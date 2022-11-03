@@ -47,7 +47,14 @@ void handle_get_public_key(
     // Only do UI actions for p1 == 0
     if (p1 == 0) {
         // Complete "Export Public | Key #x?"
-        hedera_snprintf(gpk_ctx.ui_approve_l2, DISPLAY_SIZE, "Key #%u?", gpk_ctx.key_index);
+        hedera_snprintf(gpk_ctx.ui_approve_l2,
+                        DISPLAY_SIZE,
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_NANOS)
+                        "Key #%u?",
+#elif defined(TARGET_FATSTACKS)
+                        "#%u",
+#endif
+                        gpk_ctx.key_index);
     }
 
     // Populate context with PK

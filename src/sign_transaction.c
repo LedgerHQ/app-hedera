@@ -79,7 +79,7 @@ void handle_transaction_body() {
 #if defined(TARGET_NANOS)
     MEMCLEAR(st_ctx.full);
     MEMCLEAR(st_ctx.partial);
-#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
     MEMCLEAR(st_ctx.amount_title);
     MEMCLEAR(st_ctx.senders_title);
     MEMCLEAR(st_ctx.operator);
@@ -108,7 +108,7 @@ void handle_transaction_body() {
             st_ctx.type = Create;
             reformat_summary("Create Account");
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
             reformat_operator();
             reformat_fee();
             reformat_memo();
@@ -120,7 +120,7 @@ void handle_transaction_body() {
             st_ctx.type = Associate;
             reformat_summary("Associate Token");
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
             reformat_token_associate();
 #endif
             break;
@@ -129,7 +129,7 @@ void handle_transaction_body() {
             st_ctx.type = TokenBurn;
             reformat_summary("Burn Token");
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
             reformat_token_burn();
             reformat_amount_burn();
 #endif
@@ -139,7 +139,7 @@ void handle_transaction_body() {
             st_ctx.type = TokenMint;
             reformat_summary("Mint Token");
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
             reformat_token_mint();
             reformat_amount_mint();
 #endif
@@ -148,7 +148,7 @@ void handle_transaction_body() {
         case HederaTransactionBody_cryptoTransfer_tag:
             validate_transfer();
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
             reformat_operator();
             reformat_fee();
             reformat_memo();
@@ -160,7 +160,7 @@ void handle_transaction_body() {
 
                 reformat_summary("Verify Account");
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
                 reformat_verify_account();
 #endif
 
@@ -176,7 +176,7 @@ void handle_transaction_body() {
                     st_ctx.transfer_to_index = 0;
                 }
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
                 reformat_summary("Send Hbar");
                 reformat_sender_account();
                 reformat_recipient_account();
@@ -195,7 +195,7 @@ void handle_transaction_body() {
                     st_ctx.transfer_to_index = 0;
                 }
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
                 reformat_summary_send_token();
                 reformat_tokens_account_sender();
                 reformat_tokens_account_recipient();

@@ -1,7 +1,11 @@
-#ifndef LEDGER_HEDERA_GLOBALS_H
-#define LEDGER_HEDERA_GLOBALS_H 1
+#pragma once
 
 #include <stdint.h>
+
+#ifdef HAVE_NBGL
+#include "nbgl_page.h"
+extern nbgl_page_t *pageContext;
+#endif  // HAVE_NBGL
 
 #define BIP32_PATH 5
 #define DISPLAY_SIZE 18 // characters @ 11pt sys font
@@ -33,5 +37,3 @@ static const uint8_t LEFT_ICON_ID = 0x01;
 static const uint8_t RIGHT_ICON_ID = 0x02;
 static const uint8_t LINE_1_ID = 0x05;
 static const uint8_t LINE_2_ID = 0x06;
-
-#endif // LEDGER_HEDERA_GLOBALS_H

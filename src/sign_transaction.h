@@ -2,6 +2,8 @@
 
 #include "proto/TransactionBody.pb.h"
 
+#include "ux.h"
+
 enum TransactionStep {
     Summary = 1,
     Operator = 2,
@@ -42,7 +44,7 @@ typedef struct sign_tx_context_s {
         char senders_title[TITLE_SIZE]; // alias for title
         char amount_title[TITLE_SIZE]; // alias for title
     };
-#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
     char senders_title[DISPLAY_SIZE + 1];
     char amount_title[DISPLAY_SIZE + 1];
 #endif
@@ -73,7 +75,7 @@ typedef struct sign_tx_context_s {
 #if defined(TARGET_NANOS)
     uint8_t display_index;  // 1 -> Number Screens
     uint8_t display_count;  // Number Screens
-#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
     // Transaction Operator
     char operator[DISPLAY_SIZE * 2 + 1];
 

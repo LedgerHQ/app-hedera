@@ -15,6 +15,7 @@ from .apps.hedera_builder import token_mint_conf
 
 ROOT_SCREENSHOT_PATH = Path(__file__).parent.resolve()
 
+
 def test_hedera_get_public_key_ok(client, firmware, navigator, test_name):
     hedera = HederaClient(client)
     values = [(0, "78be747e6894ee5f965e3fb0e4c1628af2f9ae0d94dc01d9b9aab75484c3184b"),
@@ -30,6 +31,9 @@ def test_hedera_get_public_key_ok(client, firmware, navigator, test_name):
             elif client.firmware.device.startswith("nano"):
                 nav_ins = [NavIns(NavInsID.RIGHT_CLICK),
                            NavIns(NavInsID.BOTH_CLICK)]
+            else:
+                nav_ins = [NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM),
+                           NavIns(NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM)]
             navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name + "_" + str(i), nav_ins)
 
         from_public_key = hedera.get_async_response().data
@@ -42,14 +46,26 @@ def test_hedera_get_public_key_refused(client, firmware, navigator, test_name):
         client.raise_policy = RaisePolicy.RAISE_NOTHING
         if firmware.device == "nanos":
             nav_ins = [NavIns(NavInsID.LEFT_CLICK)]
-        else:
+        elif client.firmware.device.startswith("nano"):
             nav_ins = [NavIns(NavInsID.RIGHT_CLICK),
                        NavIns(NavInsID.RIGHT_CLICK),
                        NavIns(NavInsID.BOTH_CLICK)]
+        else:
+            nav_ins = [NavIns(NavInsID.USE_CASE_CHOICE_REJECT)]
         navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, nav_ins)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
+
+    if firmware.device == "fat":
+        with hedera.get_public_key_confirm(0):
+            client.raise_policy = RaisePolicy.RAISE_NOTHING
+            nav_ins = [NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM),
+                       NavIns(NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CANCEL)]
+            navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name + "_2", nav_ins)
+
+        rapdu = hedera.get_async_response()
+        assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
 def test_hedera_crypto_create_account_ok(client, firmware, navigator, test_name):
@@ -62,11 +78,19 @@ def test_hedera_crypto_create_account_ok(client, firmware, navigator, test_name)
                                       transaction_fee=5,
                                       memo="this_is_the_memo",
                                       conf=conf):
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  "Confirm",
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+        if client.firmware.device.startswith("nano"):
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      "Confirm",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
+        else:
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_CONFIRM)],
+                                                      "Hold to sign",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
+
 
 def test_hedera_crypto_create_account_refused(client, firmware, navigator, test_name):
     hedera = HederaClient(client)
@@ -79,15 +103,22 @@ def test_hedera_crypto_create_account_refused(client, firmware, navigator, test_
                                       memo="this_is_the_memo",
                                       conf=conf):
         client.raise_policy = RaisePolicy.RAISE_NOTHING
-        if firmware.device == "nanos":
-            reject_text = "Deny"
+        if client.firmware.device.startswith("nano"):
+            if firmware.device == "nanos":
+                reject_text = "Deny"
+            else:
+                reject_text = "Reject"
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      reject_text,
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
         else:
-            reject_text = "Reject"
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  reject_text,
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_REJECT), NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM)],
+                                                      "Reject message",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
@@ -114,11 +145,18 @@ def test_hedera_transfer_token_ok(client, firmware, navigator, test_name):
                                       transaction_fee=5,
                                       memo="this_is_the_memo",
                                       conf=conf):
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  "Confirm",
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+        if client.firmware.device.startswith("nano"):
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      "Confirm",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
+        else:
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_CONFIRM)],
+                                                      "Hold to sign",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
 
 def test_hedera_transfer_token_refused(client, firmware, navigator, test_name):
@@ -143,15 +181,23 @@ def test_hedera_transfer_token_refused(client, firmware, navigator, test_name):
                                       memo="this_is_the_memo",
                                       conf=conf):
         client.raise_policy = RaisePolicy.RAISE_NOTHING
-        if firmware.device == "nanos":
-            reject_text = "Deny"
+        if client.firmware.device.startswith("nano"):
+            if firmware.device == "nanos":
+                reject_text = "Deny"
+            else:
+                reject_text = "Reject"
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      reject_text,
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
         else:
-            reject_text = "Reject"
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  reject_text,
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_REJECT), NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM)],
+                                                      "Reject message",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
+
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
@@ -173,11 +219,18 @@ def test_hedera_transfer_hbar_ok(client, firmware, navigator, test_name):
                                       transaction_fee=5,
                                       memo="this_is_the_memo",
                                       conf=conf):
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  "Confirm",
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+        if client.firmware.device.startswith("nano"):
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      "Confirm",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
+        else:
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_CONFIRM)],
+                                                      "Hold to sign",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
 
 def test_hedera_transfer_hbar_refused(client, firmware, navigator, test_name):
@@ -198,15 +251,22 @@ def test_hedera_transfer_hbar_refused(client, firmware, navigator, test_name):
                                       memo="this_is_the_memo",
                                       conf=conf):
         client.raise_policy = RaisePolicy.RAISE_NOTHING
-        if firmware.device == "nanos":
-            reject_text = "Deny"
+        if client.firmware.device.startswith("nano"):
+            if firmware.device == "nanos":
+                reject_text = "Deny"
+            else:
+                reject_text = "Reject"
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      reject_text,
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
         else:
-            reject_text = "Reject"
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  reject_text,
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_REJECT), NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM)],
+                                                      "Reject message",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
@@ -228,11 +288,18 @@ def test_hedera_token_associate_ok(client, firmware, navigator, test_name):
                                       transaction_fee=5,
                                       memo="this_is_the_memo",
                                       conf=conf):
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  "Confirm",
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+        if client.firmware.device.startswith("nano"):
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      "Confirm",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
+        else:
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_CONFIRM)],
+                                                      "Hold to sign",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
 
 def test_hedera_token_associate_refused(client, firmware, navigator, test_name):
@@ -252,15 +319,22 @@ def test_hedera_token_associate_refused(client, firmware, navigator, test_name):
                                       memo="this_is_the_memo",
                                       conf=conf):
         client.raise_policy = RaisePolicy.RAISE_NOTHING
-        if firmware.device == "nanos":
-            reject_text = "Deny"
+        if client.firmware.device.startswith("nano"):
+            if firmware.device == "nanos":
+                reject_text = "Deny"
+            else:
+                reject_text = "Reject"
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      reject_text,
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
         else:
-            reject_text = "Reject"
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  reject_text,
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_REJECT), NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM)],
+                                                      "Reject message",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
@@ -281,11 +355,18 @@ def test_hedera_token_burn_ok(client, firmware, navigator, test_name):
                                       transaction_fee=5,
                                       memo="this_is_the_memo",
                                       conf=conf):
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  "Confirm",
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+        if client.firmware.device.startswith("nano"):
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      "Confirm",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
+        else:
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_CONFIRM)],
+                                                      "Hold to sign",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
 
 def test_hedera_token_burn_refused(client, firmware, navigator, test_name):
@@ -304,15 +385,22 @@ def test_hedera_token_burn_refused(client, firmware, navigator, test_name):
                                       memo="this_is_the_memo",
                                       conf=conf):
         client.raise_policy = RaisePolicy.RAISE_NOTHING
-        if firmware.device == "nanos":
-            reject_text = "Deny"
+        if client.firmware.device.startswith("nano"):
+            if firmware.device == "nanos":
+                reject_text = "Deny"
+            else:
+                reject_text = "Reject"
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      reject_text,
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
         else:
-            reject_text = "Reject"
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  reject_text,
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_REJECT), NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM)],
+                                                      "Reject message",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
@@ -333,11 +421,18 @@ def test_hedera_token_mint_ok(client, firmware, navigator, test_name):
                                       transaction_fee=5,
                                       memo="this_is_the_memo",
                                       conf=conf):
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  "Confirm",
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+        if client.firmware.device.startswith("nano"):
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      "Confirm",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
+        else:
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_CONFIRM)],
+                                                      "Hold to sign",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
 
 def test_hedera_token_mint_refused(client, firmware, navigator, test_name):
@@ -356,15 +451,22 @@ def test_hedera_token_mint_refused(client, firmware, navigator, test_name):
                                       memo="this_is_the_memo",
                                       conf=conf):
         client.raise_policy = RaisePolicy.RAISE_NOTHING
-        if firmware.device == "nanos":
-            reject_text = "Deny"
+        if client.firmware.device.startswith("nano"):
+            if firmware.device == "nanos":
+                reject_text = "Deny"
+            else:
+                reject_text = "Reject"
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      reject_text,
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
         else:
-            reject_text = "Reject"
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  reject_text,
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_REJECT), NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM)],
+                                                      "Reject message",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
@@ -383,14 +485,21 @@ def test_hedera_transfer_verify_ok(client, firmware, navigator, test_name):
                                       transaction_fee=1,
                                       memo="this_is_the_memo",
                                       conf=conf):
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  "Confirm",
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+        if client.firmware.device.startswith("nano"):
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      "Confirm",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
+        else:
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_CONFIRM)],
+                                                      "Hold to sign",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
 
-def test_hedera_transfer_refused(client, firmware, navigator, test_name):
+def test_hedera_transfer_verify_refused(client, firmware, navigator, test_name):
     hedera = HederaClient(client)
     conf = crypto_transfer_verify(sender_shardNum = 57,
                                   sender_realmNum = 58,
@@ -404,15 +513,22 @@ def test_hedera_transfer_refused(client, firmware, navigator, test_name):
                                       memo="this_is_the_memo",
                                       conf=conf):
         client.raise_policy = RaisePolicy.RAISE_NOTHING
-        if firmware.device == "nanos":
-            reject_text = "Deny"
+        if client.firmware.device.startswith("nano"):
+            if firmware.device == "nanos":
+                reject_text = "Deny"
+            else:
+                reject_text = "Reject"
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                      [NavIns(NavInsID.BOTH_CLICK)],
+                                                      reject_text,
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
         else:
-            reject_text = "Reject"
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  reject_text,
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
+                                                      [NavIns(NavInsID.USE_CASE_REVIEW_REJECT), NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM)],
+                                                      "Reject message",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED

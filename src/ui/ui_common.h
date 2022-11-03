@@ -2,7 +2,7 @@
 
 #include "glyphs.h"
 #include "globals.h"
-#include "ux.h"
+// #include "ux.h"
 
 #if defined(TARGET_NANOS)
 
@@ -16,3 +16,7 @@
 #define UI_ICON(userid, x, y, w, glyph) {{BAGL_ICON,userid,x,y,w,6,0,0,0,0xFFFFFF,0,BAGL_FONT_OPEN_SANS_REGULAR_11px|BAGL_FONT_ALIGNMENT_CENTER,glyph},NULL}
 
 #endif // TARGET
+
+#ifdef HAVE_NBGL
+void releaseContext(void);
+#endif

@@ -20,8 +20,17 @@
 #include "sign_transaction.h"
 #include "ui_common.h"
 
+#ifdef HAVE_NBGL
+#include "nbgl_fonts.h"
+#include "nbgl_front.h"
+#include "nbgl_debug.h"
+#include "nbgl_page.h"
+#include "nbgl_use_case.h"
+#endif
+
 
 #if defined(TARGET_NANOS)
+
 
 static uint8_t num_screens(size_t length) {
     // Number of screens is len / display size + 1 for overflow
@@ -733,8 +742,118 @@ UX_DEF(
     &ux_tx_flow_9_step
 );
 
+
+#elif defined(HAVE_NBGL)
+
+static void rejectChoice(void) {
+    io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
+    nbgl_useCaseStatus("message\nrejected", false, ui_idle);
+}
+
+static void rejectUseCaseChoice(void) {
+    nbgl_useCaseConfirm("Reject message?", NULL, "Yes, reject", "Go back to message", rejectChoice);
+}
+
+static void review_final_callback(bool confirmed) {
+    if (confirmed) {
+        io_exchange_with_code(EXCEPTION_OK, 64);
+        nbgl_useCaseStatus("MESSAGE\nSIGNED", true, ui_idle);
+    } else {
+        rejectUseCaseChoice();
+    }
+}
+
+// Max is 8 infos for transfer transaction
+static nbgl_layoutTagValue_t infos[8];
+static nbgl_layoutTagValueList_t layout;
+
+static void start_review(void) {
+    layout.nbMaxLinesForValue = 0;
+    layout.smallCaseForValue = true;
+    layout.wrapping = true;
+    layout.pairs = infos;
+
+    uint8_t index = 0;
+    infos[index].item = "Transaction Summary";
+    infos[index].value = st_ctx.summary_line_1;
+    ++index;
+    infos[index].item = "With key";
+    infos[index].value = st_ctx.summary_line_2;
+    ++index;
+
+    switch (st_ctx.type) {
+        case Verify:
+        case Associate:
+            infos[index].item = st_ctx.senders_title;
+            infos[index].value = st_ctx.senders;
+            ++index;
+            break;
+        case Create:
+            infos[index].item = "Operator";
+            infos[index].value = st_ctx.operator;
+            ++index;
+            infos[index].item = st_ctx.amount_title;
+            infos[index].value = st_ctx.amount;
+            ++index;
+            infos[index].item = "Max Fee";
+            infos[index].value = st_ctx.fee;
+            ++index;
+            infos[index].item = "Memo";
+            infos[index].value = st_ctx.memo;
+            ++index;
+            break;
+        case TokenTransfer:
+        case Transfer:
+            infos[index].item = "Operator";
+            infos[index].value = st_ctx.operator;
+            ++index;
+            infos[index].item = st_ctx.senders_title;
+            infos[index].value = st_ctx.senders;
+            ++index;
+            infos[index].item = "Recipient";
+            infos[index].value = st_ctx.recipients;
+            ++index;
+            infos[index].item = st_ctx.amount_title;
+            infos[index].value = st_ctx.amount;
+            ++index;
+            infos[index].item = "Max Fee";
+            infos[index].value = st_ctx.fee;
+            ++index;
+            infos[index].item = "Memo";
+            infos[index].value = st_ctx.memo;
+            ++index;
+            break;
+        case TokenMint:
+        case TokenBurn:
+            infos[index].item = st_ctx.senders_title;
+            infos[index].value = st_ctx.senders;
+            ++index;
+            infos[index].item = st_ctx.amount_title;
+            infos[index].value = st_ctx.amount;
+            ++index;
+            break;
+        default:
+            // Unreachable
+            ;
+    }
+
+    layout.nbPairs = index;
+
+    static const nbgl_pageInfoLongPress_t review_final_long_press = {
+        .text = "Sign message on\nHedera network?",
+        .icon = &C_icon_hedera_64x64,
+        .longPressText = "Hold to sign",
+        .longPressToken = 0,
+        .tuneId = TUNE_TAP_CASUAL,
+    };
+    nbgl_useCaseStaticReview(&layout, &review_final_long_press, "Reject message", review_final_callback);
+}
+
+
 #endif
 
+
+// Common for all devices
 
 void ui_sign_transaction(void) {
 
@@ -764,6 +883,15 @@ void ui_sign_transaction(void) {
         default:
             break;
     }
+
+#elif defined(HAVE_NBGL)
+
+    nbgl_useCaseReviewStart(&C_icon_hedera_64x64,
+                            "Review transaction to\nsign on Hedera\nnetwork",
+                            "",
+                            "Reject transaction",
+                            start_review,
+                            rejectUseCaseChoice);
 
 #endif
 

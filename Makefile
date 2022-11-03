@@ -23,7 +23,17 @@ include $(BOLOS_SDK)/Makefile.defines
 #########
 #  App  #
 #########
-APP_LOAD_PARAMS= --curve ed25519 --path "44'/3030'" --appFlags 0x240 $(COMMON_LOAD_PARAMS)
+
+APP_LOAD_PARAMS = --curve ed25519
+ifeq ($(TARGET_NAME), TARGET_NANOX)
+APP_LOAD_PARAMS += --appFlags 0x240  # APPLICATION_FLAG_BOLOS_SETTINGS
+else ifeq ($(TARGET_NAME), TARGET_FATSTACKS)
+APP_LOAD_PARAMS += --appFlags 0x240  # APPLICATION_FLAG_BOLOS_SETTINGS
+else
+APP_LOAD_PARAMS += --appFlags 0x040
+endif
+APP_LOAD_PARAMS += --path "44'/3030'"
+APP_LOAD_PARAMS += $(COMMON_LOAD_PARAMS)
 
 APPVERSION_M = 1
 APPVERSION_N = 1
@@ -37,6 +47,8 @@ DEFINES += $(DEFINES_LIB)
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
 ICONNAME=icons/nanos_app_hedera.gif
+else ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
+ICONNAME=icons/stax_app_hedera.gif
 else
 ICONNAME=icons/nanox_app_hedera.gif
 endif
@@ -53,7 +65,11 @@ all: default
 ############
 
 DEFINES   += OS_IO_SEPROXYHAL
+DEFINES   += HAVE_SPRINTF
+ifneq ($(TARGET_NAME),TARGET_FATSTACKS)
 DEFINES   += HAVE_BAGL
+endif
+
 DEFINES   += HAVE_IO_USB HAVE_L4_USBLIB IO_USB_MAX_ENDPOINTS=6 IO_HID_EP_LENGTH=64 HAVE_USB_APDU
 DEFINES   += APPVERSION_M=$(APPVERSION_M) APPVERSION_N=$(APPVERSION_N) APPVERSION_P=$(APPVERSION_P)
 
@@ -81,25 +97,25 @@ DEFINES   += APPVERSION=\"$(APPVERSION)\"
 
 
 ifeq ($(TARGET_NAME),TARGET_NANOX)
-DEFINES       += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000
-DEFINES       += HAVE_BLE_APDU # basic ledger apdu transport over BLE
+DEFINES       += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000 HAVE_BLE_APDU
+else ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
+DEFINES       += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000 HAVE_BLE_APDU
 endif
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
 DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=128
-else
-# Instead of vendor printf
-DEFINES       += HAVE_SPRINTF
-
+else ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
 DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=300
-
+DEFINES       += NBGL_QRCODE
+else
+DEFINES       += HAVE_UX_FLOW
+DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=300
 DEFINES       += HAVE_GLO096
-DEFINES       += HAVE_BAGL BAGL_WIDTH=128 BAGL_HEIGHT=64
+DEFINES       += BAGL_WIDTH=128 BAGL_HEIGHT=64
 DEFINES       += HAVE_BAGL_ELLIPSIS # long label truncation feature
 DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
 DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
 DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
-DEFINES       += HAVE_UX_FLOW
 endif
 
 # Enabling debug PRINTF
@@ -148,9 +164,17 @@ include $(BOLOS_SDK)/Makefile.glyphs
 ### variables processed by the common makefile.rules of the SDK to grab source files and include dirs
 APP_SOURCE_PATH  += src proto
 SDK_SOURCE_PATH  += lib_stusb lib_stusb_impl lib_u2f
+
+ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
+SDK_SOURCE_PATH  += lib_nbgl/src
+SDK_SOURCE_PATH  += lib_ux_fatstacks
+else
 SDK_SOURCE_PATH  += lib_ux
+endif
 
 ifeq ($(TARGET_NAME),TARGET_NANOX)
+SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
+else ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
 SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
 endif
 

@@ -125,7 +125,7 @@ static void set_senders_title(const char *title) {
         title,
         st_ctx.display_index,
         st_ctx.display_count
-#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
         "%s",
         title
 #endif
@@ -140,7 +140,7 @@ static void set_amount_title(const char *title) {
         title,
         st_ctx.display_index,
         st_ctx.display_count
-#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
         "%s",
         title
 #endif
@@ -150,7 +150,11 @@ static void set_amount_title(const char *title) {
 void reformat_key(void) {
     hedera_safe_printf(
         st_ctx.summary_line_2,
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_NANOS)
         "with Key #%u?",
+#elif defined(TARGET_FATSTACKS)
+        "#%u",
+#endif
         st_ctx.key_index
     );
 }

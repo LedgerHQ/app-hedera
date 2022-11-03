@@ -2,11 +2,17 @@
 #include "handlers.h"
 #include "ui_flows.h"
 #include "io.h"
+#include "ux.h"
 #include "utils.h"
 #include "debug.h"
 #include "globals.h"
 #include "glyphs.h"
 #include "ux.h"
+
+#ifdef HAVE_NBGL
+#include "nbgl_touch.h"
+#include "nbgl_page.h"
+#endif  // HAVE_NBGL
 
 // This is the main loop that reads and writes APDUs. It receives request
 // APDUs from the computer, looks up the corresponding command handler, and
@@ -18,6 +24,15 @@
 
 // Things are marked volatile throughout the app to prevent unintended compiler
 // reording of instructions (since the try-catch system is a macro)
+
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(HAVE_NBGL)
+ux_state_t G_ux;
+bolos_ux_params_t G_ux_params;
+#endif
+
+#if defined (HAVE_NBGL)
+nbgl_page_t *pageContext;
+#endif
 
 void app_main() {
     volatile unsigned int rx = 0;
@@ -137,7 +152,12 @@ __attribute__((section(".boot"))) int main() {
 
     for (;;) {
         // Initialize the UX system
+#ifdef HAVE_BAGL
         UX_INIT();
+#endif  // HAVE_BAGL
+#ifdef HAVE_NBGL
+        nbgl_objInit();
+#endif  // HAVE_NBGL
 
         BEGIN_TRY {
             TRY {
