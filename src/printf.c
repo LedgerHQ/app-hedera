@@ -22,18 +22,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-// \brief Tiny printf, sprintf and (v)snprintf implementation, optimized for speed on
-//        embedded systems with a very limited resources. These routines are thread
-//        safe and reentrant!
-//        Use this instead of the bloated standard/newlib printf cause these use
-//        malloc for printf (and may not be thread safe).
+// \brief Tiny printf, sprintf and (v)snprintf implementation, optimized for
+// speed on
+//        embedded systems with a very limited resources. These routines are
+//        thread safe and reentrant! Use this instead of the bloated
+//        standard/newlib printf cause these use malloc for printf (and may not
+//        be thread safe).
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include "printf.h"
+
 #include <stdbool.h>
 #include <stdint.h>
-
-#include "printf.h"
 
 // define this globally (e.g. gcc -DPRINTF_INCLUDE_CONFIG_H ...) to include the
 // printf_config.h header file
@@ -487,6 +488,7 @@ static size_t _ftoa(out_fct_type out,
 #if defined(PRINTF_SUPPORT_EXPONENTIAL)
 // internal ftoa variant for exponential floating-point type, contributed by Martijn Jasperse
 // <m.jasperse@gmail.com>
+
 static size_t _etoa(out_fct_type out,
                     char* buffer,
                     size_t idx,

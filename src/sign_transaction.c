@@ -1,24 +1,25 @@
+#include "sign_transaction.h"
+
+#include <pb.h>
+#include <pb_decode.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <pb.h>
-#include <pb_decode.h>
 
-#include "printf.h"
-#include "globals.h"
-#include "glyphs.h"
-#include "ux.h"
+#include "TransactionBody.pb.h"
 #include "debug.h"
 #include "errors.h"
+#include "globals.h"
+#include "glyphs.h"
 #include "handlers.h"
 #include "hedera.h"
 #include "hedera_format.h"
 #include "io.h"
-#include "TransactionBody.pb.h"
-#include "utils.h"
-#include "ui_flows.h"
-#include "sign_transaction.h"
+#include "printf.h"
 #include "ui_common.h"
+#include "ui_flows.h"
+#include "utils.h"
+#include "ux.h"
 
 sign_tx_context_t st_ctx;
 
@@ -49,7 +50,8 @@ static void validate_transfer(void) {
         }
 
         if (st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts_count != 0) {
-            // Can't also transfer Hbar if the transaction is an otherwise valid token transfer
+            // Can't also transfer Hbar if the transaction is an otherwise valid
+            // token transfer
             THROW(EXCEPTION_MALFORMED_APDU);
         }
     }

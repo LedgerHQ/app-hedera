@@ -1,7 +1,7 @@
 #pragma once
 
-#include "glyphs.h"
 #include "globals.h"
+#include "glyphs.h"
 #include "ux.h"
 
 #if defined(TARGET_NANOS)

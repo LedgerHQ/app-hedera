@@ -1,5 +1,4 @@
 ---
----
 Language: Cpp
 BasedOnStyle: Google
 IndentWidth: 4
@@ -22,5 +21,6 @@ Language: Proto
 BasedOnStyle: Google
 AlignConsecutiveDeclarations: true
 AlignConsecutiveAssignments: true
-ColumnLimit: 0
+ColumnLimit: 120
 IndentWidth: 4
+---

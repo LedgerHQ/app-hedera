@@ -1,7 +1,7 @@
-#include "os.h"
-#include "ux.h"
-#include "os_io_seproxyhal.h"
 #include "debug.h"
+#include "os.h"
+#include "os_io_seproxyhal.h"
+#include "ux.h"
 
 // Everything below this point is Ledger magic. And the magic isn't well-
 // documented, so if you want to understand it, you'll need to read the
@@ -66,7 +66,8 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
         case CHANNEL_KEYBOARD:
             break;
 
-        // multiplexed io exchange over a SPI channel and TLV encapsulated protocol
+        // multiplexed io exchange over a SPI channel and TLV encapsulated
+        // protocol
         case CHANNEL_SPI:
             if (tx_len) {
                 io_seproxyhal_spi_send(G_io_apdu_buffer, tx_len);

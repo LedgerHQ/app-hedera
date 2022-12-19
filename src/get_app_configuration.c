@@ -1,7 +1,6 @@
-#include <stdint.h>
-
 #include <os.h>
 #include <os_io_seproxyhal.h>
+#include <stdint.h>
 
 #include "errors.h"
 #include "io.h"

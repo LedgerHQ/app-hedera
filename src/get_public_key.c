@@ -1,18 +1,18 @@
+#include "get_public_key.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-#include "globals.h"
-#include "printf.h"
-#include "globals.h"
 #include "debug.h"
 #include "errors.h"
+#include "globals.h"
 #include "handlers.h"
 #include "hedera.h"
 #include "io.h"
-#include "utils.h"
-#include "get_public_key.h"
+#include "printf.h"
 #include "ui_flows.h"
+#include "utils.h"
 
 get_public_key_context_t gpk_ctx;
 
@@ -41,8 +41,8 @@ void handle_get_public_key(uint8_t p1,
     // Read Key Index
     gpk_ctx.key_index = U4LE(buffer, 0);
 
-    // If p1 != 0, silent mode, for use by apps that request the user's public key frequently
-    // Only do UI actions for p1 == 0
+    // If p1 != 0, silent mode, for use by apps that request the user's public
+    // key frequently Only do UI actions for p1 == 0
     if (p1 == 0) {
         // Complete "Export Public | Key #x?"
         hedera_snprintf(gpk_ctx.ui_approve_l2, DISPLAY_SIZE, "Key #%u?", gpk_ctx.key_index);

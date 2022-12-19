@@ -22,7 +22,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-// \brief Tiny printf, sprintf and snprintf implementation, optimized for speed on
+// \brief Tiny printf, sprintf and snprintf implementation, optimized for speed
+// on
 //        embedded systems with a very limited resources.
 //        Use this instead of bloated standard/newlib printf.
 //        These routines are thread safe and reentrant.
@@ -40,17 +41,17 @@ extern "C" {
 #endif
 
 /**
- * Output a character to a custom device like UART, used by the printf() function
- * This function is declared here only. You have to write your custom implementation somewhere
- * \param character Character to output
+ * Output a character to a custom device like UART, used by the printf()
+ * function This function is declared here only. You have to write your custom
+ * implementation somewhere \param character Character to output
  */
 void _putchar(char character);
 
 /**
  * Tiny printf implementation
  * You have to implement _putchar if you use printf()
- * To avoid conflicts with the regular printf() API it is overridden by macro defines
- * and internal underscore-appended functions like printf_() are used
+ * To avoid conflicts with the regular printf() API it is overridden by macro
+ * defines and internal underscore-appended functions like printf_() are used
  * \param format A string that specifies the format of the output
  * \return The number of characters that are written into the array, not counting the terminating
  * null character

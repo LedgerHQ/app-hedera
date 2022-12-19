@@ -1,7 +1,7 @@
 #include "globals.h"
 #include "glyphs.h"
-#include "ux.h"
 #include "ui_flows.h"
+#include "ux.h"
 
 /*
  * Defines the main menu and idle actions for the app

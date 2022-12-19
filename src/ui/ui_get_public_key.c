@@ -2,18 +2,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "globals.h"
-#include "printf.h"
-#include "globals.h"
 #include "debug.h"
-#include "src/errors.h"
+#include "get_public_key.h"
+#include "globals.h"
 #include "handlers.h"
 #include "hedera.h"
 #include "io.h"
-#include "utils.h"
-#include "ui_flows.h"
-#include "get_public_key.h"
+#include "printf.h"
+#include "src/errors.h"
 #include "ui_common.h"
+#include "ui_flows.h"
+#include "utils.h"
 
 #if defined(TARGET_NANOS)
 

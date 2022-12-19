@@ -1,10 +1,11 @@
-#include <os.h>
+#include "hedera.h"
+
 #include <cx.h>
+#include <os.h>
 #include <string.h>
 
 #include "globals.h"
 #include "utils.h"
-#include "hedera.h"
 
 bool hedera_derive_keypair(uint32_t index,
                            /* out */ cx_ecfp_private_key_t* secret,

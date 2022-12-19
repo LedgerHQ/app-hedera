@@ -19,8 +19,9 @@ message HederaTokenTransferList {
     repeated HederaAccountAmount transfers = 2 [(nanopb).max_count = 2];
 
     /**
-     * If present, the number of decimals this fungible token type is expected to have. The transfer
-     * will fail with UNEXPECTED_TOKEN_DECIMALS if the actual decimals differ.
+     * If present, the number of decimals this fungible token type is expected to
+     * have. The transfer will fail with UNEXPECTED_TOKEN_DECIMALS if the actual
+     * decimals differ.
      */
     UInt32Value expected_decimals = 4;
 }

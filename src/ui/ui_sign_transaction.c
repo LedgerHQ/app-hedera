@@ -1,24 +1,24 @@
+#include <pb.h>
+#include <pb_decode.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <pb.h>
-#include <pb_decode.h>
 
-#include "printf.h"
+#include "TransactionBody.pb.h"
+#include "debug.h"
 #include "globals.h"
 #include "glyphs.h"
-#include "ux.h"
-#include "debug.h"
-#include "src/errors.h"
 #include "handlers.h"
 #include "hedera.h"
 #include "hedera_format.h"
 #include "io.h"
-#include "TransactionBody.pb.h"
-#include "utils.h"
-#include "ui_flows.h"
+#include "printf.h"
 #include "sign_transaction.h"
+#include "src/errors.h"
 #include "ui_common.h"
+#include "ui_flows.h"
+#include "utils.h"
+#include "ux.h"
 
 #if defined(TARGET_NANOS)
 
