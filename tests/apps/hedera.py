@@ -55,15 +55,6 @@ class HederaClient:
             sleep(0.5)
             yield
 
-    def validate(self):
-        self._client.right_click()
-
-    def refuse(self):
-        self._client.left_click()
-
-    def validate_screen(self, right_clicks: int):
-        validate_displayed_message(self._client, right_clicks)
-
     def get_async_response(self) -> RAPDU:
         return self._client.last_async_response
 
