@@ -21,8 +21,8 @@ jobs:
       - name: Lint
         uses: DoozyX/clang-format-lint-action@v0.11
         with:
-          source: './src'
-          extensions: 'h,c'
+          source: './src ./proto'
+          extensions: 'h,c,proto'
           clangFormatVersion: 11
 
   misspell:

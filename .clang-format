@@ -1,8 +1,8 @@
 ---
-BasedOnStyle: Google
-IndentWidth: 4
 ---
 Language: Cpp
+BasedOnStyle: Google
+IndentWidth: 4
 ColumnLimit: 120
 PointerAlignment: Right
 AlignAfterOpenBracket: Align
@@ -18,3 +18,9 @@ AllowShortFunctionsOnASingleLine: None
 BinPackArguments: false
 BinPackParameters: false
 ---
+Language: Proto
+BasedOnStyle: Google
+AlignConsecutiveDeclarations: true
+AlignConsecutiveAssignments: true
+ColumnLimit: 0
+IndentWidth: 4
