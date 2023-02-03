@@ -37,10 +37,10 @@ typedef struct sign_tx_context_s {
 
 #if defined(TARGET_NANOS)
     union {
-        #define TITLE_SIZE (DISPLAY_SIZE + 1)
+#define TITLE_SIZE (DISPLAY_SIZE + 1)
         char title[TITLE_SIZE];
-        char senders_title[TITLE_SIZE]; // alias for title
-        char amount_title[TITLE_SIZE]; // alias for title
+        char senders_title[TITLE_SIZE];  // alias for title
+        char amount_title[TITLE_SIZE];   // alias for title
     };
 #elif defined(TARGET_NANOX) || defined(TARGET_NANOS2)
     char senders_title[DISPLAY_SIZE + 1];
@@ -51,14 +51,14 @@ typedef struct sign_tx_context_s {
     // Most other entities are shorter
 #if defined(TARGET_NANOS)
     union {
-        #define FULL_SIZE (ACCOUNT_ID_SIZE + 1)
+#define FULL_SIZE (ACCOUNT_ID_SIZE + 1)
         char full[FULL_SIZE];
-        char operator[FULL_SIZE]; // alias for full
-        char senders[FULL_SIZE]; // alias for full
-        char recipients[FULL_SIZE]; // alias for full
-        char amount[FULL_SIZE]; // alias for full
-        char fee[FULL_SIZE]; // alias for full
-        char memo[FULL_SIZE]; // alias for full
+        char operator[FULL_SIZE];    // alias for full
+        char senders[FULL_SIZE];     // alias for full
+        char recipients[FULL_SIZE];  // alias for full
+        char amount[FULL_SIZE];      // alias for full
+        char fee[FULL_SIZE];         // alias for full
+        char memo[FULL_SIZE];        // alias for full
     };
     char partial[DISPLAY_SIZE + 1];
 #endif

@@ -20,7 +20,6 @@
 #include "sign_transaction.h"
 #include "ui_common.h"
 
-
 #if defined(TARGET_NANOS)
 
 static uint8_t num_screens(size_t length) {
@@ -43,11 +42,7 @@ static void update_display_count(void) {
 static void shift_display(void) {
     // Slide window (partial) along full entity (full) by DISPLAY_SIZE chars
     MEMCLEAR(st_ctx.partial);
-    memmove(
-        st_ctx.partial,
-        st_ctx.full + (DISPLAY_SIZE * (st_ctx.display_index - 1)),
-        DISPLAY_SIZE
-    );
+    memmove(st_ctx.partial, st_ctx.full + (DISPLAY_SIZE * (st_ctx.display_index - 1)), DISPLAY_SIZE);
 }
 
 static void reformat_senders(void) {
@@ -125,94 +120,73 @@ static void reformat_amount(void) {
 
 // Forward declarations for Nano S UI
 // Step 1
-unsigned int ui_tx_summary_step_button(
-    unsigned int button_mask,
-    unsigned int button_mask_counter
-);
+unsigned int ui_tx_summary_step_button(unsigned int button_mask, unsigned int button_mask_counter);
 
 // Step 2 - 7
 void handle_intermediate_left_press();
 void handle_intermediate_right_press();
-unsigned int ui_tx_intermediate_step_button(
-    unsigned int button_mask,
-    unsigned int button_mask_counter
-);
+unsigned int ui_tx_intermediate_step_button(unsigned int button_mask, unsigned int button_mask_counter);
 
 // Step 8
-unsigned int ui_tx_confirm_step_button(
-    unsigned int button_mask,
-    unsigned int button_mask_counter
-);
+unsigned int ui_tx_confirm_step_button(unsigned int button_mask, unsigned int button_mask_counter);
 
 // Step 9
-unsigned int ui_tx_deny_step_button(
-    unsigned int button_mask,
-    unsigned int button_mask_counter
-);
+unsigned int ui_tx_deny_step_button(unsigned int button_mask, unsigned int button_mask_counter);
 
 // UI Definition for Nano S
 // Step 1: Transaction Summary
-static const bagl_element_t ui_tx_summary_step[] = {
-    UI_BACKGROUND(),
-    UI_ICON_RIGHT(RIGHT_ICON_ID, BAGL_GLYPH_ICON_RIGHT),
+static const bagl_element_t ui_tx_summary_step[] = {UI_BACKGROUND(),
+                                                    UI_ICON_RIGHT(RIGHT_ICON_ID, BAGL_GLYPH_ICON_RIGHT),
 
-    // ()       >>
-    // Line 1
-    // Line 2
+                                                    // ()       >>
+                                                    // Line 1
+                                                    // Line 2
 
-    UI_TEXT(LINE_1_ID, 0, 12, 128, st_ctx.summary_line_1),
-    UI_TEXT(LINE_2_ID, 0, 26, 128, st_ctx.summary_line_2)
-};
+                                                    UI_TEXT(LINE_1_ID, 0, 12, 128, st_ctx.summary_line_1),
+                                                    UI_TEXT(LINE_2_ID, 0, 26, 128, st_ctx.summary_line_2)};
 
 // Step 2 - 7: Operator, Senders, Recipients, Amount, Fee, Memo
-static const bagl_element_t ui_tx_intermediate_step[] = {
-    UI_BACKGROUND(),
-    UI_ICON_LEFT(LEFT_ICON_ID, BAGL_GLYPH_ICON_LEFT),
-    UI_ICON_RIGHT(RIGHT_ICON_ID, BAGL_GLYPH_ICON_RIGHT),
+static const bagl_element_t ui_tx_intermediate_step[] = {UI_BACKGROUND(),
+                                                         UI_ICON_LEFT(LEFT_ICON_ID, BAGL_GLYPH_ICON_LEFT),
+                                                         UI_ICON_RIGHT(RIGHT_ICON_ID, BAGL_GLYPH_ICON_RIGHT),
 
-    // <<       >>
-    // <Title>
-    // <Partial>
+                                                         // <<       >>
+                                                         // <Title>
+                                                         // <Partial>
 
-    UI_TEXT(LINE_1_ID, 0, 12, 128, st_ctx.title),
-    UI_TEXT(LINE_2_ID, 0, 26, 128, st_ctx.partial)
-};
+                                                         UI_TEXT(LINE_1_ID, 0, 12, 128, st_ctx.title),
+                                                         UI_TEXT(LINE_2_ID, 0, 26, 128, st_ctx.partial)};
 
 // Step 8: Confirm
-static const bagl_element_t ui_tx_confirm_step[] = {
-    UI_BACKGROUND(),
-    UI_ICON_LEFT(LEFT_ICON_ID, BAGL_GLYPH_ICON_LEFT),
-    UI_ICON_RIGHT(RIGHT_ICON_ID, BAGL_GLYPH_ICON_RIGHT),
+static const bagl_element_t ui_tx_confirm_step[] = {UI_BACKGROUND(),
+                                                    UI_ICON_LEFT(LEFT_ICON_ID, BAGL_GLYPH_ICON_LEFT),
+                                                    UI_ICON_RIGHT(RIGHT_ICON_ID, BAGL_GLYPH_ICON_RIGHT),
 
-    // <<       >>
-    //    Confirm
-    //    <Check>
+                                                    // <<       >>
+                                                    //    Confirm
+                                                    //    <Check>
 
-    UI_TEXT(LINE_1_ID, 0, 12, 128, "Confirm"),
-    UI_ICON(LINE_2_ID, 0, 24, 128, BAGL_GLYPH_ICON_CHECK)
-};
+                                                    UI_TEXT(LINE_1_ID, 0, 12, 128, "Confirm"),
+                                                    UI_ICON(LINE_2_ID, 0, 24, 128, BAGL_GLYPH_ICON_CHECK)};
 
 // Step 9: Deny
-static const bagl_element_t ui_tx_deny_step[] = {
-    UI_BACKGROUND(),
-    UI_ICON_LEFT(LEFT_ICON_ID, BAGL_GLYPH_ICON_LEFT),
+static const bagl_element_t ui_tx_deny_step[] = {UI_BACKGROUND(),
+                                                 UI_ICON_LEFT(LEFT_ICON_ID, BAGL_GLYPH_ICON_LEFT),
 
-    // <<       ()
-    //    Deny
-    //      X
+                                                 // <<       ()
+                                                 //    Deny
+                                                 //      X
 
-    UI_TEXT(LINE_1_ID, 0, 12, 128, "Deny"),
-    UI_ICON(LINE_2_ID, 0, 24, 128, BAGL_GLYPH_ICON_CROSS)
-};
+                                                 UI_TEXT(LINE_1_ID, 0, 12, 128, "Deny"),
+                                                 UI_ICON(LINE_2_ID, 0, 24, 128, BAGL_GLYPH_ICON_CROSS)};
 
 // Step 1: Transaction Summary
-unsigned int ui_tx_summary_step_button(
-    unsigned int button_mask,
-    unsigned int __attribute__ ((unused)) button_mask_counter
-) {
-    switch(button_mask) {
+unsigned int ui_tx_summary_step_button(unsigned int button_mask,
+                                       unsigned int __attribute__((unused)) button_mask_counter) {
+    switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_RIGHT:
-            if (st_ctx.type == Verify || st_ctx.type == Associate || st_ctx.type == TokenMint || st_ctx.type == TokenBurn) {
+            if (st_ctx.type == Verify || st_ctx.type == Associate || st_ctx.type == TokenMint ||
+                st_ctx.type == TokenBurn) {
                 st_ctx.step = Senders;
                 st_ctx.display_index = 1;
                 update_display_count();
@@ -259,7 +233,8 @@ void handle_intermediate_left_press() {
 
         case Senders: {
             if (first_screen()) {  // Return to Operator
-                if (st_ctx.type == Verify || st_ctx.type == Associate || st_ctx.type == TokenMint || st_ctx.type == TokenBurn) {
+                if (st_ctx.type == Verify || st_ctx.type == Associate || st_ctx.type == TokenMint ||
+                    st_ctx.type == TokenBurn) {
                     st_ctx.step = Summary;
                     st_ctx.display_index = 1;
                     UX_DISPLAY(ui_tx_summary_step, NULL);
@@ -309,7 +284,7 @@ void handle_intermediate_left_press() {
                     update_display_count();
                     reformat_recipients();
                     shift_display();
-                } else if (st_ctx.type == TokenMint || st_ctx.type == TokenBurn) { // Return to Senders
+                } else if (st_ctx.type == TokenMint || st_ctx.type == TokenBurn) {  // Return to Senders
                     st_ctx.step = Senders;
                     st_ctx.display_index = 1;
                     update_display_count();
@@ -498,11 +473,9 @@ void handle_intermediate_right_press() {
 }
 
 // Step 2 - 7: Operator, Senders, Recipients, Amount, Fee, Memo
-unsigned int ui_tx_intermediate_step_button(
-    unsigned int button_mask,
-    unsigned int __attribute__ ((unused)) button_mask_counter
-) {
-    switch(button_mask) {
+unsigned int ui_tx_intermediate_step_button(unsigned int button_mask,
+                                            unsigned int __attribute__((unused)) button_mask_counter) {
+    switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_LEFT:
             handle_intermediate_left_press();
             break;
@@ -519,11 +492,9 @@ unsigned int ui_tx_intermediate_step_button(
     return 0;
 }
 
-unsigned int ui_tx_confirm_step_button(
-    unsigned int button_mask,
-    unsigned int __attribute__ ((unused)) button_mask_counter
-) {
-    switch(button_mask) {
+unsigned int ui_tx_confirm_step_button(unsigned int button_mask,
+                                       unsigned int __attribute__((unused)) button_mask_counter) {
+    switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_LEFT:
             if (st_ctx.type == Verify || st_ctx.type == Associate) {  // Return to Senders
                 st_ctx.step = Senders;
@@ -531,13 +502,13 @@ unsigned int ui_tx_confirm_step_button(
                 update_display_count();
                 reformat_senders();
                 shift_display();
-            } else if (st_ctx.type == TokenMint || st_ctx.type == TokenBurn) { // Return to Amount
+            } else if (st_ctx.type == TokenMint || st_ctx.type == TokenBurn) {  // Return to Amount
                 st_ctx.step = Amount;
                 st_ctx.display_index = 1;
                 update_display_count();
                 reformat_amount();
                 shift_display();
-            } else { // Return to Memo
+            } else {  // Return to Memo
                 st_ctx.step = Memo;
                 st_ctx.display_index = 1;
                 update_display_count();
@@ -561,11 +532,9 @@ unsigned int ui_tx_confirm_step_button(
     return 0;
 }
 
-unsigned int ui_tx_deny_step_button(
-    unsigned int button_mask,
-    unsigned int __attribute__ ((unused)) button_mask_counter
-) {
-    switch(button_mask) {
+unsigned int ui_tx_deny_step_button(unsigned int button_mask,
+                                    unsigned int __attribute__((unused)) button_mask_counter) {
+    switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_LEFT:
             // Return to Confirm
             st_ctx.step = Confirm;
@@ -582,9 +551,7 @@ unsigned int ui_tx_deny_step_button(
     return 0;
 }
 
-
 #elif defined(TARGET_NANOX) || defined(TARGET_NANOS2)
-
 
 // UI Definition for Nano X
 
@@ -604,15 +571,7 @@ unsigned int io_seproxyhal_tx_reject(const bagl_element_t* e) {
     return 0;
 }
 
-UX_STEP_NOCB(
-    ux_tx_flow_1_step,
-    bnn,
-    {
-        "Transaction Summary",
-        st_ctx.summary_line_1,
-        st_ctx.summary_line_2
-    }
-);
+UX_STEP_NOCB(ux_tx_flow_1_step, bnn, {"Transaction Summary", st_ctx.summary_line_1, st_ctx.summary_line_2});
 
 UX_STEP_NOCB(
     ux_tx_flow_2_step,
@@ -623,121 +582,56 @@ UX_STEP_NOCB(
     }
 );
 
-UX_STEP_NOCB(
-    ux_tx_flow_3_step,
-    bnnn_paging,
-    {
-        .title = (char*) st_ctx.senders_title,
-        .text = (char*) st_ctx.senders
-    }
-);
+UX_STEP_NOCB(ux_tx_flow_3_step, bnnn_paging, {.title = (char*) st_ctx.senders_title, .text = (char*) st_ctx.senders});
 
-UX_STEP_NOCB(
-    ux_tx_flow_4_step,
-    bnnn_paging,
-    {
-        .title = "Recipient",
-        .text = (char*) st_ctx.recipients
-    }
-);
+UX_STEP_NOCB(ux_tx_flow_4_step, bnnn_paging, {.title = "Recipient", .text = (char*) st_ctx.recipients});
 
-UX_STEP_NOCB(
-    ux_tx_flow_5_step,
-    bnnn_paging,
-    {
-        .title = (char*) st_ctx.amount_title,
-        .text = (char*) st_ctx.amount
-    }
-);
+UX_STEP_NOCB(ux_tx_flow_5_step, bnnn_paging, {.title = (char*) st_ctx.amount_title, .text = (char*) st_ctx.amount});
 
-UX_STEP_NOCB(
-    ux_tx_flow_6_step,
-    bnnn_paging,
-    {
-        .title = "Max Fee",
-        .text = (char*) st_ctx.fee
-    }
-);
+UX_STEP_NOCB(ux_tx_flow_6_step, bnnn_paging, {.title = "Max Fee", .text = (char*) st_ctx.fee});
 
-UX_STEP_NOCB(
-    ux_tx_flow_7_step,
-    bnnn_paging,
-    {
-        .title = "Memo",
-        .text = (char*) st_ctx.memo
-    }
-);
+UX_STEP_NOCB(ux_tx_flow_7_step, bnnn_paging, {.title = "Memo", .text = (char*) st_ctx.memo});
 
-UX_STEP_VALID(
-    ux_tx_flow_8_step,
-    pb,
-    io_seproxyhal_tx_approve(NULL),
-    {
-        &C_icon_validate_14,
-        "Confirm"
-    }
-);
+UX_STEP_VALID(ux_tx_flow_8_step, pb, io_seproxyhal_tx_approve(NULL), {&C_icon_validate_14, "Confirm"});
 
-UX_STEP_VALID(
-    ux_tx_flow_9_step,
-    pb,
-    io_seproxyhal_tx_reject(NULL),
-    {
-        &C_icon_crossmark,
-        "Reject"
-    }
-);
+UX_STEP_VALID(ux_tx_flow_9_step, pb, io_seproxyhal_tx_reject(NULL), {&C_icon_crossmark, "Reject"});
 
 // Transfer UX Flow
-UX_DEF(
-    ux_transfer_flow,
-    &ux_tx_flow_1_step,
-    &ux_tx_flow_2_step,
-    &ux_tx_flow_3_step,
-    &ux_tx_flow_4_step,
-    &ux_tx_flow_5_step,
-    &ux_tx_flow_6_step,
-    &ux_tx_flow_7_step,
-    &ux_tx_flow_8_step,
-    &ux_tx_flow_9_step
-);
+UX_DEF(ux_transfer_flow,
+       &ux_tx_flow_1_step,
+       &ux_tx_flow_2_step,
+       &ux_tx_flow_3_step,
+       &ux_tx_flow_4_step,
+       &ux_tx_flow_5_step,
+       &ux_tx_flow_6_step,
+       &ux_tx_flow_7_step,
+       &ux_tx_flow_8_step,
+       &ux_tx_flow_9_step);
 
 // Create UX Flow
-UX_DEF(
-    ux_create_flow,
-    &ux_tx_flow_1_step,
-    &ux_tx_flow_2_step,
-    &ux_tx_flow_5_step,
-    &ux_tx_flow_6_step,
-    &ux_tx_flow_7_step,
-    &ux_tx_flow_8_step,
-    &ux_tx_flow_9_step
-);
+UX_DEF(ux_create_flow,
+       &ux_tx_flow_1_step,
+       &ux_tx_flow_2_step,
+       &ux_tx_flow_5_step,
+       &ux_tx_flow_6_step,
+       &ux_tx_flow_7_step,
+       &ux_tx_flow_8_step,
+       &ux_tx_flow_9_step);
 
 // Verify UX Flow
-UX_DEF(
-    ux_verify_flow,
-    &ux_tx_flow_1_step,
-    &ux_tx_flow_3_step,
-    &ux_tx_flow_8_step,
-    &ux_tx_flow_9_step
-);
+UX_DEF(ux_verify_flow, &ux_tx_flow_1_step, &ux_tx_flow_3_step, &ux_tx_flow_8_step, &ux_tx_flow_9_step);
 
 // Burn/Mint UX Flow
-UX_DEF(
-    ux_burn_mint_flow,
-    &ux_tx_flow_1_step,
-    &ux_tx_flow_3_step,
-    &ux_tx_flow_5_step,
-    &ux_tx_flow_8_step,
-    &ux_tx_flow_9_step
-);
+UX_DEF(ux_burn_mint_flow,
+       &ux_tx_flow_1_step,
+       &ux_tx_flow_3_step,
+       &ux_tx_flow_5_step,
+       &ux_tx_flow_8_step,
+       &ux_tx_flow_9_step);
 
 #endif
 
-
 void ui_sign_transaction(void) {
-
 #if defined(TARGET_NANOS)
 
     UX_DISPLAY(ui_tx_summary_step, NULL);
@@ -766,5 +660,4 @@ void ui_sign_transaction(void) {
     }
 
 #endif
-
 }

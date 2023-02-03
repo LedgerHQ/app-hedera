@@ -6,14 +6,12 @@
 #include "errors.h"
 #include "io.h"
 
-void handle_get_app_configuration(
-    uint8_t p1,
-    uint8_t p2,
-    const uint8_t* const buffer,
-    uint16_t len,
-    /* out */ volatile const unsigned int* const flags,
-    /* out */ volatile const unsigned int* const tx
-) {
+void handle_get_app_configuration(uint8_t p1,
+                                  uint8_t p2,
+                                  const uint8_t* const buffer,
+                                  uint16_t len,
+                                  /* out */ volatile const unsigned int* const flags,
+                                  /* out */ volatile const unsigned int* const tx) {
     UNUSED(p1);
     UNUSED(p2);
     UNUSED(buffer);

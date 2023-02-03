@@ -30,7 +30,7 @@ void app_main() {
         BEGIN_TRY {
             TRY {
                 rx = tx;
-                tx = 0; // ensure no race in catch_other if io_exchange throws an error
+                tx = 0;  // ensure no race in catch_other if io_exchange throws an error
                 rx = io_exchange(CHANNEL_APDU | flags, rx);
                 flags = 0;
 
@@ -48,38 +48,32 @@ void app_main() {
                 switch (G_io_apdu_buffer[OFFSET_INS]) {
                     case INS_GET_APP_CONFIGURATION:
                         // handlers -> get_app_configuration
-                        handle_get_app_configuration(
-                            G_io_apdu_buffer[OFFSET_P1],
-                            G_io_apdu_buffer[OFFSET_P2],
-                            G_io_apdu_buffer + OFFSET_CDATA,
-                            G_io_apdu_buffer[OFFSET_LC],
-                            &flags,
-                            &tx
-                        );
+                        handle_get_app_configuration(G_io_apdu_buffer[OFFSET_P1],
+                                                     G_io_apdu_buffer[OFFSET_P2],
+                                                     G_io_apdu_buffer + OFFSET_CDATA,
+                                                     G_io_apdu_buffer[OFFSET_LC],
+                                                     &flags,
+                                                     &tx);
                         break;
 
                     case INS_GET_PUBLIC_KEY:
                         // handlers -> get_public_key
-                        handle_get_public_key(
-                            G_io_apdu_buffer[OFFSET_P1],
-                            G_io_apdu_buffer[OFFSET_P2],
-                            G_io_apdu_buffer + OFFSET_CDATA,
-                            G_io_apdu_buffer[OFFSET_LC],
-                            &flags,
-                            &tx
-                        );
+                        handle_get_public_key(G_io_apdu_buffer[OFFSET_P1],
+                                              G_io_apdu_buffer[OFFSET_P2],
+                                              G_io_apdu_buffer + OFFSET_CDATA,
+                                              G_io_apdu_buffer[OFFSET_LC],
+                                              &flags,
+                                              &tx);
                         break;
 
                     case INS_SIGN_TRANSACTION:
                         // handlers -> sign_transaction
-                        handle_sign_transaction(
-                            G_io_apdu_buffer[OFFSET_P1],
-                            G_io_apdu_buffer[OFFSET_P2],
-                            G_io_apdu_buffer + OFFSET_CDATA,
-                            G_io_apdu_buffer[OFFSET_LC],
-                            &flags,
-                            &tx
-                        );
+                        handle_sign_transaction(G_io_apdu_buffer[OFFSET_P1],
+                                                G_io_apdu_buffer[OFFSET_P2],
+                                                G_io_apdu_buffer + OFFSET_CDATA,
+                                                G_io_apdu_buffer[OFFSET_LC],
+                                                &flags,
+                                                &tx);
                         break;
 
                     default:
@@ -148,12 +142,12 @@ __attribute__((section(".boot"))) int main() {
 #ifdef TARGET_NANOX
                 // grab the current plane mode setting
                 G_io_app.plane_mode = os_setting_get(OS_SETTING_PLANEMODE, NULL, 0);
-#endif // TARGET_NANOX
+#endif  // TARGET_NANOX
 
 #ifdef HAVE_BLE
                 BLE_power(0, NULL);
                 BLE_power(1, "Nano X");
-#endif // HAVE_BLE
+#endif  // HAVE_BLE
 
                 USB_power(0);
                 USB_power(1);

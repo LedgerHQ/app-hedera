@@ -28,14 +28,12 @@ static void get_pk() {
     gpk_ctx.full_key[KEY_SIZE] = '\0';
 }
 
-void handle_get_public_key(
-        uint8_t p1,
-        uint8_t p2,
-        uint8_t* buffer,
-        uint16_t len,
-        /* out */ volatile unsigned int* flags,
-        /* out */ volatile unsigned int* tx
-) {
+void handle_get_public_key(uint8_t p1,
+                           uint8_t p2,
+                           uint8_t* buffer,
+                           uint16_t len,
+                           /* out */ volatile unsigned int* flags,
+                           /* out */ volatile unsigned int* tx) {
     UNUSED(p2);
     UNUSED(len);
     UNUSED(tx);

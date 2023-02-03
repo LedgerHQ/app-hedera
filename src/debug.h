@@ -9,4 +9,4 @@ extern uint32_t debug_get_stack_canary();
 
 extern void debug_check_stack_canary();
 
-#endif // LEDGER_HEDERA_DEBUG_H
+#endif  // LEDGER_HEDERA_DEBUG_H
