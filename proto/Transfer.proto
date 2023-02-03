@@ -6,7 +6,7 @@ import "proto/BasicTypes.proto";
 
 message HederaAccountAmount {
     HederaAccountID accountID = 1;
-    sint64 amount = 2;
+    sint64          amount    = 2;
 }
 
 message HederaTransferList {
@@ -27,6 +27,6 @@ message HederaTokenTransferList {
 
 message HederaCryptoTransferTransactionBody {
     HederaTransferList transfers = 1;
-    
+
     repeated HederaTokenTransferList tokenTransfers = 2 [(nanopb).max_count = 1];
 }
