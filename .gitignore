@@ -17,6 +17,4 @@ proto/*.h
 
 # Tests
 tests/elfs/
-
-proto/*pb2.py
-nanopb_pb2.py
+tests/snapshots-tmp/
