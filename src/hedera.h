@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // Forward declare to avoid including os.h in a header file
 struct cx_ecfp_256_public_key_s;

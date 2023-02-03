@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ux.h"
+#include "globals.h"
 
 typedef struct get_public_key_context_s {
     uint32_t key_index;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "proto/TransactionBody.pb.h"
+#include "globals.h"
 
 enum TransactionStep {
     Summary = 1,
