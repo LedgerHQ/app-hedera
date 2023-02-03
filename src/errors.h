@@ -16,4 +16,4 @@
 // Ok
 #define EXCEPTION_OK 0x9000
 
-#endif // LEDGER_HEDERA_ERRORS_H
+#endif  // LEDGER_HEDERA_ERRORS_H

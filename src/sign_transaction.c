@@ -31,10 +31,8 @@ static void validate_transfer(void) {
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
-    if (
-        st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts_count == 2 &&
-        st_ctx.transaction.data.cryptoTransfer.tokenTransfers_count != 0
-    ) {
+    if (st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts_count == 2 &&
+        st_ctx.transaction.data.cryptoTransfer.tokenTransfers_count != 0) {
         // Can't also transfer tokens while sending hbar
         THROW(EXCEPTION_MALFORMED_APDU);
     }
@@ -59,9 +57,9 @@ static void validate_transfer(void) {
 
 static bool is_verify_account(void) {
     // Only 1 Account (Sender), Fee 1 Tinybar, and Value 0 Tinybar
-    return (st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts[0].amount == 0
-            && st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts_count == 1
-            && st_ctx.transaction.transactionFee == 1);
+    return (st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts[0].amount == 0 &&
+            st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts_count == 1 &&
+            st_ctx.transaction.transactionFee == 1);
 }
 
 static bool is_transfer(void) {
@@ -189,8 +187,7 @@ void handle_transaction_body() {
                 // Determine Sender based on amount
                 st_ctx.transfer_from_index = 0;
                 st_ctx.transfer_to_index = 1;
-                if (st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0].transfers[0].amount > 0)
-                {
+                if (st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0].transfers[0].amount > 0) {
                     st_ctx.transfer_from_index = 1;
                     st_ctx.transfer_to_index = 0;
                 }
@@ -206,7 +203,7 @@ void handle_transaction_body() {
                 // Unsupported
                 THROW(EXCEPTION_MALFORMED_APDU);
             }
-        break;
+            break;
 
         default:
             // Unsupported
@@ -217,18 +214,14 @@ void handle_transaction_body() {
     ui_sign_transaction();
 }
 
-
-
 // Sign Handler
 // Decodes and handles transaction message
-void handle_sign_transaction(
-    uint8_t p1,
-    uint8_t p2,
-    uint8_t* buffer,
-    uint16_t len,
-    /* out */ volatile unsigned int* flags,
-    /* out */ volatile unsigned int* tx
-) {
+void handle_sign_transaction(uint8_t p1,
+                             uint8_t p2,
+                             uint8_t* buffer,
+                             uint16_t len,
+                             /* out */ volatile unsigned int* flags,
+                             /* out */ volatile unsigned int* tx) {
     UNUSED(p1);
     UNUSED(p2);
     UNUSED(tx);
@@ -250,27 +243,15 @@ void handle_sign_transaction(
 
     // Sign Transaction
     // TODO: handle error return here (internal error?!)
-    if (!hedera_sign(
-        st_ctx.key_index,
-        raw_transaction,
-        raw_transaction_length,
-        G_io_apdu_buffer
-    )) {
+    if (!hedera_sign(st_ctx.key_index, raw_transaction, raw_transaction_length, G_io_apdu_buffer)) {
         THROW(EXCEPTION_INTERNAL);
     }
 
     // Make in memory buffer into stream
-    pb_istream_t stream = pb_istream_from_buffer(
-        raw_transaction,
-        raw_transaction_length
-    );
+    pb_istream_t stream = pb_istream_from_buffer(raw_transaction, raw_transaction_length);
 
     // Decode the Transaction
-    if (!pb_decode(
-        &stream,
-        HederaTransactionBody_fields,
-        &st_ctx.transaction
-    )) {
+    if (!pb_decode(&stream, HederaTransactionBody_fields, &st_ctx.transaction)) {
         // Oh no couldn't ...
         THROW(EXCEPTION_MALFORMED_APDU);
     }
