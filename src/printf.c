@@ -341,7 +341,8 @@ static size_t _ntoa_long_long(out_fct_type out,
 #if defined(PRINTF_SUPPORT_FLOAT)
 
 #if defined(PRINTF_SUPPORT_EXPONENTIAL)
-// forward declaration so that _ftoa can switch to exp notation for values > PRINTF_MAX_FLOAT
+// forward declaration so that _ftoa can switch to exp notation for values >
+// PRINTF_MAX_FLOAT
 static size_t _etoa(out_fct_type out,
                     char* buffer,
                     size_t idx,
@@ -486,9 +487,8 @@ static size_t _ftoa(out_fct_type out,
 }
 
 #if defined(PRINTF_SUPPORT_EXPONENTIAL)
-// internal ftoa variant for exponential floating-point type, contributed by Martijn Jasperse
-// <m.jasperse@gmail.com>
-
+// internal ftoa variant for exponential floating-point type, contributed by
+// Martijn Jasperse <m.jasperse@gmail.com>
 static size_t _etoa(out_fct_type out,
                     char* buffer,
                     size_t idx,
@@ -523,7 +523,8 @@ static size_t _etoa(out_fct_type out,
     conv.F = value;
     int exp2 = (int) ((conv.U >> 52U) & 0x07FFU) - 1023;          // effectively log2
     conv.U = (conv.U & ((1ULL << 52U) - 1U)) | (1023ULL << 52U);  // drop the exponent so conv.F is now in [1,2)
-    // now approximate log10 from the log2 integer part and an expansion of ln around 1.5
+    // now approximate log10 from the log2 integer part and an expansion of ln
+    // around 1.5
     int expval = (int) (0.1760912590558 + exp2 * 0.301029995663981 + (conv.F - 1.5) * 0.289529654602168);
     // now we want to compute 10^expval but we want to be sure it won't overflow
     exp2 = (int) (expval * 3.321928094887362 + 0.5);

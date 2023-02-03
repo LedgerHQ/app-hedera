@@ -30,7 +30,8 @@ void app_main() {
         BEGIN_TRY {
             TRY {
                 rx = tx;
-                tx = 0;  // ensure no race in catch_other if io_exchange throws an error
+                tx = 0;  // ensure no race in catch_other if io_exchange throws
+                         // an error
                 rx = io_exchange(CHANNEL_APDU | flags, rx);
                 flags = 0;
 

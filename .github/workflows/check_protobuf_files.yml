@@ -23,9 +23,11 @@ jobs:
         run: |
           cp -r proto proto_current
           rm proto/*_pb2.py
+          rm proto/*_pb2.pyi
 
       - name: Regenerate
         run: |
+          pip install mypy-protobuf
           PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python make python_pb
           cp ./vendor/nanopb/generator/proto/nanopb_pb2.py ./proto
 
