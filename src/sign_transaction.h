@@ -1,7 +1,6 @@
 #pragma once
 
 #include "proto/TransactionBody.pb.h"
-
 #include "ux.h"
 
 enum TransactionStep {
@@ -34,35 +33,36 @@ typedef struct sign_tx_context_s {
     uint8_t transfer_from_index;
 
     // Transaction Summary
-    char summary_line_1[DISPLAY_SIZE + 1];
-    char summary_line_2[DISPLAY_SIZE + 1];
+    char summary_line_1[ DISPLAY_SIZE + 1 ];
+    char summary_line_2[ DISPLAY_SIZE + 1 ];
 
 #if defined(TARGET_NANOS)
     union {
-        #define TITLE_SIZE (DISPLAY_SIZE + 1)
-        char title[TITLE_SIZE];
-        char senders_title[TITLE_SIZE]; // alias for title
-        char amount_title[TITLE_SIZE]; // alias for title
+#define TITLE_SIZE (DISPLAY_SIZE + 1)
+        char title[ TITLE_SIZE ];
+        char senders_title[ TITLE_SIZE ]; // alias for title
+        char amount_title[ TITLE_SIZE ];  // alias for title
     };
-#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
-    char senders_title[DISPLAY_SIZE + 1];
-    char amount_title[DISPLAY_SIZE + 1];
+#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2) || \
+    defined(TARGET_FATSTACKS)
+    char senders_title[ DISPLAY_SIZE + 1 ];
+    char amount_title[ DISPLAY_SIZE + 1 ];
 #endif
 
     // Account ID: uint64_t.uint64_t.uint64_t
     // Most other entities are shorter
 #if defined(TARGET_NANOS)
     union {
-        #define FULL_SIZE (ACCOUNT_ID_SIZE + 1)
-        char full[FULL_SIZE];
-        char operator[FULL_SIZE]; // alias for full
-        char senders[FULL_SIZE]; // alias for full
-        char recipients[FULL_SIZE]; // alias for full
-        char amount[FULL_SIZE]; // alias for full
-        char fee[FULL_SIZE]; // alias for full
-        char memo[FULL_SIZE]; // alias for full
+#define FULL_SIZE (ACCOUNT_ID_SIZE + 1)
+        char full[ FULL_SIZE ];
+        char operator[ FULL_SIZE ];   // alias for full
+        char senders[ FULL_SIZE ];    // alias for full
+        char recipients[ FULL_SIZE ]; // alias for full
+        char amount[ FULL_SIZE ];     // alias for full
+        char fee[ FULL_SIZE ];        // alias for full
+        char memo[ FULL_SIZE ];       // alias for full
     };
-    char partial[DISPLAY_SIZE + 1];
+    char partial[ DISPLAY_SIZE + 1 ];
 #endif
 
     // Steps correspond to parts of the transaction proto
@@ -73,26 +73,27 @@ typedef struct sign_tx_context_s {
     enum TransactionType type;
 
 #if defined(TARGET_NANOS)
-    uint8_t display_index;  // 1 -> Number Screens
-    uint8_t display_count;  // Number Screens
-#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_FATSTACKS)
+    uint8_t display_index; // 1 -> Number Screens
+    uint8_t display_count; // Number Screens
+#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2) || \
+    defined(TARGET_FATSTACKS)
     // Transaction Operator
-    char operator[DISPLAY_SIZE * 2 + 1];
+    char operator[ DISPLAY_SIZE * 2 + 1 ];
 
     // Transaction Senders
-    char senders[DISPLAY_SIZE * 2 + 1];
+    char senders[ DISPLAY_SIZE * 2 + 1 ];
 
     // Transaction Recipients
-    char recipients[DISPLAY_SIZE * 2 + 1];
+    char recipients[ DISPLAY_SIZE * 2 + 1 ];
 
     // Transaction Amount
-    char amount[DISPLAY_SIZE * 2 + 1];
+    char amount[ DISPLAY_SIZE * 2 + 1 ];
 
     // Transaction Fee
-    char fee[DISPLAY_SIZE * 2 + 1];
+    char fee[ DISPLAY_SIZE * 2 + 1 ];
 
     // Transaction Memo
-    char memo[MAX_MEMO_SIZE + 1];
+    char memo[ MAX_MEMO_SIZE + 1 ];
 #endif
 
     // Parsed transaction

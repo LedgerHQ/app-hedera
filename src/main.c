@@ -1,18 +1,17 @@
-#include "errors.h"
-#include "handlers.h"
-#include "ui_flows.h"
-#include "io.h"
-#include "ux.h"
-#include "utils.h"
 #include "debug.h"
+#include "errors.h"
 #include "globals.h"
 #include "glyphs.h"
+#include "handlers.h"
+#include "io.h"
+#include "ui_flows.h"
+#include "utils.h"
 #include "ux.h"
 
 #ifdef HAVE_NBGL
-#include "nbgl_touch.h"
 #include "nbgl_page.h"
-#endif  // HAVE_NBGL
+#include "nbgl_touch.h"
+#endif // HAVE_NBGL
 
 // This is the main loop that reads and writes APDUs. It receives request
 // APDUs from the computer, looks up the corresponding command handler, and
@@ -30,7 +29,7 @@ ux_state_t G_ux;
 bolos_ux_params_t G_ux_params;
 #endif
 
-#if defined (HAVE_NBGL)
+#if defined(HAVE_NBGL)
 nbgl_page_t *pageContext;
 #endif
 
@@ -45,7 +44,8 @@ void app_main() {
         BEGIN_TRY {
             TRY {
                 rx = tx;
-                tx = 0; // ensure no race in catch_other if io_exchange throws an error
+                tx = 0; // ensure no race in catch_other if io_exchange throws
+                        // an error
                 rx = io_exchange(CHANNEL_APDU | flags, rx);
                 flags = 0;
 
@@ -55,55 +55,44 @@ void app_main() {
                 }
 
                 // malformed APDU
-                if (G_io_apdu_buffer[OFFSET_CLA] != CLA) {
+                if (G_io_apdu_buffer[ OFFSET_CLA ] != CLA) {
                     THROW(EXCEPTION_MALFORMED_APDU);
                 }
 
                 // APDU handler functions defined in handlers
-                switch (G_io_apdu_buffer[OFFSET_INS]) {
+                switch (G_io_apdu_buffer[ OFFSET_INS ]) {
                     case INS_GET_APP_CONFIGURATION:
                         // handlers -> get_app_configuration
                         handle_get_app_configuration(
-                            G_io_apdu_buffer[OFFSET_P1],
-                            G_io_apdu_buffer[OFFSET_P2],
+                            G_io_apdu_buffer[ OFFSET_P1 ],
+                            G_io_apdu_buffer[ OFFSET_P2 ],
                             G_io_apdu_buffer + OFFSET_CDATA,
-                            G_io_apdu_buffer[OFFSET_LC],
-                            &flags,
-                            &tx
-                        );
+                            G_io_apdu_buffer[ OFFSET_LC ], &flags, &tx);
                         break;
 
                     case INS_GET_PUBLIC_KEY:
                         // handlers -> get_public_key
-                        handle_get_public_key(
-                            G_io_apdu_buffer[OFFSET_P1],
-                            G_io_apdu_buffer[OFFSET_P2],
-                            G_io_apdu_buffer + OFFSET_CDATA,
-                            G_io_apdu_buffer[OFFSET_LC],
-                            &flags,
-                            &tx
-                        );
+                        handle_get_public_key(G_io_apdu_buffer[ OFFSET_P1 ],
+                                              G_io_apdu_buffer[ OFFSET_P2 ],
+                                              G_io_apdu_buffer + OFFSET_CDATA,
+                                              G_io_apdu_buffer[ OFFSET_LC ],
+                                              &flags, &tx);
                         break;
 
                     case INS_SIGN_TRANSACTION:
                         // handlers -> sign_transaction
-                        handle_sign_transaction(
-                            G_io_apdu_buffer[OFFSET_P1],
-                            G_io_apdu_buffer[OFFSET_P2],
-                            G_io_apdu_buffer + OFFSET_CDATA,
-                            G_io_apdu_buffer[OFFSET_LC],
-                            &flags,
-                            &tx
-                        );
+                        handle_sign_transaction(G_io_apdu_buffer[ OFFSET_P1 ],
+                                                G_io_apdu_buffer[ OFFSET_P2 ],
+                                                G_io_apdu_buffer + OFFSET_CDATA,
+                                                G_io_apdu_buffer[ OFFSET_LC ],
+                                                &flags, &tx);
                         break;
 
                     default:
                         THROW(EXCEPTION_UNKNOWN_INS);
                 }
             }
-            CATCH(EXCEPTION_IO_RESET) {
-                THROW(EXCEPTION_IO_RESET);
-            }
+            CATCH(EXCEPTION_IO_RESET) { THROW(EXCEPTION_IO_RESET); }
             CATCH_OTHER(e) {
                 // Convert exception to response code and add to APDU return
                 switch (e & 0xF000) {
@@ -117,8 +106,8 @@ void app_main() {
                         break;
                 }
 
-                G_io_apdu_buffer[tx++] = sw >> 8;
-                G_io_apdu_buffer[tx++] = sw & 0xff;
+                G_io_apdu_buffer[ tx++ ] = sw >> 8;
+                G_io_apdu_buffer[ tx++ ] = sw & 0xff;
             }
             FINALLY {
                 // explicitly do nothing
@@ -131,9 +120,7 @@ void app_main() {
 void app_exit(void) {
     // All os calls must be wrapped in a try catch context
     BEGIN_TRY_L(exit) {
-        TRY_L(exit) {
-            os_sched_exit(-1);
-        }
+        TRY_L(exit) { os_sched_exit(-1); }
         FINALLY_L(exit) {
             // explicitly do nothing
         }
@@ -154,10 +141,10 @@ __attribute__((section(".boot"))) int main() {
         // Initialize the UX system
 #ifdef HAVE_BAGL
         UX_INIT();
-#endif  // HAVE_BAGL
+#endif // HAVE_BAGL
 #ifdef HAVE_NBGL
         nbgl_objInit();
-#endif  // HAVE_NBGL
+#endif // HAVE_NBGL
 
         BEGIN_TRY {
             TRY {
@@ -167,7 +154,8 @@ __attribute__((section(".boot"))) int main() {
 
 #ifdef TARGET_NANOX
                 // grab the current plane mode setting
-                G_io_app.plane_mode = os_setting_get(OS_SETTING_PLANEMODE, NULL, 0);
+                G_io_app.plane_mode =
+                    os_setting_get(OS_SETTING_PLANEMODE, NULL, 0);
 #endif // TARGET_NANOX
 
 #ifdef HAVE_BLE
@@ -188,9 +176,7 @@ __attribute__((section(".boot"))) int main() {
                 // reset IO and UX before continuing
                 continue;
             }
-            CATCH_ALL {
-                break;
-            }
+            CATCH_ALL { break; }
             FINALLY {
                 // explicitly do nothing
             }

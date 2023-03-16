@@ -2,42 +2,37 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "globals.h"
-#include "printf.h"
-#include "globals.h"
 #include "debug.h"
-#include "src/errors.h"
+#include "get_public_key.h"
+#include "globals.h"
 #include "handlers.h"
 #include "hedera.h"
 #include "io.h"
-#include "utils.h"
-#include "ui_flows.h"
-#include "get_public_key.h"
+#include "printf.h"
+#include "src/errors.h"
 #include "ui_common.h"
+#include "ui_flows.h"
+#include "utils.h"
 
 #ifdef HAVE_NBGL
+#include "nbgl_debug.h"
 #include "nbgl_fonts.h"
 #include "nbgl_front.h"
-#include "nbgl_debug.h"
 #include "nbgl_page.h"
 #include "nbgl_use_case.h"
 #endif
 
-
 #if defined(TARGET_NANOS)
 
-
 static const bagl_element_t ui_get_public_key_compare[] = {
-    UI_BACKGROUND(),
-    UI_ICON_LEFT(LEFT_ICON_ID, BAGL_GLYPH_ICON_LEFT),
+    UI_BACKGROUND(), UI_ICON_LEFT(LEFT_ICON_ID, BAGL_GLYPH_ICON_LEFT),
     UI_ICON_RIGHT(RIGHT_ICON_ID, BAGL_GLYPH_ICON_RIGHT),
     // <=                  =>
     //      Public Key
     //      <partial>
     //
     UI_TEXT(LINE_1_ID, 0, 12, 128, "Public Key"),
-    UI_TEXT(LINE_2_ID, 0, 26, 128, gpk_ctx.partial_key)
-};
+    UI_TEXT(LINE_2_ID, 0, 26, 128, gpk_ctx.partial_key)};
 
 static const bagl_element_t ui_get_public_key_approve[] = {
     UI_BACKGROUND(),
@@ -52,17 +47,12 @@ static const bagl_element_t ui_get_public_key_approve[] = {
 };
 
 static void shift_partial_key() {
-    memmove(
-        gpk_ctx.partial_key,
-        gpk_ctx.full_key + gpk_ctx.display_index,
-        DISPLAY_SIZE
-    );
+    memmove(gpk_ctx.partial_key, gpk_ctx.full_key + gpk_ctx.display_index,
+            DISPLAY_SIZE);
 }
 
 static unsigned int ui_get_public_key_compare_button(
-    unsigned int button_mask,
-    unsigned int button_mask_counter
-) {
+    unsigned int button_mask, unsigned int button_mask_counter) {
     UNUSED(button_mask_counter);
     switch (button_mask) {
         case BUTTON_LEFT: // Left
@@ -73,7 +63,8 @@ static unsigned int ui_get_public_key_compare_button(
             break;
         case BUTTON_RIGHT: // Right
         case BUTTON_EVT_FAST | BUTTON_RIGHT:
-            if (gpk_ctx.display_index < KEY_SIZE - DISPLAY_SIZE) gpk_ctx.display_index++;
+            if (gpk_ctx.display_index < KEY_SIZE - DISPLAY_SIZE)
+                gpk_ctx.display_index++;
             shift_partial_key();
             UX_REDISPLAY();
             break;
@@ -85,13 +76,11 @@ static unsigned int ui_get_public_key_compare_button(
 }
 
 static const bagl_element_t* ui_prepro_get_public_key_compare(
-    const bagl_element_t* element
-) {
-    if (element->component.userid == LEFT_ICON_ID
-        && gpk_ctx.display_index == 0)
+    const bagl_element_t* element) {
+    if (element->component.userid == LEFT_ICON_ID && gpk_ctx.display_index == 0)
         return NULL; // Hide Left Arrow at Left Edge
-    if (element->component.userid == RIGHT_ICON_ID
-        && gpk_ctx.display_index == KEY_SIZE - DISPLAY_SIZE)
+    if (element->component.userid == RIGHT_ICON_ID &&
+        gpk_ctx.display_index == KEY_SIZE - DISPLAY_SIZE)
         return NULL; // Hide Right Arrow at Right Edge
     return element;
 }
@@ -99,22 +88,17 @@ static const bagl_element_t* ui_prepro_get_public_key_compare(
 static void compare_pk() {
     // init partial key str from full str
     memmove(gpk_ctx.partial_key, gpk_ctx.full_key, DISPLAY_SIZE);
-    gpk_ctx.partial_key[DISPLAY_SIZE] = '\0';
+    gpk_ctx.partial_key[ DISPLAY_SIZE ] = '\0';
 
     // init display index
     gpk_ctx.display_index = 0;
 
     // Display compare with button mask
-    UX_DISPLAY(
-        ui_get_public_key_compare,
-        ui_prepro_get_public_key_compare
-    );
+    UX_DISPLAY(ui_get_public_key_compare, ui_prepro_get_public_key_compare);
 }
 
 static unsigned int ui_get_public_key_approve_button(
-    unsigned int button_mask,
-    unsigned int button_mask_counter
-) {
+    unsigned int button_mask, unsigned int button_mask_counter) {
     UNUSED(button_mask_counter);
     switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_LEFT: // REJECT
@@ -134,28 +118,14 @@ static unsigned int ui_get_public_key_approve_button(
     return 0;
 }
 
-
 #elif defined(TARGET_NANOX) || defined(TARGET_NANOS2)
 
+UX_STEP_CB(ux_compare_pk_flow_1_step, bnnn_paging, ui_idle(),
+           {.title = "Public Key", .text = (char *)gpk_ctx.full_key});
 
-UX_STEP_CB(
-    ux_compare_pk_flow_1_step,
-    bnnn_paging,
-    ui_idle(),
-    {
-        .title = "Public Key",
-        .text = (char*) gpk_ctx.full_key
-    }
-);
+UX_DEF(ux_compare_pk_flow, &ux_compare_pk_flow_1_step);
 
-UX_DEF(
-    ux_compare_pk_flow,
-    &ux_compare_pk_flow_1_step
-);
-
-static void compare_pk() {
-    ux_flow_init(0, ux_compare_pk_flow, NULL);
-}
+static void compare_pk() { ux_flow_init(0, ux_compare_pk_flow, NULL); }
 
 static unsigned int io_seproxyhal_touch_pk_ok(const bagl_element_t *e) {
     UNUSED(e);
@@ -166,50 +136,25 @@ static unsigned int io_seproxyhal_touch_pk_ok(const bagl_element_t *e) {
 
 static unsigned int io_seproxyhal_touch_pk_cancel(const bagl_element_t *e) {
     UNUSED(e);
-     io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
-     ui_idle();
-     return 0;
+    io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
+    ui_idle();
+    return 0;
 }
 
-UX_STEP_NOCB(
-    ux_approve_pk_flow_1_step,
-    bn,
-    {
-        "Export Public",
-        gpk_ctx.ui_approve_l2
-    }
-);
+UX_STEP_NOCB(ux_approve_pk_flow_1_step, bn,
+             {"Export Public", gpk_ctx.ui_approve_l2});
 
-UX_STEP_VALID(
-    ux_approve_pk_flow_2_step,
-    pb,
-    io_seproxyhal_touch_pk_ok(NULL),
-    {
-       &C_icon_validate_14,
-       "Approve"
-    }
-);
+UX_STEP_VALID(ux_approve_pk_flow_2_step, pb, io_seproxyhal_touch_pk_ok(NULL),
+              {&C_icon_validate_14, "Approve"});
 
-UX_STEP_VALID(
-    ux_approve_pk_flow_3_step,
-    pb,
-    io_seproxyhal_touch_pk_cancel(NULL),
-    {
-        &C_icon_crossmark,
-        "Reject"
-    }
-);
+UX_STEP_VALID(ux_approve_pk_flow_3_step, pb,
+              io_seproxyhal_touch_pk_cancel(NULL),
+              {&C_icon_crossmark, "Reject"});
 
-UX_DEF(
-    ux_approve_pk_flow,
-    &ux_approve_pk_flow_1_step,
-    &ux_approve_pk_flow_2_step,
-    &ux_approve_pk_flow_3_step
-);
-
+UX_DEF(ux_approve_pk_flow, &ux_approve_pk_flow_1_step,
+       &ux_approve_pk_flow_2_step, &ux_approve_pk_flow_3_step);
 
 #elif defined(HAVE_NBGL)
-
 
 static void callback_match(bool match) {
     if (match) {
@@ -222,7 +167,8 @@ static void callback_match(bool match) {
 
 static void callback_export(bool accept) {
     if (accept) {
-        nbgl_useCaseAddressConfirmation((const char *) gpk_ctx.full_key, callback_match);
+        nbgl_useCaseAddressConfirmation((const char *)gpk_ctx.full_key,
+                                        callback_match);
     } else {
         io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
         ui_idle();
@@ -230,17 +176,16 @@ static void callback_export(bool accept) {
 }
 
 static void ui_get_public_key_nbgl(void) {
-    nbgl_useCaseChoice(&C_icon_hedera_64x64, "Export Public Key?", gpk_ctx.ui_approve_l2, "Approve", "Reject", callback_export);
+    nbgl_useCaseChoice(&C_icon_hedera_64x64, "Export Public Key?",
+                       gpk_ctx.ui_approve_l2, "Approve", "Reject",
+                       callback_export);
 }
 
-
 #endif // TARGET
-
 
 // Common for all devices
 
 void ui_get_public_key(void) {
-
 #if defined(TARGET_NANOS)
 
     UX_DISPLAY(ui_get_public_key_approve, NULL);
@@ -254,5 +199,4 @@ void ui_get_public_key(void) {
     ui_get_public_key_nbgl();
 
 #endif // #if TARGET_
-
 }

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <stdint.h>
 #include <os.h>
+#include <stdint.h>
 
 #define MEMCLEAR(element) explicit_bzero(&element, sizeof(element))
 
-#define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))
+#define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[ 0 ]))
 
 void public_key_to_bytes(uint8_t *dst, cx_ecfp_public_key_t *public);
 
