@@ -2,16 +2,20 @@
 
 get_public_key_context_t gpk_ctx;
 
-static void get_pk() {
+static bool get_pk() {
     // Derive Key
-    hedera_derive_keypair(gpk_ctx.key_index, NULL, &gpk_ctx.public);
+    if (!hedera_get_pubkey(gpk_ctx.key_index, gpk_ctx.raw_pubkey)) {
+        return false;
+    }
 
     // Put Key bytes in APDU buffer
-    public_key_to_bytes(G_io_apdu_buffer, &gpk_ctx.public);
+    public_key_to_bytes(G_io_apdu_buffer, gpk_ctx.raw_pubkey);
 
     // Populate Key Hex String
     bin2hex(gpk_ctx.full_key, G_io_apdu_buffer, KEY_SIZE);
     gpk_ctx.full_key[ KEY_SIZE ] = '\0';
+
+    return true;
 }
 
 void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
@@ -40,7 +44,9 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
     }
 
     // Populate context with PK
-    get_pk();
+    if (!get_pk()) {
+        io_exchange_with_code(EXCEPTION_INTERNAL, 0);
+    }
 
     if (p1 == 0) {
         ui_get_public_key();

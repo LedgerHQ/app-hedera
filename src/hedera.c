@@ -4,84 +4,62 @@
 #include <os.h>
 #include <string.h>
 
+#include "lib_standard_app/crypto_helpers.h"
+
 #include "globals.h"
 #include "utils.h"
 
-bool hedera_derive_keypair(uint32_t index,
-                           /* out */ cx_ecfp_private_key_t* secret,
-                           /* out */ cx_ecfp_public_key_t* public) {
-    static uint8_t seed[ 32 ];
-    static uint32_t path[ 5 ];
-    static cx_ecfp_private_key_t pk;
 
+static void hedera_set_path(uint32_t index, uint32_t path[static 5]) {
     path[ 0 ] = 44 | 0x80000000;
     path[ 1 ] = 3030 | 0x80000000;
     path[ 2 ] = 0x80000000;
     path[ 3 ] = 0x80000000;
     path[ 4 ] = index | 0x80000000;
+}
 
-    os_perso_derive_node_bip32_seed_key(HDW_ED25519_SLIP10, CX_CURVE_Ed25519,
-                                        path, 5, seed, NULL, NULL, 0);
 
-    if (CX_OK != cx_ecfp_init_private_key_no_throw(CX_CURVE_Ed25519, seed,
-                                                   sizeof(seed), &pk)) {
-        MEMCLEAR(seed);
+bool hedera_get_pubkey(uint32_t index, uint8_t raw_pubkey[static 65]) {
+    static uint32_t path[ 5 ];
+
+    hedera_set_path(index, path);
+
+    if (CX_OK != bip32_derive_with_seed_get_pubkey_256(HDW_ED25519_SLIP10,
+                                                       CX_CURVE_Ed25519,
+                                                       path,
+                                                       5,
+                                                       raw_pubkey,
+                                                       NULL,
+                                                       CX_SHA512,
+                                                       NULL,
+                                                       0)) {
         return false;
     }
-
-    if (public) {
-        if (CX_OK != cx_ecfp_init_public_key_no_throw(CX_CURVE_Ed25519, NULL, 0,
-                                                      public)) {
-            MEMCLEAR(seed);
-            MEMCLEAR(pk);
-            return false;
-        }
-
-        if (CX_OK !=
-            cx_ecfp_generate_pair_no_throw(CX_CURVE_Ed25519, public, &pk, 1)) {
-            MEMCLEAR(seed);
-            MEMCLEAR(pk);
-            return false;
-        }
-    }
-
-    if (secret) {
-        *secret = pk;
-    }
-
-    MEMCLEAR(seed);
-    MEMCLEAR(pk);
-
     return true;
 }
 
 bool hedera_sign(uint32_t index, const uint8_t* tx, uint8_t tx_len,
                  /* out */ uint8_t* result) {
-    static cx_ecfp_private_key_t pk;
 
-    // Get Keys
-    if (!hedera_derive_keypair(index, &pk, NULL)) {
+    static uint32_t path[ 5 ];
+    size_t sig_len = 64;
+
+    hedera_set_path(index, path);
+
+
+    if (CX_OK != bip32_derive_with_seed_eddsa_sign_hash_256(HDW_ED25519_SLIP10,
+                                                            CX_CURVE_Ed25519,
+                                                            path,
+                                                            5,
+                                                            CX_SHA512,
+                                                            tx,        // hash (really message)
+                                                            tx_len,    // hash length (really message length)
+                                                            result,    // signature
+                                                            &sig_len,
+                                                            NULL,
+                                                            0)) {
         return false;
     }
-
-    // Sign Transaction
-    // <cx.h> 2283
-    // Claims to want Hashes, but other apps use the message itself
-    // and complain that the documentation is wrong
-    if (CX_OK != cx_eddsa_sign_no_throw(
-                     &pk,       // private key
-                     CX_SHA512, // hashID
-                     tx,        // hash (really message)
-                     tx_len,    // hash length (really message length)
-                     result,    // signature
-                     64         // signature length
-                     )) {
-        MEMCLEAR(pk);
-        return false;
-    }
-
-    // Clear private key
-    MEMCLEAR(pk);
 
     return true;
 }

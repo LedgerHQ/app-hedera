@@ -17,7 +17,7 @@ typedef struct get_public_key_context_s {
     // Lines on the UI Screen
     char ui_approve_l2[ DISPLAY_SIZE + 1 ];
 
-    cx_ecfp_public_key_t public;
+    uint8_t raw_pubkey[65];
 
     // Public Key Compare
     uint8_t display_index;

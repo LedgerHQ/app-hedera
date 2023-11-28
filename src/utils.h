@@ -7,6 +7,6 @@
 
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))
 
-void public_key_to_bytes(uint8_t *dst, cx_ecfp_public_key_t *public);
+void public_key_to_bytes(unsigned char *dst, uint8_t raw_pubkey[static 65]);
 
 void bin2hex(uint8_t *dst, uint8_t *data, uint64_t inlen);
