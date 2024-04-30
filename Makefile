@@ -23,11 +23,15 @@ include $(BOLOS_SDK)/Makefile.defines
 #########
 #  App  #
 #########
-APP_LOAD_PARAMS= --curve ed25519 --path "44'/3030'" --appFlags 0x240 $(COMMON_LOAD_PARAMS)
+
+APP_LOAD_PARAMS = --curve ed25519
+APP_LOAD_PARAMS += --appFlags 0x200  # APPLICATION_FLAG_BOLOS_SETTINGS
+APP_LOAD_PARAMS += --path "44'/3030'"
+APP_LOAD_PARAMS += $(COMMON_LOAD_PARAMS)
 
 APPVERSION_M = 1
-APPVERSION_N = 0
-APPVERSION_P = 8
+APPVERSION_N = 4
+APPVERSION_P = 2
 APPVERSION = $(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
 APPNAME = Hedera
 
@@ -37,6 +41,8 @@ DEFINES += $(DEFINES_LIB)
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
 ICONNAME=icons/nanos_app_hedera.gif
+else ifeq ($(TARGET_NAME),TARGET_STAX)
+ICONNAME=icons/stax_app_hedera.gif
 else
 ICONNAME=icons/nanox_app_hedera.gif
 endif
@@ -53,7 +59,8 @@ all: default
 ############
 
 DEFINES   += OS_IO_SEPROXYHAL
-DEFINES   += HAVE_BAGL
+DEFINES   += HAVE_SPRINTF
+
 DEFINES   += HAVE_IO_USB HAVE_L4_USBLIB IO_USB_MAX_ENDPOINTS=6 IO_HID_EP_LENGTH=64 HAVE_USB_APDU
 DEFINES   += APPVERSION_M=$(APPVERSION_M) APPVERSION_N=$(APPVERSION_N) APPVERSION_P=$(APPVERSION_P)
 
@@ -62,7 +69,7 @@ DFEFINES  += PB_FIELD_32BIT=1
 
 # vendor/printf
 DEFINES   += PRINTF_DISABLE_SUPPORT_FLOAT PRINTF_DISABLE_SUPPORT_EXPONENTIAL PRINTF_DISABLE_SUPPORT_PTRDIFF_T
-DEFINES   += PRINTF_NTOA_BUFFER_SIZE=9U PRINTF_FTOA_BUFFER_SIZE=0
+DEFINES   += PRINTF_FTOA_BUFFER_SIZE=0
 # endif
 
 # U2F
@@ -76,34 +83,37 @@ DEFINES   += BLE_SEGMENT_SIZE=32 #max MTU, min 20
 
 DEFINES   += HAVE_WEBUSB WEBUSB_URL_SIZE_B=0 WEBUSB_URL=""
 
-DEFINES   += UNUSED\(x\)=\(void\)x
 DEFINES   += APPVERSION=\"$(APPVERSION)\"
 
 
-ifeq ($(TARGET_NAME),TARGET_NANOX)
-DEFINES       += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000
-DEFINES       += HAVE_BLE_APDU # basic ledger apdu transport over BLE
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
+DEFINES += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000 HAVE_BLE_APDU
 endif
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
-DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=128
+    DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=128
 else
-# Instead of vendor printf
-DEFINES       += HAVE_SPRINTF
+    DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=300
+endif
 
-DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=300
-
-DEFINES       += HAVE_GLO096
-DEFINES       += HAVE_BAGL BAGL_WIDTH=128 BAGL_HEIGHT=64
-DEFINES       += HAVE_BAGL_ELLIPSIS # long label truncation feature
-DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
-DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
-DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
-DEFINES       += HAVE_UX_FLOW
+ifeq ($(TARGET_NAME),TARGET_STAX)
+    DEFINES += NBGL_QRCODE
+    SDK_SOURCE_PATH  += qrcode
+else
+    DEFINES += HAVE_BAGL
+    ifneq ($(TARGET_NAME),TARGET_NANOS)
+        DEFINES += HAVE_UX_FLOW
+        DEFINES += HAVE_GLO096
+        DEFINES += BAGL_WIDTH=128 BAGL_HEIGHT=64
+        DEFINES += HAVE_BAGL_ELLIPSIS # long label truncation feature
+        DEFINES += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
+        DEFINES += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
+        DEFINES += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
+    endif
 endif
 
 # Enabling debug PRINTF
-DEBUG = 1
+DEBUG ?= 0
 ifneq ($(DEBUG),0)
         ifeq ($(TARGET_NAME),TARGET_NANOS)
                 DEFINES   += HAVE_PRINTF PRINTF=screen_printf
@@ -148,11 +158,17 @@ include $(BOLOS_SDK)/Makefile.glyphs
 ### variables processed by the common makefile.rules of the SDK to grab source files and include dirs
 APP_SOURCE_PATH  += src proto
 SDK_SOURCE_PATH  += lib_stusb lib_stusb_impl lib_u2f
-SDK_SOURCE_PATH  += lib_ux
 
-ifeq ($(TARGET_NAME),TARGET_NANOX)
+ifneq ($(TARGET_NAME),TARGET_STAX)
+SDK_SOURCE_PATH  += lib_ux
+endif
+
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
 SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
 endif
+
+# Allow usage of function from lib_standard_app/crypto_helpers.c
+APP_SOURCE_FILES += ${BOLOS_SDK}/lib_standard_app/crypto_helpers.c
 
 include vendor/nanopb/extra/nanopb.mk
 
@@ -160,23 +176,24 @@ DEFINES   += PB_NO_ERRMSG=1
 SOURCE_FILES += $(NANOPB_CORE)
 CFLAGS += "-I$(NANOPB_DIR)"
 
-# Build rule for proto files
-SOURCE_FILES += proto/BasicTypes.pb.c
-SOURCE_FILES += proto/CryptoCreateTransactionBody.pb.c
-SOURCE_FILES += proto/CryptoTransferTransactionBody.pb.c
-SOURCE_FILES += proto/TransactionBody.pb.c
+PB_FILES = $(wildcard proto/*.proto)
+C_PB_FILES = $(patsubst %.proto,%.pb.c,$(PB_FILES))
+PYTHON_PB_FILES = $(patsubst %.proto,%_pb2.py,$(PB_FILES))
 
-proto/BasicTypes.pb.c: proto/BasicTypes.proto
-	$(PROTOC) $(PROTOC_OPTS) --nanopb_out=. proto/BasicTypes.proto
+# Build rule for C proto files
+SOURCE_FILES += $(C_PB_FILES)
+$(C_PB_FILES): %.pb.c: $(PB_FILES)
+	$(PROTOC) $(PROTOC_OPTS) --nanopb_out=. $*.proto
 
-proto/CryptoCreateTransactionBody.pb.c: proto/BasicTypes.proto
-	$(PROTOC) $(PROTOC_OPTS) --nanopb_out=. proto/CryptoCreateTransactionBody.proto
+# Build rule for Python proto files
+$(PYTHON_PB_FILES): %_pb2.py: $(PB_FILES)
+	$(PROTOC) $(PROTOC_OPTS) --python_out=. $*.proto
 
-proto/CryptoTransferTransactionBody.pb.c: proto/BasicTypes.proto
-	$(PROTOC) $(PROTOC_OPTS) --nanopb_out=. proto/CryptoTransferTransactionBody.proto
-
-proto/TransactionBody.pb.c: proto/BasicTypes.proto
-	$(PROTOC) $(PROTOC_OPTS) --nanopb_out=. proto/TransactionBody.proto
+.PHONY: c_pb python_pb clean_python_pb
+c_pb: $(C_PB_FILES)
+python_pb: $(PYTHON_PB_FILES)
+clean_python_pb:
+	rm -f $(PYTHON_PB_FILES)
 
 # target to also clean generated proto c files
 .SILENT : cleanall
@@ -207,4 +224,3 @@ check:
 		$(CFLAGS) \
 		$(addprefix -D, $(DEFINES)) \
 		$(addprefix -I, $(INCLUDES_PATH))
-

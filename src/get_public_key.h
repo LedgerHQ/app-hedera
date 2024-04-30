@@ -1,34 +1,28 @@
-#ifndef LEDGER_HEDERA_GET_PUBLIC_KEY_H
-#define LEDGER_HEDERA_GET_PUBLIC_KEY_H 1
+#pragma once
 
-void get_pk();
-void compare_pk();
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#if defined(TARGET_NANOS)
+#include "globals.h"
+#include "handlers.h"
+#include "hedera.h"
+#include "io.h"
+#include "ui_common.h"
+#include "utils.h"
 
-void shift_partial_key();
+typedef struct get_public_key_context_s {
+    uint32_t key_index;
 
-static unsigned int ui_get_public_key_compare_button(
-    unsigned int button_mask,
-    unsigned int button_mask_counter
-);
+    // Lines on the UI Screen
+    char ui_approve_l2[ DISPLAY_SIZE + 1 ];
 
-static const bagl_element_t* ui_prepro_get_public_key_compare(
-    const bagl_element_t* element
-);
+    uint8_t raw_pubkey[65];
 
-void send_pk();
+    // Public Key Compare
+    uint8_t display_index;
+    uint8_t full_key[ KEY_SIZE + 1 ];
+    uint8_t partial_key[ DISPLAY_SIZE + 1 ];
+} get_public_key_context_t;
 
-static unsigned int ui_get_public_key_approve_button(
-    unsigned int button_mask,
-    unsigned int button_mask_counter
-);
-
-#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2)
-
-unsigned int io_seproxyhal_touch_pk_ok(const bagl_element_t *e);
-unsigned int io_seproxyhal_touch_pk_cancel(const bagl_element_t *e);
-
-#endif // TARGET
-
-#endif // LEDGER_HEDERA_GET_PUBLIC_KEY_H
+extern get_public_key_context_t gpk_ctx;

@@ -1,10 +1,8 @@
-#include "errors.h"
-#include "handlers.h"
-#include "ui.h"
-#include "io.h"
-#include "utils.h"
-#include "debug.h"
+#include "ux.h"
+#include "glyphs.h"
 #include "globals.h"
+#include "handlers.h"
+#include "ui_common.h"
 
 // This is the main loop that reads and writes APDUs. It receives request
 // APDUs from the computer, looks up the corresponding command handler, and
@@ -17,6 +15,11 @@
 // Things are marked volatile throughout the app to prevent unintended compiler
 // reording of instructions (since the try-catch system is a macro)
 
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+ux_state_t G_ux;
+bolos_ux_params_t G_ux_params;
+#endif
+
 void app_main() {
     volatile unsigned int rx = 0;
     volatile unsigned int tx = 0;
@@ -28,7 +31,8 @@ void app_main() {
         BEGIN_TRY {
             TRY {
                 rx = tx;
-                tx = 0; // ensure no race in catch_other if io_exchange throws an error
+                tx = 0; // ensure no race in catch_other if io_exchange throws
+                        // an error
                 rx = io_exchange(CHANNEL_APDU | flags, rx);
                 flags = 0;
 
@@ -38,55 +42,44 @@ void app_main() {
                 }
 
                 // malformed APDU
-                if (G_io_apdu_buffer[OFFSET_CLA] != CLA) {
+                if (G_io_apdu_buffer[ OFFSET_CLA ] != CLA) {
                     THROW(EXCEPTION_MALFORMED_APDU);
                 }
 
                 // APDU handler functions defined in handlers
-                switch (G_io_apdu_buffer[OFFSET_INS]) {
+                switch (G_io_apdu_buffer[ OFFSET_INS ]) {
                     case INS_GET_APP_CONFIGURATION:
                         // handlers -> get_app_configuration
                         handle_get_app_configuration(
-                            G_io_apdu_buffer[OFFSET_P1], 
-                            G_io_apdu_buffer[OFFSET_P2],
-                            G_io_apdu_buffer + OFFSET_CDATA, 
-                            G_io_apdu_buffer[OFFSET_LC], 
-                            &flags, 
-                            &tx
-                        );
+                            G_io_apdu_buffer[ OFFSET_P1 ],
+                            G_io_apdu_buffer[ OFFSET_P2 ],
+                            G_io_apdu_buffer + OFFSET_CDATA,
+                            G_io_apdu_buffer[ OFFSET_LC ], &flags, &tx);
                         break;
 
                     case INS_GET_PUBLIC_KEY:
                         // handlers -> get_public_key
-                        handle_get_public_key(
-                            G_io_apdu_buffer[OFFSET_P1], 
-                            G_io_apdu_buffer[OFFSET_P2],
-                            G_io_apdu_buffer + OFFSET_CDATA, 
-                            G_io_apdu_buffer[OFFSET_LC], 
-                            &flags, 
-                            &tx
-                        );
+                        handle_get_public_key(G_io_apdu_buffer[ OFFSET_P1 ],
+                                              G_io_apdu_buffer[ OFFSET_P2 ],
+                                              G_io_apdu_buffer + OFFSET_CDATA,
+                                              G_io_apdu_buffer[ OFFSET_LC ],
+                                              &flags, &tx);
                         break;
 
                     case INS_SIGN_TRANSACTION:
                         // handlers -> sign_transaction
-                        handle_sign_transaction(
-                            G_io_apdu_buffer[OFFSET_P1], 
-                            G_io_apdu_buffer[OFFSET_P2],
-                            G_io_apdu_buffer + OFFSET_CDATA, 
-                            G_io_apdu_buffer[OFFSET_LC], 
-                            &flags, 
-                            &tx
-                        );
+                        handle_sign_transaction(G_io_apdu_buffer[ OFFSET_P1 ],
+                                                G_io_apdu_buffer[ OFFSET_P2 ],
+                                                G_io_apdu_buffer + OFFSET_CDATA,
+                                                G_io_apdu_buffer[ OFFSET_LC ],
+                                                &flags, &tx);
                         break;
 
-                    default: 
+                    default:
                         THROW(EXCEPTION_UNKNOWN_INS);
                 }
             }
-            CATCH(EXCEPTION_IO_RESET) {
-                THROW(EXCEPTION_IO_RESET);
-            }
+            CATCH(EXCEPTION_IO_RESET) { THROW(EXCEPTION_IO_RESET); }
             CATCH_OTHER(e) {
                 // Convert exception to response code and add to APDU return
                 switch (e & 0xF000) {
@@ -100,8 +93,8 @@ void app_main() {
                         break;
                 }
 
-                G_io_apdu_buffer[tx++] = sw >> 8;
-                G_io_apdu_buffer[tx++] = sw & 0xff;
+                G_io_apdu_buffer[ tx++ ] = sw >> 8;
+                G_io_apdu_buffer[ tx++ ] = sw & 0xff;
             }
             FINALLY {
                 // explicitly do nothing
@@ -114,9 +107,7 @@ void app_main() {
 void app_exit(void) {
     // All os calls must be wrapped in a try catch context
     BEGIN_TRY_L(exit) {
-        TRY_L(exit) {
-            os_sched_exit(-1);
-        }
+        TRY_L(exit) { os_sched_exit(-1); }
         FINALLY_L(exit) {
             // explicitly do nothing
         }
@@ -139,18 +130,19 @@ __attribute__((section(".boot"))) int main() {
 
         BEGIN_TRY {
             TRY {
-                // Initialize the hardware abstraction layer (HAL) in 
+                // Initialize the hardware abstraction layer (HAL) in
                 // the Ledger SDK
                 io_seproxyhal_init();
 
-#ifdef TARGET_NANOX
+#ifdef HAVE_BLE
                 // grab the current plane mode setting
-                G_io_app.plane_mode = os_setting_get(OS_SETTING_PLANEMODE, NULL, 0);
+                G_io_app.plane_mode =
+                    os_setting_get(OS_SETTING_PLANEMODE, NULL, 0);
 #endif // TARGET_NANOX
 
 #ifdef HAVE_BLE
                 BLE_power(0, NULL);
-                BLE_power(1, "Nano X");
+                BLE_power(1, NULL);
 #endif // HAVE_BLE
 
                 USB_power(0);
@@ -166,9 +158,7 @@ __attribute__((section(".boot"))) int main() {
                 // reset IO and UX before continuing
                 continue;
             }
-            CATCH_ALL {
-                break;
-            }
+            CATCH_ALL { break; }
             FINALLY {
                 // explicitly do nothing
             }

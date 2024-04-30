@@ -1,14 +1,29 @@
-#ifndef LEDGER_APP_HEDERA_SIGN_TRANSACTION_H
-#define LEDGER_APP_HEDERA_SIGN_TRANSACTION_H 1
+#pragma once
+
+#include <pb.h>
+#include <pb_decode.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#include "crypto_create.pb.h"
+#include "crypto_update.pb.h"
+#include "handlers.h"
+#include "hedera.h"
+#include "hedera_format.h"
+#include "io.h"
+#include "transaction_body.pb.h"
+#include "ui_common.h"
+#include "utils.h"
 
 enum TransactionStep {
     Summary = 1,
     Operator = 2,
     Senders = 3,
-    Recipients = 4, 
+    Recipients = 4,
     Amount = 5,
     Fee = 6,
-    Memo =  7,
+    Memo = 7,
     Confirm = 8,
     Deny = 9
 };
@@ -17,59 +32,129 @@ enum TransactionType {
     Unknown = -1,
     Verify = 0,
     Create = 1,
-    Transfer = 2
+    Update = 2,
+    Transfer = 3,
+    Associate = 4,
+    Dissociate = 5,
+    TokenTransfer = 6,
+    TokenMint = 7,
+    TokenBurn = 8,
 };
 
+/*
+ * Supported Transactions:
+ * Verify:
+ * "Verify Account with Key #0?" (Summary) <--> "Account" (Senders) <--> Confirm
+ * <--> Deny
+ *
+ * Create:
+ * "Create Account with Key #0?" (Summary) <--> Operator <--> "Stake to"
+(Senders)
+ * <--> "Collect Rewards? Yes / No" (Recipients) <--> "Initial Balance" (Amount)
+ * <--> Fee <--> Memo <--> Confirm <--> Deny
+ *
+ * Update:
+ * "Update Account 0.0.0 with Key #0?" (Summary) <--> Operator <-->
+ * "Stake to" (Senders) <--> "Collect Rewards (Yes / No)" (Recipients) <-->
+ * "Updated Account" (Amount) <--> Fee <--> Memo <--> Confirm <--> Deny
+ *
+ * Transfer:
+ * "Transfer with Key #0?" (Summary) <--> Operator <--> Senders <--> Recipients
+ * <--> Amount <--> Fee <--> Memo <--> Confirm <--> Deny
+ *
+ * Associate:
+ * "Associate Token with Key #0?" (Summary) <--> Operator <--> "Token" (Senders)
+ * <--> Fee <--> Memo <--> Confirm <--> Deny
+ *
+ * Dissociate:
+ * "Dissociate Token with Key #0?" (Summary) <--> Operator <-->
+ * "Token" (Senders) <--> Fee <--> Memo <--> Confirm <--> Deny
+ *
+ * TokenMint:
+ * "Mint Token with Key #0?" (Summary) <--> Operator <--> "Token" (Senders) <-->
+ * Amount <--> Fee <--> Memo <--> Confirm <--> Deny
+ *
+ * TokenBurn:
+ * "Burn Token with Key #0?" (Summary) <--> Operator <--> "Token" (Senders) <-->
+ * Amount <--> Fee <--> Memo <--> Confirm <--> Deny
+ *
+ * I chose the steps for the originally supported CreateAccount and Transfer
+transactions, and the additional transactions have been added since then. Steps
+may be skipped or modified (as described above) from the original transfer flow.
+ */
+
+typedef struct sign_tx_context_s {
+    // ui common
+    uint32_t key_index;
+    uint8_t transfer_to_index;
+    uint8_t transfer_from_index;
+
+    // Transaction Summary
+    char summary_line_1[ DISPLAY_SIZE + 1 ];
+    char summary_line_2[ DISPLAY_SIZE + 1 ];
+
 #if defined(TARGET_NANOS)
-// Forward declarations for Nano S UI
-// Step 1
-unsigned int ui_tx_summary_step_button(
-    unsigned int button_mask, 
-    unsigned int button_mask_counter
-);
+    union {
+#define TITLE_SIZE (DISPLAY_SIZE + 1)
+        char title[ TITLE_SIZE ];
+        char senders_title[ TITLE_SIZE ];    // alias for title
+        char recipients_title[ TITLE_SIZE ]; // alias for title
+        char amount_title[ TITLE_SIZE ];     // alias for title
+    };
+#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+    char senders_title[ DISPLAY_SIZE + 1 ];
+    char recipients_title[ DISPLAY_SIZE + 1 ];
+    char amount_title[ DISPLAY_SIZE + 1 ];
+#endif
 
-// Step 2 - 7
-void handle_intermediate_left_press();
-void handle_intermediate_right_press();
-unsigned int ui_tx_intermediate_step_button(
-    unsigned int button_mask,
-    unsigned int button_mask_counter
-);
+    // Account ID: uint64_t.uint64_t.uint64_t
+    // Most other entities are shorter
+#if defined(TARGET_NANOS)
+    union {
+#define FULL_SIZE (ACCOUNT_ID_SIZE + 1)
+        char full[ FULL_SIZE ];
+        char operator[ FULL_SIZE ];   // alias for full
+        char senders[ FULL_SIZE ];    // alias for full
+        char recipients[ FULL_SIZE ]; // alias for full
+        char amount[ FULL_SIZE ];     // alias for full
+        char fee[ FULL_SIZE ];        // alias for full
+        char memo[ FULL_SIZE ];       // alias for full
+    };
+    char partial[ DISPLAY_SIZE + 1 ];
+#endif
 
-// Step 8
-unsigned int ui_tx_confirm_step_button(
-    unsigned int button_mask,
-    unsigned int button_mask_counter
-);
+    // Steps correspond to parts of the transaction proto
+    // type is set based on proto
+#if defined(TARGET_NANOS)
+    enum TransactionStep step;
+#endif
+    enum TransactionType type;
 
-// Step 9
-unsigned int ui_tx_deny_step_button(
-    unsigned int button_mask,
-    unsigned int button_mask_counter
-);
+#if defined(TARGET_NANOS)
+    uint8_t display_index; // 1 -> Number Screens
+    uint8_t display_count; // Number Screens
+#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+    // Transaction Operator
+    char operator[ DISPLAY_SIZE * 2 + 1 ];
 
-uint8_t num_screens(size_t length);
-void count_screens();
-void shift_display();
-bool first_screen();
-bool last_screen();
+    // Transaction Senders
+    char senders[ DISPLAY_SIZE * 2 + 1 ];
 
-#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2)
-// Forward declarations for Nano X UI
-void x_start_tx_loop();
-void x_continue_tx_loop();
-void x_end_tx_loop();
-unsigned int io_seproxyhal_tx_approve(const bagl_element_t* e);
-unsigned int io_seproxyhal_tx_reject(const bagl_element_t* e);
+    // Transaction Recipients
+    char recipients[ DISPLAY_SIZE * 2 + 1 ];
 
-#endif // TARGET
+    // Transaction Amount
+    char amount[ DISPLAY_SIZE * 2 + 1 ];
 
-void reformat_operator();
-void reformat_senders();
-void reformat_recipients();
-void reformat_amount();
-void reformat_fee();
-void reformat_memo();
-void handle_transaction_body();
+    // Transaction Fee
+    char fee[ DISPLAY_SIZE * 2 + 1 ];
 
-#endif //LEDGER_APP_HEDERA_SIGN_TRANSACTION_H
+    // Transaction Memo
+    char memo[ MAX_MEMO_SIZE + 1 ];
+#endif
+
+    // Parsed transaction
+    Hedera_TransactionBody transaction;
+} sign_tx_context_t;
+
+extern sign_tx_context_t st_ctx;
