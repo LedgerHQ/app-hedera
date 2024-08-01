@@ -5,6 +5,7 @@
 #define BIP32_PATH 5
 #define DISPLAY_SIZE 18 // characters @ 11pt sys font
 
+#define RAW_PUBKEY_SIZE 65
 #define MAX_TX_SIZE 512
 #define FULL_ADDRESS_LENGTH 54
 #define ACCOUNT_ID_SIZE 19 * 3 + 2 + 1

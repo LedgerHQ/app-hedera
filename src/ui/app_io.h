@@ -1,7 +1,7 @@
 #pragma once
 
 #include "debug.h"
-#include "globals.h"
+#include "app_globals.h"
 #include "os.h"
 #include "os_io_seproxyhal.h"
 

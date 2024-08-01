@@ -1,5 +1,6 @@
 from ragger.backend.interface import RAPDU, RaisePolicy
 from ragger.navigator import NavInsID
+from ragger.firmware import Firmware
 
 from .apps.hedera import HederaClient, ErrorType
 from .apps.hedera_builder import crypto_create_account_conf
@@ -62,7 +63,7 @@ def test_hedera_get_public_key_refused(backend, firmware, navigator, test_name):
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
-    if firmware.device == "stax":
+    if not firmware.is_nano:
         with hedera.get_public_key_confirm(0):
             backend.raise_policy = RaisePolicy.RAISE_NOTHING
             nav_ins = [NavInsID.USE_CASE_CHOICE_CONFIRM,
@@ -73,7 +74,7 @@ def test_hedera_get_public_key_refused(backend, firmware, navigator, test_name):
         assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_crypto_create_account_ok(backend, firmware, navigator, test_name):
+def test_hedera_crypto_create_account_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_create_account_conf(initialBalance=5)
     with hedera.send_sign_transaction(
@@ -85,10 +86,10 @@ def test_hedera_crypto_create_account_ok(backend, firmware, navigator, test_name
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_crypto_create_account_refused(backend, firmware, navigator, test_name):
+def test_hedera_crypto_create_account_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_create_account_conf(initialBalance=5)
     with hedera.send_sign_transaction(
@@ -101,13 +102,13 @@ def test_hedera_crypto_create_account_refused(backend, firmware, navigator, test
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_crypto_create_account_stake_account_ok(backend, firmware, navigator, test_name):
+def test_hedera_crypto_create_account_stake_account_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_create_account_conf(
         initialBalance=5, stakeTargetAccount=666, declineRewards=True
@@ -121,10 +122,10 @@ def test_hedera_crypto_create_account_stake_account_ok(backend, firmware, naviga
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_crypto_create_account_stake_account_refused(backend, firmware, navigator, test_name):
+def test_hedera_crypto_create_account_stake_account_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_create_account_conf(
         initialBalance=5, stakeTargetAccount=777, declineRewards=False
@@ -139,13 +140,13 @@ def test_hedera_crypto_create_account_stake_account_refused(backend, firmware, n
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_crypto_create_account_stake_node_ok(backend, firmware, navigator, test_name):
+def test_hedera_crypto_create_account_stake_node_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_create_account_conf(
         initialBalance=5, stakeTargetNode=4, declineRewards=True
@@ -159,10 +160,10 @@ def test_hedera_crypto_create_account_stake_node_ok(backend, firmware, navigator
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_crypto_create_account_stake_node_refused(backend, firmware, navigator, test_name):
+def test_hedera_crypto_create_account_stake_node_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_create_account_conf(
         initialBalance=5, stakeTargetNode=3, declineRewards=False
@@ -177,13 +178,13 @@ def test_hedera_crypto_create_account_stake_node_refused(backend, firmware, navi
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_crypto_update_account_ok(backend, firmware, navigator, test_name):
+def test_hedera_crypto_update_account_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_update_account_conf(
         targetShardNum=6, targetRealmNum=54, targetAccountNum=6789
@@ -197,10 +198,10 @@ def test_hedera_crypto_update_account_ok(backend, firmware, navigator, test_name
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_crypto_update_account_refused(backend, firmware, navigator, test_name):
+def test_hedera_crypto_update_account_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_update_account_conf(
         targetShardNum=6, targetRealmNum=54, targetAccountNum=6789
@@ -215,13 +216,18 @@ def test_hedera_crypto_update_account_refused(backend, firmware, navigator, test
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        if firmware is Firmware.NANOS:
+            scenario_navigator.review_reject(custom_screen_text="Deny")
+        elif firmware.is_nano:
+            scenario_navigator.review_reject(custom_screen_text="Reject")
+        else:
+            navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_crypto_update_account_stake_account_ok(backend, firmware, navigator, test_name):
+def test_hedera_crypto_update_account_stake_account_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_update_account_conf(
         targetShardNum=8,
@@ -239,10 +245,10 @@ def test_hedera_crypto_update_account_stake_account_ok(backend, firmware, naviga
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_crypto_update_account_stake_account_refused(backend, firmware, navigator, test_name):
+def test_hedera_crypto_update_account_stake_account_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_update_account_conf(
         targetShardNum=8,
@@ -261,13 +267,13 @@ def test_hedera_crypto_update_account_stake_account_refused(backend, firmware, n
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_crypto_update_account_stake_node_ok(backend, firmware, navigator, test_name):
+def test_hedera_crypto_update_account_stake_node_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_update_account_conf(
         targetShardNum=87,
@@ -285,10 +291,10 @@ def test_hedera_crypto_update_account_stake_node_ok(backend, firmware, navigator
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_crypto_update_account_stake_node_refused(backend, firmware, navigator, test_name):
+def test_hedera_crypto_update_account_stake_node_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_update_account_conf(
         targetShardNum=87,
@@ -307,13 +313,13 @@ def test_hedera_crypto_update_account_stake_node_refused(backend, firmware, navi
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_transfer_token_ok(backend, firmware, navigator, test_name):
+def test_hedera_transfer_token_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_token_conf(
         token_shardNum=15,
@@ -338,10 +344,10 @@ def test_hedera_transfer_token_ok(backend, firmware, navigator, test_name):
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_transfer_token_refused(backend, firmware, navigator, test_name):
+def test_hedera_transfer_token_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_token_conf(
         token_shardNum=15,
@@ -367,13 +373,13 @@ def test_hedera_transfer_token_refused(backend, firmware, navigator, test_name):
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_transfer_hbar_ok(backend, firmware, navigator, test_name):
+def test_hedera_transfer_hbar_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_hbar_conf(
         sender_shardNum=57,
@@ -394,10 +400,10 @@ def test_hedera_transfer_hbar_ok(backend, firmware, navigator, test_name):
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_transfer_hbar_refused(backend, firmware, navigator, test_name):
+def test_hedera_transfer_hbar_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_hbar_conf(
         sender_shardNum=57,
@@ -419,13 +425,13 @@ def test_hedera_transfer_hbar_refused(backend, firmware, navigator, test_name):
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_token_associate_ok(backend, firmware, navigator, test_name):
+def test_hedera_token_associate_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = token_associate_conf(
         token_shardNum=57,
@@ -445,10 +451,10 @@ def test_hedera_token_associate_ok(backend, firmware, navigator, test_name):
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_token_associate_refused(backend, firmware, navigator, test_name):
+def test_hedera_token_associate_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = token_associate_conf(
         token_shardNum=57,
@@ -469,13 +475,13 @@ def test_hedera_token_associate_refused(backend, firmware, navigator, test_name)
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_token_dissociate_ok(backend, firmware, navigator, test_name):
+def test_hedera_token_dissociate_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = token_dissociate_conf(
         token_shardNum=57,
@@ -495,10 +501,10 @@ def test_hedera_token_dissociate_ok(backend, firmware, navigator, test_name):
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_token_dissociate_refused(backend, firmware, navigator, test_name):
+def test_hedera_token_dissociate_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = token_dissociate_conf(
         token_shardNum=57,
@@ -519,13 +525,13 @@ def test_hedera_token_dissociate_refused(backend, firmware, navigator, test_name
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_token_burn_ok(backend, firmware, navigator, test_name):
+def test_hedera_token_burn_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = token_burn_conf(
         token_shardNum=57, token_realmNum=58, token_tokenNum=59, amount=77
@@ -540,10 +546,10 @@ def test_hedera_token_burn_ok(backend, firmware, navigator, test_name):
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_token_burn_refused(backend, firmware, navigator, test_name):
+def test_hedera_token_burn_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = token_burn_conf(
         token_shardNum=57, token_realmNum=58, token_tokenNum=59, amount=77
@@ -559,13 +565,13 @@ def test_hedera_token_burn_refused(backend, firmware, navigator, test_name):
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_token_mint_ok(backend, firmware, navigator, test_name):
+def test_hedera_token_mint_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = token_mint_conf(
         token_shardNum=57, token_realmNum=58, token_tokenNum=59, amount=77
@@ -580,10 +586,10 @@ def test_hedera_token_mint_ok(backend, firmware, navigator, test_name):
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_token_mint_refused(backend, firmware, navigator, test_name):
+def test_hedera_token_mint_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = token_mint_conf(
         token_shardNum=57, token_realmNum=58, token_tokenNum=59, amount=77
@@ -599,13 +605,13 @@ def test_hedera_token_mint_refused(backend, firmware, navigator, test_name):
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_transfer_verify_ok(backend, firmware, navigator, test_name):
+def test_hedera_transfer_verify_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_verify(
         sender_shardNum=57, sender_realmNum=58, sender_accountNum=59
@@ -620,10 +626,10 @@ def test_hedera_transfer_verify_ok(backend, firmware, navigator, test_name):
         memo="this_is_the_memo",
         conf=conf,
     ):
-        navigation_helper_confirm(navigator, firmware.device, test_name)
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_transfer_verify_refused(backend, firmware, navigator, test_name):
+def test_hedera_transfer_verify_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_verify(
         sender_shardNum=57, sender_realmNum=58, sender_accountNum=59
@@ -639,7 +645,7 @@ def test_hedera_transfer_verify_refused(backend, firmware, navigator, test_name)
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigation_helper_reject(navigator, firmware.device, test_name)
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED

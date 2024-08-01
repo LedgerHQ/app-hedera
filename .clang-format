@@ -19,7 +19,7 @@ SpacesBeforeTrailingComments: 1
 SpacesInContainerLiterals: true
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
-SpacesInSquareBrackets: true
+SpacesInSquareBrackets: false
 UseTab: Never
 ---
 Language: Proto

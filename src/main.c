@@ -1,8 +1,9 @@
-#include "ux.h"
+#include "app_globals.h"
 #include "glyphs.h"
-#include "globals.h"
 #include "handlers.h"
+#include "os.h"
 #include "ui_common.h"
+#include "ux.h"
 
 // This is the main loop that reads and writes APDUs. It receives request
 // APDUs from the computer, looks up the corresponding command handler, and
@@ -15,7 +16,7 @@
 // Things are marked volatile throughout the app to prevent unintended compiler
 // reording of instructions (since the try-catch system is a macro)
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#if !defined(TARGET_NANOS)
 ux_state_t G_ux;
 bolos_ux_params_t G_ux_params;
 #endif
@@ -42,36 +43,36 @@ void app_main() {
                 }
 
                 // malformed APDU
-                if (G_io_apdu_buffer[ OFFSET_CLA ] != CLA) {
+                if (G_io_apdu_buffer[OFFSET_CLA] != CLA) {
                     THROW(EXCEPTION_MALFORMED_APDU);
                 }
 
                 // APDU handler functions defined in handlers
-                switch (G_io_apdu_buffer[ OFFSET_INS ]) {
+                switch (G_io_apdu_buffer[OFFSET_INS]) {
                     case INS_GET_APP_CONFIGURATION:
                         // handlers -> get_app_configuration
                         handle_get_app_configuration(
-                            G_io_apdu_buffer[ OFFSET_P1 ],
-                            G_io_apdu_buffer[ OFFSET_P2 ],
+                            G_io_apdu_buffer[OFFSET_P1],
+                            G_io_apdu_buffer[OFFSET_P2],
                             G_io_apdu_buffer + OFFSET_CDATA,
-                            G_io_apdu_buffer[ OFFSET_LC ], &flags, &tx);
+                            G_io_apdu_buffer[OFFSET_LC], &flags, &tx);
                         break;
 
                     case INS_GET_PUBLIC_KEY:
                         // handlers -> get_public_key
-                        handle_get_public_key(G_io_apdu_buffer[ OFFSET_P1 ],
-                                              G_io_apdu_buffer[ OFFSET_P2 ],
+                        handle_get_public_key(G_io_apdu_buffer[OFFSET_P1],
+                                              G_io_apdu_buffer[OFFSET_P2],
                                               G_io_apdu_buffer + OFFSET_CDATA,
-                                              G_io_apdu_buffer[ OFFSET_LC ],
+                                              G_io_apdu_buffer[OFFSET_LC],
                                               &flags, &tx);
                         break;
 
                     case INS_SIGN_TRANSACTION:
                         // handlers -> sign_transaction
-                        handle_sign_transaction(G_io_apdu_buffer[ OFFSET_P1 ],
-                                                G_io_apdu_buffer[ OFFSET_P2 ],
+                        handle_sign_transaction(G_io_apdu_buffer[OFFSET_P1],
+                                                G_io_apdu_buffer[OFFSET_P2],
                                                 G_io_apdu_buffer + OFFSET_CDATA,
-                                                G_io_apdu_buffer[ OFFSET_LC ],
+                                                G_io_apdu_buffer[OFFSET_LC],
                                                 &flags, &tx);
                         break;
 
@@ -93,8 +94,8 @@ void app_main() {
                         break;
                 }
 
-                G_io_apdu_buffer[ tx++ ] = sw >> 8;
-                G_io_apdu_buffer[ tx++ ] = sw & 0xff;
+                G_io_apdu_buffer[tx++] = sw >> 8;
+                G_io_apdu_buffer[tx++] = sw & 0xff;
             }
             FINALLY {
                 // explicitly do nothing

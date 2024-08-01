@@ -25,7 +25,7 @@ static void validate_transfer(void) {
     }
 
     if (st_ctx.transaction.data.cryptoTransfer.tokenTransfers_count == 1) {
-        if (st_ctx.transaction.data.cryptoTransfer.tokenTransfers[ 0 ]
+        if (st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
                 .transfers_count != 2) {
             // More than two accounts in a token transfer
             THROW(EXCEPTION_MALFORMED_APDU);
@@ -43,7 +43,7 @@ static void validate_transfer(void) {
 static bool is_verify_account(void) {
     // Only 1 Account (Sender), Fee 1 Tinybar, and Value 0 Tinybar
     return (
-        st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts[ 0 ]
+        st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts[0]
                 .amount == 0 &&
         st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts_count ==
             1 &&
@@ -67,7 +67,7 @@ void handle_transaction_body() {
 #if defined(TARGET_NANOS)
     MEMCLEAR(st_ctx.full);
     MEMCLEAR(st_ctx.partial);
-#elif defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#else
     MEMCLEAR(st_ctx.amount_title);
     MEMCLEAR(st_ctx.senders_title);
     MEMCLEAR(st_ctx.operator);
@@ -90,7 +90,7 @@ void handle_transaction_body() {
     // with Key #X?
     reformat_key();
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#if !defined(TARGET_NANOS)
     // All flows except Verify
     if (!is_verify_account()) reformat_operator();
 #endif
@@ -101,7 +101,7 @@ void handle_transaction_body() {
             st_ctx.type = Create;
             reformat_summary("Create Account");
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#if !defined(TARGET_NANOS)
             reformat_stake_target();
             reformat_collect_rewards();
             reformat_amount_balance();
@@ -112,7 +112,7 @@ void handle_transaction_body() {
             st_ctx.type = Update;
             reformat_summary("Update Account");
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#if !defined(TARGET_NANOS)
             reformat_stake_target();
             reformat_collect_rewards();
             reformat_updated_account();
@@ -123,7 +123,7 @@ void handle_transaction_body() {
             st_ctx.type = Associate;
             reformat_summary("Associate Token");
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#if !defined(TARGET_NANOS)
             reformat_token_associate();
 #endif
             break;
@@ -132,7 +132,7 @@ void handle_transaction_body() {
             st_ctx.type = Dissociate;
             reformat_summary("Dissociate Token");
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#if !defined(TARGET_NANOS)
             reformat_token_dissociate();
 #endif
             break;
@@ -141,7 +141,7 @@ void handle_transaction_body() {
             st_ctx.type = TokenBurn;
             reformat_summary("Burn Token");
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#if !defined(TARGET_NANOS)
             reformat_token_burn();
             reformat_amount_burn();
 #endif
@@ -151,7 +151,7 @@ void handle_transaction_body() {
             st_ctx.type = TokenMint;
             reformat_summary("Mint Token");
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#if !defined(TARGET_NANOS)
             reformat_token_mint();
             reformat_amount_mint();
 #endif
@@ -164,7 +164,7 @@ void handle_transaction_body() {
                 st_ctx.type = Verify;
                 reformat_summary("Verify Account");
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#if !defined(TARGET_NANOS)
                 reformat_verify_account();
 #endif
 
@@ -177,13 +177,13 @@ void handle_transaction_body() {
                 st_ctx.transfer_from_index = 0;
                 st_ctx.transfer_to_index = 1;
                 if (st_ctx.transaction.data.cryptoTransfer.transfers
-                        .accountAmounts[ 0 ]
+                        .accountAmounts[0]
                         .amount > 0) {
                     st_ctx.transfer_from_index = 1;
                     st_ctx.transfer_to_index = 0;
                 }
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#if !defined(TARGET_NANOS)
                 reformat_sender_account();
                 reformat_recipient_account();
                 reformat_amount_transfer();
@@ -196,14 +196,14 @@ void handle_transaction_body() {
                 // Determine Sender based on amount
                 st_ctx.transfer_from_index = 0;
                 st_ctx.transfer_to_index = 1;
-                if (st_ctx.transaction.data.cryptoTransfer.tokenTransfers[ 0 ]
-                        .transfers[ 0 ]
+                if (st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
+                        .transfers[0]
                         .amount > 0) {
                     st_ctx.transfer_from_index = 1;
                     st_ctx.transfer_to_index = 0;
                 }
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#if !defined(TARGET_NANOS)
                 reformat_token_sender_account();
                 reformat_token_recipient_account();
                 reformat_token_transfer();
@@ -221,7 +221,7 @@ void handle_transaction_body() {
             break;
     }
 
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
+#if !defined(TARGET_NANOS)
     // All flows except Verify
     if (!is_verify_account()) {
         reformat_fee();
@@ -243,15 +243,12 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
     UNUSED(tx);
 
     // Raw Tx
-    uint8_t raw_transaction[ MAX_TX_SIZE ];
+    uint8_t raw_transaction[MAX_TX_SIZE];
     int raw_transaction_length = len - 4;
 
     // Oops Oof Owie
-    if (
-        raw_transaction_length > MAX_TX_SIZE || 
-        raw_transaction_length > (int) buffer - 4 ||
-        buffer == NULL
-        ) {
+    if (raw_transaction_length > MAX_TX_SIZE ||
+        raw_transaction_length > (int)buffer - 4 || buffer == NULL) {
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 

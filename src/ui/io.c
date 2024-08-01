@@ -1,22 +1,23 @@
-#include "io.h"
+#include "app_io.h"
+
 #include "ux.h"
 
 #ifdef HAVE_NBGL
 #include "nbgl_touch.h"
-#endif  // HAVE_NBGL
+#endif // HAVE_NBGL
 
 // Everything below this point is Ledger magic. And the magic isn't well-
 // documented, so if you want to understand it, you'll need to read the
 // source, which you can find in the sdk repo for your device.
 // Fortunately, we are not meant to understand this.
 
-unsigned char G_io_seproxyhal_spi_buffer[ IO_SEPROXYHAL_BUFFER_SIZE_B ];
+unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 
 #ifdef HAVE_BAGL
 void io_seproxyhal_display(const bagl_element_t *element) {
     io_seproxyhal_display_default(element);
 }
-#endif //HAVE_BAGL
+#endif // HAVE_BAGL
 
 uint8_t io_event(uint8_t channel) {
     UNUSED(channel);
@@ -28,11 +29,11 @@ uint8_t io_event(uint8_t channel) {
         case SEPROXYHAL_TAG_BUTTON_PUSH_EVENT:
 #ifdef HAVE_BAGL
             UX_BUTTON_PUSH_EVENT(G_io_seproxyhal_spi_buffer);
-#endif  // HAVE_BAGL
+#endif // HAVE_BAGL
             break;
         case SEPROXYHAL_TAG_STATUS_EVENT:
-            if (G_io_apdu_media == IO_APDU_MEDIA_USB_HID &&  //
-                !(U4BE(G_io_seproxyhal_spi_buffer, 3) &      //
+            if (G_io_apdu_media == IO_APDU_MEDIA_USB_HID && //
+                !(U4BE(G_io_seproxyhal_spi_buffer, 3) &     //
                   SEPROXYHAL_TAG_STATUS_EVENT_FLAG_USB_POWERED)) {
                 THROW(EXCEPTION_IO_RESET);
             }
@@ -41,16 +42,16 @@ uint8_t io_event(uint8_t channel) {
         case SEPROXYHAL_TAG_DISPLAY_PROCESSED_EVENT:
 #ifdef HAVE_BAGL
             UX_DISPLAYED_EVENT({});
-#endif  // HAVE_BAGL
+#endif // HAVE_BAGL
 #ifdef HAVE_NBGL
             UX_DEFAULT_EVENT();
-#endif  // HAVE_NBGL
+#endif // HAVE_NBGL
             break;
 #ifdef HAVE_NBGL
         case SEPROXYHAL_TAG_FINGER_EVENT:
             UX_FINGER_EVENT(G_io_seproxyhal_spi_buffer);
             break;
-#endif  // HAVE_NBGL
+#endif // HAVE_NBGL
         case SEPROXYHAL_TAG_TICKER_EVENT:
             UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer, {});
             break;
@@ -95,8 +96,8 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
 }
 
 void io_exchange_with_code(uint16_t code, uint16_t tx) {
-    G_io_apdu_buffer[ tx++ ] = code >> 8;
-    G_io_apdu_buffer[ tx++ ] = code & 0xff;
+    G_io_apdu_buffer[tx++] = code >> 8;
+    G_io_apdu_buffer[tx++] = code & 0xff;
 
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
 }

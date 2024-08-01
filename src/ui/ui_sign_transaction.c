@@ -1,14 +1,13 @@
-#include "ux.h"
 #include "glyphs.h"
+#include "proto/crypto_create.pb.h"
 #include "sign_transaction.h"
 #include "ui_common.h"
-#include "proto/crypto_create.pb.h"
+#include "ux.h"
 
 #ifdef HAVE_NBGL
 #include "nbgl_page.h"
 #include "nbgl_use_case.h"
 #endif
-
 
 #if defined(TARGET_NANOS)
 
@@ -270,13 +269,19 @@ void handle_intermediate_left_press() {
         // Other flows do not have Recipients
         case Recipients: {
             if (first_screen()) {
-                if(
-                    (st_ctx.type == Create || st_ctx.type == Update) 
-                    && st_ctx.transaction.data.cryptoCreateAccount.which_staked_id != Hedera_CryptoCreateTransactionBody_staked_account_id_tag 
-                    && st_ctx.transaction.data.cryptoCreateAccount.which_staked_id != Hedera_CryptoCreateTransactionBody_staked_node_id_tag
-                    && st_ctx.transaction.data.cryptoUpdateAccount.which_staked_id != Hedera_CryptoUpdateTransactionBody_staked_account_id_tag 
-                    && st_ctx.transaction.data.cryptoUpdateAccount.which_staked_id != Hedera_CryptoUpdateTransactionBody_staked_node_id_tag
-                ) {
+                if ((st_ctx.type == Create || st_ctx.type == Update) &&
+                    st_ctx.transaction.data.cryptoCreateAccount
+                            .which_staked_id !=
+                        Hedera_CryptoCreateTransactionBody_staked_account_id_tag &&
+                    st_ctx.transaction.data.cryptoCreateAccount
+                            .which_staked_id !=
+                        Hedera_CryptoCreateTransactionBody_staked_node_id_tag &&
+                    st_ctx.transaction.data.cryptoUpdateAccount
+                            .which_staked_id !=
+                        Hedera_CryptoUpdateTransactionBody_staked_account_id_tag &&
+                    st_ctx.transaction.data.cryptoUpdateAccount
+                            .which_staked_id !=
+                        Hedera_CryptoUpdateTransactionBody_staked_node_id_tag) {
                     st_ctx.step = Operator;
                     st_ctx.display_index = 1;
                     update_display_count();
@@ -385,13 +390,19 @@ void handle_intermediate_right_press() {
         // All flows proceed from Operator to Senders
         case Operator: {
             if (last_screen()) { // Continue to Senders
-                if(
-                    (st_ctx.type == Create || st_ctx.type == Update) 
-                    && st_ctx.transaction.data.cryptoCreateAccount.which_staked_id != Hedera_CryptoCreateTransactionBody_staked_account_id_tag 
-                    && st_ctx.transaction.data.cryptoCreateAccount.which_staked_id != Hedera_CryptoCreateTransactionBody_staked_node_id_tag
-                    && st_ctx.transaction.data.cryptoUpdateAccount.which_staked_id != Hedera_CryptoUpdateTransactionBody_staked_account_id_tag 
-                    && st_ctx.transaction.data.cryptoUpdateAccount.which_staked_id != Hedera_CryptoUpdateTransactionBody_staked_node_id_tag
-                ) {
+                if ((st_ctx.type == Create || st_ctx.type == Update) &&
+                    st_ctx.transaction.data.cryptoCreateAccount
+                            .which_staked_id !=
+                        Hedera_CryptoCreateTransactionBody_staked_account_id_tag &&
+                    st_ctx.transaction.data.cryptoCreateAccount
+                            .which_staked_id !=
+                        Hedera_CryptoCreateTransactionBody_staked_node_id_tag &&
+                    st_ctx.transaction.data.cryptoUpdateAccount
+                            .which_staked_id !=
+                        Hedera_CryptoUpdateTransactionBody_staked_account_id_tag &&
+                    st_ctx.transaction.data.cryptoUpdateAccount
+                            .which_staked_id !=
+                        Hedera_CryptoUpdateTransactionBody_staked_node_id_tag) {
                     st_ctx.step = Amount;
                     st_ctx.display_index = 1;
                     update_display_count();
@@ -677,48 +688,42 @@ UX_DEF(ux_burn_mint_flow, &summary_step, &operator_step, &senders_step,
 UX_DEF(ux_associate_flow, &summary_step, &operator_step, &senders_step,
        &fee_step, &memo_step, &confirm_step, &reject_step);
 
-
 #elif defined(HAVE_NBGL)
 
-
-static void rejectChoice(void) {
-    io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
-    nbgl_useCaseStatus("Transaction\nrejected", false, ui_idle);
-}
-
-static void rejectUseCaseChoice(void) {
-    nbgl_useCaseConfirm("Reject transaction?", NULL, "Yes, reject", "Go back to transaction", rejectChoice);
-}
-
-static void review_final_callback(bool confirmed) {
-    if (confirmed) {
+static void review_choice(bool confirm) {
+    // Answer, display a status page and go back to main
+    if (confirm) {
         io_exchange_with_code(EXCEPTION_OK, 64);
-        nbgl_useCaseStatus("TRANSACTION\nSIGNED", true, ui_idle);
+        nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_idle);
     } else {
-        rejectUseCaseChoice();
+        io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
+        nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_REJECTED, ui_idle);
     }
 }
 
 // Max is 7 infos for transfer transaction
-// If a new flow is added or flows are modified to include more steps, don't forget to update the infos array size!
-static nbgl_layoutTagValue_t infos[7];
-static nbgl_layoutTagValueList_t layout;
-static nbgl_pageInfoLongPress_t review_final_long_press;
+// If a new flow is added or flows are modified to include more steps, don't
+// forget to update the infos array size!
+static nbgl_contentTagValue_t infos[7];
+// Content of the review flow
+static nbgl_contentTagValueList_t content;
 static char review_start_title[64];
 static char review_final_title[64];
 
 static void create_transaction_flow(void) {
     uint8_t index = 0;
     infos[index].value = st_ctx.summary_line_1;
-    snprintf(review_start_title, sizeof(review_start_title), "Review transaction to\n%s", st_ctx.summary_line_1);
-    snprintf(review_final_title, sizeof(review_final_title), "Sign transaction to\n%s", st_ctx.summary_line_1);
+    snprintf(review_start_title, sizeof(review_start_title),
+             "Review transaction to\n%s", st_ctx.summary_line_1);
+    snprintf(review_final_title, sizeof(review_final_title),
+             "Sign transaction to\n%s", st_ctx.summary_line_1);
 
     infos[index].item = "With key";
     infos[index].value = st_ctx.summary_line_2;
     ++index;
 
     switch (st_ctx.type) {
-        case Verify: 
+        case Verify:
             // FALLTHROUGH
         case Associate:
             infos[index].item = st_ctx.senders_title;
@@ -739,7 +744,7 @@ static void create_transaction_flow(void) {
             infos[index].value = st_ctx.memo;
             ++index;
             break;
-        case TokenTransfer: 
+        case TokenTransfer:
             // FALLTHROUGH
         case Transfer:
             infos[index].item = "Operator";
@@ -761,7 +766,7 @@ static void create_transaction_flow(void) {
             infos[index].value = st_ctx.memo;
             ++index;
             break;
-        case TokenMint: 
+        case TokenMint:
             // FALLTHROUGH
         case TokenBurn:
             infos[index].item = st_ctx.senders_title;
@@ -776,27 +781,17 @@ static void create_transaction_flow(void) {
             ;
     }
 
-    // If a new flow is added or flows are modified to include more steps, don't forget to update the infos array size!
-    layout.nbPairs = index;
-    layout.nbMaxLinesForValue = 0;
-    layout.smallCaseForValue = true;
-    layout.wrapping = true;
-    layout.pairs = infos;
-
-    review_final_long_press.text = review_final_title,
-    review_final_long_press.icon = &C_icon_hedera_64x64;
-    review_final_long_press.longPressText = "Hold to sign";
-    review_final_long_press.longPressToken = 0;
-    review_final_long_press.tuneId = TUNE_TAP_CASUAL;
+    // If a new flow is added or flows are modified to include more steps, don't
+    // forget to update the infos array size!
+    content.nbMaxLinesForValue = 0;
+    content.smallCaseForValue = true;
+    content.wrapping = true;
+    content.pairs = infos;
+    content.callback = NULL;
+    content.startIndex = 0;
+    content.nbPairs = index;
 }
-
-static void start_review(void) {
-    nbgl_useCaseStaticReview(&layout, &review_final_long_press, "Reject transaction", review_final_callback);
-}
-
-
 #endif
-
 
 // Common for all devices
 
@@ -808,7 +803,7 @@ void ui_sign_transaction(void) {
 #elif defined(TARGET_NANOX) || defined(TARGET_NANOS2)
 
     switch (st_ctx.type) {
-        case Associate: 
+        case Associate:
             // FALLTHROUGH
         case Dissociate:
             ux_flow_init(0, ux_associate_flow, NULL);
@@ -816,16 +811,16 @@ void ui_sign_transaction(void) {
         case Verify:
             ux_flow_init(0, ux_verify_flow, NULL);
             break;
-        case Create: 
+        case Create:
             // FALLTHROUGH
-        case Update: 
+        case Update:
             // FALLTHROUGH
-        case TokenTransfer: 
+        case TokenTransfer:
             // FALLTHROUGH
         case Transfer:
             ux_flow_init(0, ux_transfer_flow, NULL);
             break;
-        case TokenMint: 
+        case TokenMint:
             // FALLTHROUGH
         case TokenBurn:
             ux_flow_init(0, ux_burn_mint_flow, NULL);
@@ -839,12 +834,9 @@ void ui_sign_transaction(void) {
 
     create_transaction_flow();
 
-    nbgl_useCaseReviewStart(&C_icon_hedera_64x64,
-                            review_start_title,
-                            "",
-                            "Reject transaction",
-                            start_review,
-                            rejectUseCaseChoice);
-
+    // Start review
+    nbgl_useCaseReview(TYPE_TRANSACTION, &content, &C_icon_hedera_64x64,
+                       review_start_title, NULL, review_final_title,
+                       review_choice);
 #endif
 }

@@ -1,6 +1,6 @@
 #pragma once
-#include "globals.h"
-#include "io.h"
+#include "app_globals.h"
+#include "app_io.h"
 #include "sign_transaction.h"
 
 void reformat_key(void);

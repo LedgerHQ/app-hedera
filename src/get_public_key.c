@@ -17,7 +17,7 @@ static bool get_pk() {
 
     // Populate Key Hex String
     bin2hex(gpk_ctx.full_key, G_io_apdu_buffer, KEY_SIZE);
-    gpk_ctx.full_key[ KEY_SIZE ] = '\0';
+    gpk_ctx.full_key[KEY_SIZE] = '\0';
 
     return true;
 }
@@ -41,11 +41,10 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
     // key frequently Only do UI actions for p1 == 0
     if (p1 == 0) {
         // Complete "Export Public | Key #x?"
-        hedera_snprintf(gpk_ctx.ui_approve_l2,
-                        DISPLAY_SIZE,
+        hedera_snprintf(gpk_ctx.ui_approve_l2, DISPLAY_SIZE,
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_NANOS)
                         "Key #%u?",
-#elif defined(TARGET_STAX)
+#elif defined(TARGET_STAX) || defined(TARGET_FLEX)
                         "#%u",
 #endif
                         gpk_ctx.key_index);

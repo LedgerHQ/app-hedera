@@ -1,6 +1,6 @@
 #*******************************************************************************
 #   Ledger App Hedera
-#   (c) 2019 Hedera Hashgraph
+#   (c) 2024 Hedera Hashgraph
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -18,163 +18,91 @@
 ifeq ($(BOLOS_SDK),)
 $(error Environment variable BOLOS_SDK is not set)
 endif
+
 include $(BOLOS_SDK)/Makefile.defines
 
-#########
-#  App  #
-#########
-
-APP_LOAD_PARAMS = --curve ed25519
-APP_LOAD_PARAMS += --appFlags 0x200  # APPLICATION_FLAG_BOLOS_SETTINGS
-APP_LOAD_PARAMS += --path "44'/3030'"
-APP_LOAD_PARAMS += $(COMMON_LOAD_PARAMS)
-
-APPVERSION_M = 1
-APPVERSION_N = 4
-APPVERSION_P = 2
-APPVERSION = $(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
+########################################
+#        Mandatory configuration       #
+########################################
+# Application name
 APPNAME = Hedera
 
-COIN = HBAR
+# Application version
+APPVERSION_M = 1
+APPVERSION_N = 5
+APPVERSION_P = 0
+APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
-DEFINES += $(DEFINES_LIB)
+# Application source files
+APP_SOURCE_PATH  += src proto
+SDK_SOURCE_PATH  += lib_u2f
 
+# Application icons
+ICON_NANOS = icons/nanos_app_hedera.gif
+ICON_NANOX = icons/nanox_app_hedera.gif
+ICON_NANOSP = icons/nanox_app_hedera.gif
+ICON_STAX = icons/stax_app_hedera.gif
+ICON_FLEX = icons/flex_app_hedera.gif
+
+# Application allowed derivation curves.
+CURVE_APP_LOAD_PARAMS = ed25519
+
+# Application allowed derivation paths.
+PATH_APP_LOAD_PARAMS = "44'/3030'"   # purpose=coin(44) / coin_type=Hedera HBAR(3030)
+
+VARIANT_PARAM = COIN
+VARIANT_VALUES = hedera
+
+# Enabling DEBUG flag will enable PRINTF and disable optimizations
+#DEBUG = 1
+
+########################################
+#     Application custom permissions   #
+########################################
+HAVE_APPLICATION_FLAG_BOLOS_SETTINGS = 1
+
+########################################
+# Application communication interfaces #
+########################################
+ENABLE_BLUETOOTH = 1
+
+########################################
+#         NBGL custom features         #
+########################################
+ENABLE_NBGL_QRCODE = 1
+
+########################################
+#          Features disablers          #
+########################################
+# These advanced settings allow to disable some feature that are by
+# default enabled in the SDK `Makefile.standard_app`.
+DISABLE_STANDARD_APP_FILES = 1
+
+########################################
+#          App specific configuration  #
+########################################
 ifeq ($(TARGET_NAME),TARGET_NANOS)
-ICONNAME=icons/nanos_app_hedera.gif
-else ifeq ($(TARGET_NAME),TARGET_STAX)
-ICONNAME=icons/stax_app_hedera.gif
-else
-ICONNAME=icons/nanox_app_hedera.gif
+DISABLE_STANDARD_BAGL_UX_FLOW = 1
 endif
-
-
-################
-# Default rule #
-################
-
-all: default
-
-############
-# Platform #
-############
-
-DEFINES   += OS_IO_SEPROXYHAL
-DEFINES   += HAVE_SPRINTF
-
-DEFINES   += HAVE_IO_USB HAVE_L4_USBLIB IO_USB_MAX_ENDPOINTS=6 IO_HID_EP_LENGTH=64 HAVE_USB_APDU
-DEFINES   += APPVERSION_M=$(APPVERSION_M) APPVERSION_N=$(APPVERSION_N) APPVERSION_P=$(APPVERSION_P)
-
-# vendor/ledger-nanopb
-DFEFINES  += PB_FIELD_32BIT=1
 
 # vendor/printf
 DEFINES   += PRINTF_DISABLE_SUPPORT_FLOAT PRINTF_DISABLE_SUPPORT_EXPONENTIAL PRINTF_DISABLE_SUPPORT_PTRDIFF_T
 DEFINES   += PRINTF_FTOA_BUFFER_SIZE=0
-# endif
 
 # U2F
 DEFINES   += HAVE_U2F HAVE_IO_U2F
 DEFINES   += U2F_PROXY_MAGIC=\"BOIL\"
-DEFINES   += USB_SEGMENT_SIZE=64
-DEFINES   += BLE_SEGMENT_SIZE=32 #max MTU, min 20
-
-#WEBUSB_URL     = www.ledgerwallet.com
-#DEFINES       += HAVE_WEBUSB WEBUSB_URL_SIZE_B=$(shell echo -n $(WEBUSB_URL) | wc -c) WEBUSB_URL=$(shell echo -n $(WEBUSB_URL) | sed -e "s/./\\\'\0\\\',/g")
-
-DEFINES   += HAVE_WEBUSB WEBUSB_URL_SIZE_B=0 WEBUSB_URL=""
-
-DEFINES   += APPVERSION=\"$(APPVERSION)\"
-
-
-ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
-DEFINES += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000 HAVE_BLE_APDU
-endif
-
-ifeq ($(TARGET_NAME),TARGET_NANOS)
-    DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=128
-else
-    DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=300
-endif
-
-ifeq ($(TARGET_NAME),TARGET_STAX)
-    DEFINES += NBGL_QRCODE
-    SDK_SOURCE_PATH  += qrcode
-else
-    DEFINES += HAVE_BAGL
-    ifneq ($(TARGET_NAME),TARGET_NANOS)
-        DEFINES += HAVE_UX_FLOW
-        DEFINES += HAVE_GLO096
-        DEFINES += BAGL_WIDTH=128 BAGL_HEIGHT=64
-        DEFINES += HAVE_BAGL_ELLIPSIS # long label truncation feature
-        DEFINES += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
-        DEFINES += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
-        DEFINES += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
-    endif
-endif
-
-# Enabling debug PRINTF
-DEBUG ?= 0
-ifneq ($(DEBUG),0)
-        ifeq ($(TARGET_NAME),TARGET_NANOS)
-                DEFINES   += HAVE_PRINTF PRINTF=screen_printf
-        else
-                DEFINES   += HAVE_PRINTF PRINTF=mcu_usb_printf
-        endif
-else
-        DEFINES   += PRINTF\(...\)=
-endif
-
-##############
-#  Compiler  #
-##############
-ifneq ($(BOLOS_ENV),)
-CLANGPATH := $(BOLOS_ENV)/clang-arm-fropi/bin/
-GCCPATH := $(BOLOS_ENV)/gcc-arm-none-eabi-5_3-2016q1/bin/
-endif
-
-CC       := $(CLANGPATH)clang
-
-CFLAGS   += -Og -Iproto
-
-# nanopb
-CFLAGS   += -I.
-
-# printf
-# CFLAGS   += -Ivendor/printf/
-
-# enable color from inside a script
-CFLAGS   += -fcolor-diagnostics
-
-AS     := $(GCCPATH)arm-none-eabi-gcc
-
-LD       := $(GCCPATH)arm-none-eabi-gcc
-
-LDFLAGS  += -Og -flto=thin
-LDLIBS   += -lm -lgcc -lc
-
-# import rules to compile glyphs(/pone)
-include $(BOLOS_SDK)/Makefile.glyphs
-
-### variables processed by the common makefile.rules of the SDK to grab source files and include dirs
-APP_SOURCE_PATH  += src proto
-SDK_SOURCE_PATH  += lib_stusb lib_stusb_impl lib_u2f
-
-ifneq ($(TARGET_NAME),TARGET_STAX)
-SDK_SOURCE_PATH  += lib_ux
-endif
-
-ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
-SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
-endif
 
 # Allow usage of function from lib_standard_app/crypto_helpers.c
 APP_SOURCE_FILES += ${BOLOS_SDK}/lib_standard_app/crypto_helpers.c
+
+# Additional include paths
+INCLUDES_PATH += ${BOLOS_SDK}/lib_standard_app $(NANOPB_DIR) .
 
 include vendor/nanopb/extra/nanopb.mk
 
 DEFINES   += PB_NO_ERRMSG=1
 SOURCE_FILES += $(NANOPB_CORE)
-CFLAGS += "-I$(NANOPB_DIR)"
 
 PB_FILES = $(wildcard proto/*.proto)
 C_PB_FILES = $(patsubst %.proto,%.pb.c,$(PB_FILES))
@@ -200,27 +128,11 @@ clean_python_pb:
 cleanall : clean
 	-@rm -rf proto/*.pb.c proto/*.pb.h
 
-load: all
-	python -m ledgerblue.loadApp $(APP_LOAD_PARAMS)
-
-load-offline: all
-	python -m ledgerblue.loadApp $(APP_LOAD_PARAMS) --offline
-
-delete:
-	python -m ledgerblue.deleteApp $(COMMON_DELETE_PARAMS)
-
-# import generic rules from the sdk
-include $(BOLOS_SDK)/Makefile.rules
-
-#add dependency on custom makefile filename
-dep/%.d: %.c Makefile
-
-listvariants:
-	@echo VARIANTS COIN hedera
-
 check:
 	@ clang-tidy \
 		$(foreach path, $(APP_SOURCE_PATH), $(shell find $(path) -name "*.c" -and -not -name "pb*" -and -not -name "glyphs*")) -- \
 		$(CFLAGS) \
 		$(addprefix -D, $(DEFINES)) \
 		$(addprefix -I, $(INCLUDES_PATH))
+
+include $(BOLOS_SDK)/Makefile.standard_app

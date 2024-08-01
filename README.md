@@ -1,6 +1,6 @@
 # Hedera Ledger App
 
-Hedera™ Hashgraph BOLOS application for Ledger Nano S, Nano S Plus, and Nano X.
+Hedera™ Hashgraph BOLOS application for Ledger devices.
 
 ## Development
 
