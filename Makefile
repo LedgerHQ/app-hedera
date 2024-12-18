@@ -29,7 +29,7 @@ APPNAME = Hedera
 
 # Application version
 APPVERSION_M = 1
-APPVERSION_N = 5
+APPVERSION_N = 6
 APPVERSION_P = 0
 APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
@@ -45,7 +45,7 @@ ICON_STAX = icons/stax_app_hedera.gif
 ICON_FLEX = icons/flex_app_hedera.gif
 
 # Application allowed derivation curves.
-CURVE_APP_LOAD_PARAMS = ed25519
+CURVE_APP_LOAD_PARAMS = ed25519 secp256k1
 
 # Application allowed derivation paths.
 PATH_APP_LOAD_PARAMS = "44'/3030'"   # purpose=coin(44) / coin_type=Hedera HBAR(3030)

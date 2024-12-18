@@ -2,9 +2,9 @@
 
 get_public_key_context_t gpk_ctx;
 
-static bool get_pk() {
+static bool get_pk(uint8_t p2) {
     // Derive Key
-    if (!hedera_get_pubkey(gpk_ctx.key_index, gpk_ctx.raw_pubkey)) {
+    if (!hedera_get_pubkey(gpk_ctx.key_index, gpk_ctx.raw_pubkey, p2)) {
         return false;
     }
 
@@ -16,7 +16,15 @@ static bool get_pk() {
     public_key_to_bytes(G_io_apdu_buffer, gpk_ctx.raw_pubkey);
 
     // Populate Key Hex String
-    bin2hex(gpk_ctx.full_key, G_io_apdu_buffer, KEY_SIZE);
+    if (p2 == 1) {
+        bin2hex(gpk_ctx.full_key, G_io_apdu_buffer, 66);
+        gpk_ctx.full_key[66] = '\0';
+    } else {
+        bin2hex(gpk_ctx.full_key, G_io_apdu_buffer, KEY_SIZE);
+        gpk_ctx.full_key[KEY_SIZE] = '\0';
+    }
+
+
     gpk_ctx.full_key[KEY_SIZE] = '\0';
 
     return true;
@@ -26,7 +34,6 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
                            uint16_t len,
                            /* out */ volatile unsigned int* flags,
                            /* out */ volatile unsigned int* tx) {
-    UNUSED(p2);
     UNUSED(len);
     UNUSED(tx);
 
@@ -51,7 +58,7 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
     }
 
     // Populate context with PK
-    if (!get_pk()) {
+    if (!get_pk(p2)) {
         io_exchange_with_code(EXCEPTION_INTERNAL, 0);
     }
 
