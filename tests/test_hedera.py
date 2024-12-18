@@ -46,6 +46,36 @@ def test_hedera_get_public_key_ok(backend, firmware, navigator, test_name):
         assert from_public_key.hex() == key
 
 
+def test_hedera_get_ec_public_key_ok(backend, firmware, navigator, test_name):
+    hedera = HederaClient(backend)
+    values = [
+        (0, "a5ac18a918d6e10f2cc1aa9aa9a49986dda2bb1dda6d7c317be5e11900d99cc8"),
+        (11095, "35caf40ef00ddf57c716169a0a436b141129f49b7f01b03c3263958ab0c5668e"),
+        (294967295, "c004f48aa1ef968ab8a5c4ab65d0573eafa724df486d909be9ed84803abe4920"),
+        (
+            2294967295,
+            "c7db82a056d8968320127a7ab887ac6f05d3c1322713599e0d6e7d7d93b989ad",
+        ),
+    ]
+    for i, (index, key) in enumerate(values):
+        from_public_key = hedera.get_ec_public_key_non_confirm(index).data
+        backend.wait_for_home_screen()
+        assert from_public_key.hex() == key
+        with hedera.get_ec_public_key_confirm(index):
+            if firmware.device == "nanos":
+                nav_ins = [NavInsID.RIGHT_CLICK]
+            elif backend.firmware.device.startswith("nano"):
+                nav_ins = [NavInsID.RIGHT_CLICK,
+                           NavInsID.BOTH_CLICK]
+            else:
+                nav_ins = [NavInsID.USE_CASE_CHOICE_CONFIRM,
+                           NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM]
+            navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name + "_" + str(i), nav_ins)
+
+        from_public_key = hedera.get_async_response().data
+        assert from_public_key.hex() == key
+
+
 def test_hedera_get_public_key_refused(backend, firmware, navigator, test_name):
     hedera = HederaClient(backend)
     with hedera.get_public_key_confirm(0):

@@ -239,7 +239,6 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
                              /* out */ volatile unsigned int* flags,
                              /* out */ volatile unsigned int* tx) {
     UNUSED(p1);
-    UNUSED(p2);
     UNUSED(tx);
 
     // Raw Tx
@@ -260,7 +259,7 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
 
     // Sign Transaction
     if (!hedera_sign(st_ctx.key_index, raw_transaction, raw_transaction_length,
-                     G_io_apdu_buffer)) {
+                     G_io_apdu_buffer, p2)) {
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 

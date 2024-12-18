@@ -47,10 +47,21 @@ class HederaClient:
         index_b = index.to_bytes(4, "little")
         return self._client.exchange(CLA, INS.INS_GET_PUBLIC_KEY, P1_NON_CONFIRM, 0, index_b)
 
+    def get_ec_public_key_non_confirm(self, index: int) -> RAPDU:
+        index_b = index.to_bytes(4, "little")
+        return self._client.exchange(CLA, INS.INS_GET_PUBLIC_KEY, P1_NON_CONFIRM, 1, index_b)
+
     @contextmanager
     def get_public_key_confirm(self, index: int) -> Generator[None, None, None]:
         index_b = index.to_bytes(4, "little")
         with self._client.exchange_async(CLA, INS.INS_GET_PUBLIC_KEY, P1_CONFIRM, 0, index_b):
+            sleep(0.5)
+            yield
+
+    @contextmanager
+    def get_ec_public_key_confirm(self, index: int) -> Generator[None, None, None]:
+        index_b = index.to_bytes(4, "little")
+        with self._client.exchange_async(CLA, INS.INS_GET_PUBLIC_KEY, P1_CONFIRM, 1, index_b):
             sleep(0.5)
             yield
 
