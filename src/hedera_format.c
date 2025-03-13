@@ -92,13 +92,14 @@ static void validate_memo(const char memo[100]) {
     hedera_snprintf(element, sizeof(element) - 1, __VA_ARGS__)
 
 void reformat_key(void) {
-    hedera_safe_printf(st_ctx.summary_line_2,
+    const char *format_string;
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_NANOS)
-                       "with Key #%u?",
+    format_string = "with Key #%u?",
 #elif defined(TARGET_STAX) || defined(TARGET_FLEX)
-                       "#%u",
+    format_string = "#%u",
 #endif
-                       st_ctx.key_index);
+
+    hedera_snprintf(st_ctx.summary_line_2, sizeof(st_ctx.summary_line_2) - 1, format_string, st_ctx.key_index);
 }
 
 // SUMMARIES

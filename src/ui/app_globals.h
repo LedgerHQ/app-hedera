@@ -12,6 +12,7 @@
 #define KEY_SIZE 64
 #define MAX_MEMO_SIZE 200
 #define SIGNATURE_SIZE 32
+#define ACCEPTABLE_SIZE 32
 
 #define HBAR 100000000 // tinybar
 #define HBAR_BUF_SIZE 26

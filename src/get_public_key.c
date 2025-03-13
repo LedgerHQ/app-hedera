@@ -8,7 +8,7 @@ static bool get_pk(uint8_t p2) {
         return false;
     }
 
-    if (sizeof(G_io_apdu_buffer) < 32) {
+    if (sizeof(G_io_apdu_buffer) < ACCEPTABLE_SIZE) {
         THROW(EXCEPTION_INTERNAL);
     }
 
@@ -16,15 +16,7 @@ static bool get_pk(uint8_t p2) {
     public_key_to_bytes(G_io_apdu_buffer, gpk_ctx.raw_pubkey);
 
     // Populate Key Hex String
-    if (p2 == 1) {
-        bin2hex(gpk_ctx.full_key, G_io_apdu_buffer, 66);
-        gpk_ctx.full_key[66] = '\0';
-    } else {
-        bin2hex(gpk_ctx.full_key, G_io_apdu_buffer, KEY_SIZE);
-        gpk_ctx.full_key[KEY_SIZE] = '\0';
-    }
-
-
+    bin2hex(gpk_ctx.full_key, G_io_apdu_buffer, KEY_SIZE);
     gpk_ctx.full_key[KEY_SIZE] = '\0';
 
     return true;

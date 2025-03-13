@@ -7,6 +7,12 @@
 #include "crypto_helpers.h"
 #include "utils.h"
 
+/**
+ * @brief Sets the derivation path for the Hedera Ledger application.
+ *
+ * @param index Index value (not used in this function but kept for consistency).
+ * @param path Output array to store the 5-level BIP32 derivation path.
+ */
 static void hedera_set_path(uint32_t index, uint32_t path[static 5]) {
     path[0] = PATH_ZERO;
     path[1] = PATH_ONE;
@@ -15,6 +21,13 @@ static void hedera_set_path(uint32_t index, uint32_t path[static 5]) {
     path[4] = PATH_FOUR;
 }
 
+/**
+ * @brief Derives the public key for a given index and stores it in raw_pubkey.
+ *
+ * @param index The derivation index for the key.
+ * @param raw_pubkey Output buffer to store the derived raw public key (must be at least RAW_PUBKEY_SIZE bytes).
+ * @return true if the public key was successfully derived, false otherwise.
+ */
 bool hedera_get_pubkey(uint32_t index, uint8_t raw_pubkey[static RAW_PUBKEY_SIZE], uint8_t p2) {
     static uint32_t path[5];
 
@@ -37,6 +50,15 @@ bool hedera_get_pubkey(uint32_t index, uint8_t raw_pubkey[static RAW_PUBKEY_SIZE
     return true;
 }
 
+/**
+ * @brief Signs a transaction using the Ed25519 private key derived from the given index.
+ *
+ * @param index The derivation index for the private key.
+ * @param tx Pointer to the transaction data to be signed.
+ * @param tx_len Length of the transaction data.
+ * @param result Output buffer to store the generated signature (must be at least 64 bytes).
+ * @return true if the signing operation was successful, false otherwise.
+ */
 bool hedera_sign(uint32_t index, const uint8_t* tx, uint8_t tx_len,
                  /* out */ uint8_t* result, uint8_t p2) {
     static uint32_t path[5];
