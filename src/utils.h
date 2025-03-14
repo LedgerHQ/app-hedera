@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include "app_globals.h"
 
+#define BAIL_IF(x)           \
+  do {                       \
+      int err = x;           \
+      if (err) return err;   \
+  } while (0)
+
 #define MEMCLEAR(element) explicit_bzero(&element, sizeof(element))
 
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))

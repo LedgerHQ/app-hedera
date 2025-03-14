@@ -1,5 +1,7 @@
 #include "get_public_key.h"
 
+#include <swap_utils.h>
+
 get_public_key_context_t gpk_ctx;
 
 static bool get_pk() {
@@ -29,6 +31,10 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
     UNUSED(p2);
     UNUSED(len);
     UNUSED(tx);
+
+    if (G_called_from_swap) {
+        THROW(EXCEPTION_OK);
+    }
 
     if (buffer == NULL || len < sizeof(uint32_t)) {
         THROW(EXCEPTION_INTERNAL);
