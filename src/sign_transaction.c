@@ -1,6 +1,16 @@
+#include "handle_swap_sign_transaction.h"
 #include "sign_transaction.h"
 
+#include <swap_entrypoints.h>
+#include <swap_utils.h>
+
+
 sign_tx_context_t st_ctx;
+
+static void write_u16_be(uint8_t *ptr, size_t offset, uint16_t value) {
+    ptr[offset + 0] = (uint8_t) (value >> 8);
+    ptr[offset + 1] = (uint8_t) (value >> 0);
+}
 
 // Validates whether or not a transfer is legal:
 // Either a transfer between two accounts
@@ -227,6 +237,58 @@ void handle_transaction_body() {
         reformat_fee();
         reformat_memo();
     }
+#endif
+
+#ifdef HAVE_SWAP
+    // If we are in swap context, do not redisplay the message data
+    // Instead, ensure they are identical with what was previously displayed
+    if (G_called_from_swap) {
+        if (G_swap_response_ready) {
+            // Safety against trying to make the app sign multiple TX
+            // This code should never be triggered as the app is supposed to exit after
+            // sending the signed transaction
+            PRINTF("Safety against double signing triggered\n");
+            // io_send_sw(SW_SWAP_CHECKING_FAIL);
+            os_sched_exit(-1);
+        } else {
+            // We will quit the app after this transaction, whether it succeeds or fails
+            PRINTF("Swap response is ready, the app will quit after the next send\n");
+            // This boolean will make the io_send_sw family instant reply + return to
+            // exchange
+            G_swap_response_ready = true;
+        }
+        if (swap_check_validity()) {
+            PRINTF("Swap response validated\n");
+            validate_transfer();
+
+            uint8_t tx = 0;
+
+            write_u16_be(G_io_apdu_buffer, tx, 0x9000);
+            tx += 2;
+
+            // Send back the response, do not restart the event loop
+            io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+            // io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, 0);
+            finalize_exchange_sign_transaction(true);
+        } else {
+            PRINTF("swap_check_validity failed\n");
+            // Failsafe
+            // io_send_sw(SW_SWAP_CHECKING_FAIL);
+            uint8_t tx = 0;
+
+            write_u16_be(G_io_apdu_buffer, tx, 0x6980);
+            tx += 2;
+
+            // Send back the response, do not restart the event loop
+            io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+
+            finalize_exchange_sign_transaction(false);
+        }
+    } else {
+        ui_sign_transaction();
+    }
+#else
+    ui_sign_transaction();
 #endif
 
     ui_sign_transaction();

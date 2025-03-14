@@ -16,7 +16,7 @@ static void hedera_set_path(uint32_t index, uint32_t path[static 5]) {
 }
 
 bool hedera_get_pubkey(uint32_t index, uint8_t raw_pubkey[static RAW_PUBKEY_SIZE]) {
-    static uint32_t path[5];
+    uint32_t path[5];
 
     hedera_set_path(index, path);
 
@@ -31,7 +31,7 @@ bool hedera_get_pubkey(uint32_t index, uint8_t raw_pubkey[static RAW_PUBKEY_SIZE
 
 bool hedera_sign(uint32_t index, const uint8_t* tx, uint8_t tx_len,
                  /* out */ uint8_t* result) {
-    static uint32_t path[5];
+    uint32_t path[5];
     size_t sig_len = 64;
 
     hedera_set_path(index, path);
