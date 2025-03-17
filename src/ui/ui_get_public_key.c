@@ -138,8 +138,11 @@ UX_DEF(ux_approve_pk_flow, &ux_approve_pk_flow_1_step,
 
 #elif defined(HAVE_NBGL)
 
-static void callback_match(bool match) {
-    if (match) {
+static void callback_match(int token, uint8_t index, int page) {
+    UNUSED(index);
+    UNUSED(page);
+
+    if (token == FIRST_USER_TOKEN) {
         io_exchange_with_code(EXCEPTION_OK, 32);
     } else {
         io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
@@ -147,10 +150,37 @@ static void callback_match(bool match) {
     ui_idle();
 }
 
+static void callback_rejected(void) {
+    io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
+    ui_idle();
+}
+
+static void content_cb(uint8_t contentIndex, nbgl_content_t *content) {
+    memset(content, 0, sizeof(nbgl_content_t));
+
+    switch (contentIndex) {
+        case 0: 
+            content->type = INFO_BUTTON;
+            content->content.infoButton.text = (const char *)gpk_ctx.full_key;
+            content->content.infoButton.icon = &C_icon_hedera_64x64;
+            content->content.infoButton.buttonText = "Confirm";
+            content->content.infoButton.buttonToken = FIRST_USER_TOKEN;
+            content->contentActionCallback = callback_match;
+            break;
+        default:
+            break;
+    }
+}
+
 static void callback_export(bool accept) {
+    static nbgl_genericContents_t genericContent = {0};
+
+    genericContent.callbackCallNeeded = true;
+    genericContent.contentGetterCallback = content_cb;
+    genericContent.nbContents = 1;
+
     if (accept) {
-        nbgl_useCaseAddressConfirmation((const char *)gpk_ctx.full_key,
-                                        callback_match);
+        nbgl_useCaseGenericReview(&genericContent, "Done", callback_rejected);
     } else {
         io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
         ui_idle();
