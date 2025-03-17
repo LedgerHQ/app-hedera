@@ -39,7 +39,7 @@ def test_hedera_get_public_key_ok(backend, firmware, navigator, test_name):
                            NavInsID.BOTH_CLICK]
             else:
                 nav_ins = [NavInsID.USE_CASE_CHOICE_CONFIRM,
-                           NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM]
+                           NavInsID.USE_CASE_CHOICE_CONFIRM]
             navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name + "_" + str(i), nav_ins)
 
         from_public_key = hedera.get_async_response().data
@@ -69,7 +69,7 @@ def test_hedera_get_ec_public_key_ok(backend, firmware, navigator, test_name):
                            NavInsID.BOTH_CLICK]
             else:
                 nav_ins = [NavInsID.USE_CASE_CHOICE_CONFIRM,
-                           NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM]
+                           NavInsID.USE_CASE_CHOICE_CONFIRM]
             navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name + "_" + str(i), nav_ins)
 
         from_public_key = hedera.get_async_response().data
