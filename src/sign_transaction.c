@@ -228,8 +228,6 @@ void handle_transaction_body() {
         reformat_memo();
     }
 #endif
-
-    ui_sign_transaction();
 }
 
 // Sign Handler
@@ -256,6 +254,8 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
 
     // copy raw transaction
     memmove(raw_transaction, (buffer + 4), raw_transaction_length);
+
+    ui_sign_transaction();
 
     // Sign Transaction
     if (!hedera_sign(st_ctx.key_index, raw_transaction, raw_transaction_length,
