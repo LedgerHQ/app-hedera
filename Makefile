@@ -110,23 +110,25 @@ PYTHON_PB_FILES = $(patsubst %.proto,%_pb2.py,$(PB_FILES))
 
 # Build rule for C proto files
 SOURCE_FILES += $(C_PB_FILES)
-$(C_PB_FILES): %.pb.c: $(PB_FILES)
-	$(PROTOC) $(PROTOC_OPTS) --nanopb_out=. $*.proto
-
-# Build rule for Python proto files
-$(PYTHON_PB_FILES): %_pb2.py: $(PB_FILES)
-	$(PROTOC) $(PROTOC_OPTS) --python_out=. $*.proto
 
 .PHONY: c_pb python_pb clean_python_pb
-c_pb: $(C_PB_FILES)
-python_pb: $(PYTHON_PB_FILES)
+
+c_pb:
+	$(PROTOC) $(PROTOC_OPTS) --nanopb_out=. $(PB_FILES)
+
+python_pb:
+	$(PROTOC) $(PROTOC_OPTS) --python_out=. $(PB_FILES)
+
 clean_python_pb:
 	rm -f $(PYTHON_PB_FILES)
 
-# target to also clean generated proto c files
-.SILENT : cleanall
-cleanall : clean
+clean_c_pb:
 	-@rm -rf proto/*.pb.c proto/*.pb.h
+
+
+# target to also clean generated proto (c and python) files
+.SILENT : cleanall
+cleanall : clean clean_python_pb clean_c_pb
 
 check:
 	@ clang-tidy \
