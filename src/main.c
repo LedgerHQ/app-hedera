@@ -139,9 +139,6 @@ static void start_app_from_lib(void) {
     G_called_from_swap = true;
     G_swap_response_ready = false;
     UX_INIT();
-#ifdef HAVE_NBGL
-    nbgl_useCaseSpinner("Signing");
-#endif  // HAVE_BAGL
     io_seproxyhal_init();
     // nv_app_state_init();
     USB_power(0);
