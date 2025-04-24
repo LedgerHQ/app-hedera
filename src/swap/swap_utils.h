@@ -5,7 +5,7 @@
 #include "stdbool.h"
 
 #define HEDERA_SIGN "HBAR"
-#define HEDERA_DECIMALS 9
+#define HEDERA_DECIMALS 8
 
 bool swap_str_to_u64(const uint8_t* src, size_t length, uint64_t* result);
 

@@ -1,11 +1,10 @@
 #ifdef HAVE_SWAP
 
 #include "handle_check_address.h"
-
+#include "../get_public_key.h"
 #include <ctype.h>
 #include <string.h>
 
-#include "../get_public_key.h"
 
 static void derive_public_key(uint32_t index, uint8_t public_key[RAW_PUBKEY_SIZE],
                               uint8_t public_key_str[RAW_PUBKEY_SIZE]) {
@@ -24,7 +23,7 @@ int handle_check_address(const check_address_parameters_t *params) {
     }
 
     if (params->address_parameters == NULL || params->address_parameters_length < 4) {
-        PRINTF("derivation path expected\n");
+        PRINTF("Derivation path expected\n");
         return 0;
     }
 
@@ -32,7 +31,6 @@ int handle_check_address(const check_address_parameters_t *params) {
         PRINTF("Address to check expected\n");
         return 0;
     }
-    PRINTF("Address to check %s\n", params->address_to_check);
 
     if (params->extra_id_to_check == NULL) {
         PRINTF("extra_id_to_check expected\n");
@@ -46,11 +44,11 @@ int handle_check_address(const check_address_parameters_t *params) {
 
     uint8_t public_key[RAW_PUBKEY_SIZE];
     uint8_t public_key_str[RAW_PUBKEY_SIZE];
+    
     // Read Key Index (last 4 bytes of buffer)
     // The key index is the last 4 bytes of the buffer
     // It will work for both sending only index and full path
     uint32_t index = U4BE(params->address_parameters, params->address_parameters_length - 4);
-    PRINTF("Deriving public key for index %u, hardened=%u\n", index & 0x7FFFFFFF, (index & 0x80000000) != 0);
     derive_public_key(index, public_key, public_key_str);
 
     UNUSED(public_key);
