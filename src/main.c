@@ -42,7 +42,6 @@ void app_main() {
     volatile unsigned int tx = 0;
     volatile unsigned int flags = 0;
 
-    // reset_getpubkey_globals();
     reset_main_globals();
 
     for (;;) {
@@ -140,7 +139,6 @@ static void start_app_from_lib(void) {
     G_swap_response_ready = false;
     UX_INIT();
     io_seproxyhal_init();
-    // nv_app_state_init();
     USB_power(0);
     USB_power(1);
 #ifdef HAVE_BLE

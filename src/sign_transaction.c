@@ -248,7 +248,6 @@ void handle_transaction_body() {
             // This code should never be triggered as the app is supposed to exit after
             // sending the signed transaction
             PRINTF("Safety against double signing triggered\n");
-            // io_send_sw(SW_SWAP_CHECKING_FAIL);
             os_sched_exit(-1);
         } else {
             // We will quit the app after this transaction, whether it succeeds or fails
@@ -268,12 +267,9 @@ void handle_transaction_body() {
 
             // Send back the response, do not restart the event loop
             io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
-            // io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, 0);
             finalize_exchange_sign_transaction(true);
         } else {
             PRINTF("swap_check_validity failed\n");
-            // Failsafe
-            // io_send_sw(SW_SWAP_CHECKING_FAIL);
             uint8_t tx = 0;
 
             write_u16_be(G_io_apdu_buffer, tx, 0x6980);

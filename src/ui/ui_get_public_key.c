@@ -149,6 +149,11 @@ static void callback_match(bool match) {
 
 static void callback_export(bool accept) {
     if (accept) {
+        // This function was marked as deprecated during development. 
+        // However, the new function has a completely different signature, 
+        // so we are ignoring the deprecation warning for now. 
+        // This usage will be removed in the future.
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
         nbgl_useCaseAddressConfirmation((const char *)gpk_ctx.full_key,
                                         callback_match);
     } else {

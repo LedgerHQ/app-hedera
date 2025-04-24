@@ -6,7 +6,6 @@ get_public_key_context_t gpk_ctx;
 
 static bool get_pk() {
     // Derive Key
-    PRINTF("Deriving public key for index %u\n", gpk_ctx.key_index);
     if (!hedera_get_pubkey(gpk_ctx.key_index, gpk_ctx.raw_pubkey)) {
         return false;
     }
@@ -41,10 +40,8 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
         THROW(EXCEPTION_INTERNAL);
     }
     
-    // Read Key Index (last 4 bytes of buffer)
-    // The key index is the last 4 bytes of the buffer
-    // It will work for both sending only index and full path
-    gpk_ctx.key_index = U4BE(buffer, len-4);
+    // Read Key Index
+    gpk_ctx.key_index = U4LE(buffer, 0);
 
     // If p1 != 0, silent mode, for use by apps that request the user's public
     // key frequently Only do UI actions for p1 == 0
