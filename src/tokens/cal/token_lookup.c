@@ -36,7 +36,6 @@ bool token_info_get_by_address(const token_addr_t address,
     }
     // Token not found
     return false;
-
 }
 
 size_t token_info_count(void) { return token_info_table_size; }
