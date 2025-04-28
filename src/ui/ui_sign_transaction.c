@@ -655,6 +655,10 @@ UX_STEP_NOCB(recipients_step, bnnn_paging,
              {.title = (char*)st_ctx.recipients_title,
               .text = (char*)st_ctx.recipients});
 
+UX_STEP_NOCB(token_addr_step, bnnn_paging,
+             {.title = "Token address",
+              .text = (char*)st_ctx.token_address_str});
+
 UX_STEP_NOCB(amount_step, bnnn_paging,
              {.title = (char*)st_ctx.amount_title,
               .text = (char*)st_ctx.amount});
@@ -673,7 +677,12 @@ UX_STEP_VALID(reject_step, pb, io_seproxyhal_tx_reject(NULL),
 
 // Transfer UX Flow
 UX_DEF(ux_transfer_flow, &summary_step, &operator_step, &senders_step,
-       &recipients_step, &amount_step, &fee_step, &memo_step, &confirm_step,
+       &recipients_step,  &amount_step, &fee_step, &memo_step, &confirm_step,
+       &reject_step);
+
+// Transfer UX Flow with Known Token
+UX_DEF(ux_transfer_flow_known_token, &summary_step, &operator_step,
+       &senders_step, &recipients_step, &token_addr_step, &amount_step, &fee_step, &memo_step, &confirm_step,
        &reject_step);
 
 // Verify UX Flow
@@ -823,7 +832,11 @@ void ui_sign_transaction(void) {
         case TokenTransfer:
             // FALLTHROUGH
         case Transfer:
-            ux_flow_init(0, ux_transfer_flow, NULL);
+            if (st_ctx.token_known) {
+                ux_flow_init(0, ux_transfer_flow_known_token, NULL);
+            } else {
+                ux_flow_init(0, ux_transfer_flow, NULL);
+            }
             break;
         case TokenMint:
             // FALLTHROUGH

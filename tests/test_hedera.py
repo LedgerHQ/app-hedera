@@ -350,9 +350,9 @@ def test_hedera_transfer_token_ok(backend, firmware, scenario_navigator):
 def test_hedera_transfer_known_token_1_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_token_conf(
-        token_shardNum=5022567, #hBARK
+        token_shardNum=0,
         token_realmNum=0,
-        token_tokenNum=0,
+        token_tokenNum=5022567, #hBARK
         sender_shardNum=12312312345,
         sender_realmNum=0,
         sender_accountNum=0,
@@ -378,9 +378,9 @@ def test_hedera_transfer_known_token_1_ok(backend, firmware, scenario_navigator)
 def test_hedera_transfer_known_token_2_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_token_conf(
-        token_shardNum=4794920, #PACK
+        token_shardNum=0, 
         token_realmNum=0,
-        token_tokenNum=0,
+        token_tokenNum=4794920,#PACK
         sender_shardNum=33,
         sender_realmNum=0,
         sender_accountNum=0,
@@ -406,9 +406,9 @@ def test_hedera_transfer_known_token_2_ok(backend, firmware, scenario_navigator)
 def test_hedera_transfer_known_token_wrong_decimal(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_token_conf(
-        token_shardNum=4794920, #PACK
+        token_shardNum=0,
         token_realmNum=0,
-        token_tokenNum=0,
+        token_tokenNum=4794920, #PACK
         sender_shardNum=33,
         sender_realmNum=0,
         sender_accountNum=0,

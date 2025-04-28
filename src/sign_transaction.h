@@ -161,7 +161,7 @@ typedef struct sign_tx_context_s {
     char token_ticker[MAX_TICKER_LENG];
     uint32_t token_decimals;
     char token_name[MAX_TOKEN_LEN];
-    char token_address_str[MAX_HEDERA_ADDRESS_LENGTH + 1];
+    char token_address_str[MAX_HEDERA_ADDRESS_LENGTH*2 + 1];
 
 #endif
 

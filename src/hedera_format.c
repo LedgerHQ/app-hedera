@@ -77,6 +77,7 @@ static char *hedera_format_tinybar(uint64_t tinybar) {
 static void validate_decimals(uint32_t decimals) {
     if (decimals >= 20) {
         // We only support decimal values less than 20
+        PRINTF("Invalid decimals: %u\n", decimals);
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 }
@@ -84,6 +85,7 @@ static void validate_decimals(uint32_t decimals) {
 static void validate_memo(const char memo[100]) {
     if (strlen(memo) > MAX_MEMO_SIZE) {
         // Hedera max length for memos
+        PRINTF("Invalid memo length: %u\n", strlen(memo));
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 }
@@ -292,8 +294,9 @@ void reformat_sender_account(void) {
                            .accountID.account);
 }
 
-void address_to_string(const token_addr_t *addr, char *buf) {
-    hedera_safe_printf(buf, "%llu.%llu.%llu", addr->addr_shard, addr->addr_realm,
+void address_to_string(const token_addr_t *addr, char buf[MAX_HEDERA_ADDRESS_LENGTH+1]) {
+    hedera_snprintf(buf, MAX_HEDERA_ADDRESS_LENGTH,
+                       "%llu.%llu.%llu", addr->addr_shard, addr->addr_realm,
                        addr->addr_account);
 }
 
