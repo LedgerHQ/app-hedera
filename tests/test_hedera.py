@@ -347,6 +347,93 @@ def test_hedera_transfer_token_ok(backend, firmware, scenario_navigator):
         navigation_helper_confirm(firmware, scenario_navigator)
 
 
+def test_hedera_transfer_known_token_1_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=5022567, #hBARK
+        token_realmNum=0,
+        token_tokenNum=0,
+        sender_shardNum=12312312345,
+        sender_realmNum=0,
+        sender_accountNum=0,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=1,
+        decimals=0,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="sending 1 hBARK",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_transfer_known_token_2_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=4794920, #PACK
+        token_realmNum=0,
+        token_tokenNum=0,
+        sender_shardNum=33,
+        sender_realmNum=0,
+        sender_accountNum=0,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=1,  #Should be 3.14 PACK
+        decimals=6,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="sending 0.000001 PACK",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_transfer_known_token_wrong_decimal(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=4794920, #PACK
+        token_realmNum=0,
+        token_tokenNum=0,
+        sender_shardNum=33,
+        sender_realmNum=0,
+        sender_accountNum=0,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=1,  #Should be 3.14 PACK
+        decimals=9,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="sending 0.000001 PACK",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+
 def test_hedera_transfer_token_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_token_conf(

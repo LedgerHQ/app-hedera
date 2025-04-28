@@ -31,6 +31,7 @@ STATUS_OK = 0x9000
 
 class ErrorType:
     EXCEPTION_USER_REJECTED = 0x6985
+    EXCEPTION_MALFORMED_APDU = 0x6E00
 
 
 def to_zigzag(n):

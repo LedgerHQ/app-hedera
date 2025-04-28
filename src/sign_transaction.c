@@ -1,5 +1,7 @@
 #include "sign_transaction.h"
 
+#include "tokens/cal/token_lookup.h"
+
 sign_tx_context_t st_ctx;
 
 // Validates whether or not a transfer is legal:
@@ -76,6 +78,9 @@ void handle_transaction_body() {
     MEMCLEAR(st_ctx.fee);
     MEMCLEAR(st_ctx.amount);
     MEMCLEAR(st_ctx.memo);
+    MEMCLEAR(st_ctx.token_decimals);
+    MEMCLEAR(st_ctx.token_name);
+    MEMCLEAR(st_ctx.token_ticker);
 #endif
 
     // Step 1, Unknown Type, Screen 1 of 1
@@ -116,15 +121,6 @@ void handle_transaction_body() {
             reformat_stake_target();
             reformat_collect_rewards();
             reformat_updated_account();
-#endif
-            break;
-
-        case Hedera_TransactionBody_tokenAssociate_tag:
-            st_ctx.type = Associate;
-            reformat_summary("Associate Token");
-
-#if !defined(TARGET_NANOS)
-            reformat_token_associate();
 #endif
             break;
 
@@ -191,7 +187,44 @@ void handle_transaction_body() {
 
             } else if (is_token_transfer()) {
                 st_ctx.type = TokenTransfer;
-                reformat_summary_send_token();
+
+                token_addr_t token_address = {
+                    st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
+                        .token.tokenNum,
+                    st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
+                        .token.realmNum,
+                    st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
+                        .token.shardNum,
+                };
+
+                // Parse token address to string
+                address_to_string(&token_address, st_ctx.token_address_str);
+
+                // Get info about token
+                st_ctx.token_known = token_info_get_by_address(
+                    token_address, st_ctx.token_ticker, st_ctx.token_name,
+                    &st_ctx.token_decimals);
+
+                // Veify decimals
+                if (st_ctx.token_known) {
+                    if (st_ctx.token_decimals !=
+                        st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
+                            .expected_decimals.value) {
+                        PRINTF(
+                            "Token %s has %u decimals, but transaction has %u",
+                            st_ctx.token_name, st_ctx.token_decimals,
+                            st_ctx.transaction.data.cryptoTransfer
+                                .tokenTransfers[0]
+                                .expected_decimals.value);
+                        THROW(EXCEPTION_MALFORMED_APDU);
+                    }
+                }
+
+                if (st_ctx.token_known) {
+                    reformat_summary_send_known_token();
+                } else {
+                    reformat_summary_send_token();
+                }
 
                 // Determine Sender based on amount
                 st_ctx.transfer_from_index = 0;

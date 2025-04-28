@@ -198,9 +198,9 @@ static const bagl_element_t ui_tx_deny_step[] = {
     UI_ICON(LINE_2_ID, 0, 24, 128, BAGL_GLYPH_ICON_CROSS)};
 
 // Step 1: Transaction Summary
-unsigned int ui_tx_summary_step_button(unsigned int button_mask,
-                                       unsigned int __attribute__((unused))
-                                       button_mask_counter) {
+unsigned int ui_tx_summary_step_button(
+    unsigned int button_mask,
+    unsigned int __attribute__((unused)) button_mask_counter) {
     switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_RIGHT:
             if (st_ctx.type == Verify) { // Verify skips to Senders
@@ -540,9 +540,9 @@ void handle_intermediate_right_press() {
 }
 
 // Step 2 - 7: Operator, Senders, Recipients, Amount, Fee, Memo
-unsigned int ui_tx_intermediate_step_button(unsigned int button_mask,
-                                            unsigned int __attribute__((unused))
-                                            button_mask_counter) {
+unsigned int ui_tx_intermediate_step_button(
+    unsigned int button_mask,
+    unsigned int __attribute__((unused)) button_mask_counter) {
     switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_LEFT:
             handle_intermediate_left_press();
@@ -560,9 +560,9 @@ unsigned int ui_tx_intermediate_step_button(unsigned int button_mask,
     return 0;
 }
 
-unsigned int ui_tx_confirm_step_button(unsigned int button_mask,
-                                       unsigned int __attribute__((unused))
-                                       button_mask_counter) {
+unsigned int ui_tx_confirm_step_button(
+    unsigned int button_mask,
+    unsigned int __attribute__((unused)) button_mask_counter) {
     switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_LEFT:
             if (st_ctx.type == Verify) { // Return to Senders
@@ -595,9 +595,9 @@ unsigned int ui_tx_confirm_step_button(unsigned int button_mask,
     return 0;
 }
 
-unsigned int ui_tx_deny_step_button(unsigned int button_mask,
-                                    unsigned int __attribute__((unused))
-                                    button_mask_counter) {
+unsigned int ui_tx_deny_step_button(
+    unsigned int button_mask,
+    unsigned int __attribute__((unused)) button_mask_counter) {
     switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_LEFT:
             // Return to Confirm
@@ -704,7 +704,7 @@ static void review_choice(bool confirm) {
 // Max is 7 infos for transfer transaction
 // If a new flow is added or flows are modified to include more steps, don't
 // forget to update the infos array size!
-static nbgl_contentTagValue_t infos[7];
+static nbgl_contentTagValue_t infos[8];
 // Content of the review flow
 static nbgl_contentTagValueList_t content;
 static char review_start_title[64];
@@ -756,6 +756,11 @@ static void create_transaction_flow(void) {
             infos[index].item = "Recipient";
             infos[index].value = st_ctx.recipients;
             ++index;
+            if (st_ctx.token_known) {
+                infos[index].item = "Token address";
+                infos[index].value = st_ctx.token_address_str;
+                ++index;
+            }
             infos[index].item = st_ctx.amount_title;
             infos[index].value = st_ctx.amount;
             ++index;

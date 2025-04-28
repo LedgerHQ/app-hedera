@@ -2,6 +2,7 @@
 #include "app_globals.h"
 #include "app_io.h"
 #include "sign_transaction.h"
+#include "tokens/token_address.h"
 
 void reformat_key(void);
 
@@ -10,6 +11,8 @@ void reformat_operator(void);
 void reformat_summary(const char *summary);
 
 void reformat_summary_send_token(void);
+
+void reformat_summary_send_known_token(void);
 
 void reformat_stake_target(void);
 
@@ -48,3 +51,5 @@ void reformat_token_transfer(void);
 void reformat_fee();
 
 void reformat_memo();
+
+void address_to_string(const token_addr_t *addr, char *buf);
