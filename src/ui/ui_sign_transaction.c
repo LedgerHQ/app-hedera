@@ -198,9 +198,9 @@ static const bagl_element_t ui_tx_deny_step[] = {
     UI_ICON(LINE_2_ID, 0, 24, 128, BAGL_GLYPH_ICON_CROSS)};
 
 // Step 1: Transaction Summary
-unsigned int ui_tx_summary_step_button(
-    unsigned int button_mask,
-    unsigned int __attribute__((unused)) button_mask_counter) {
+unsigned int ui_tx_intermediate_step_button(unsigned int button_mask,
+                                            unsigned int __attribute__((unused))
+                                            button_mask_counter) {
     switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_RIGHT:
             if (st_ctx.type == Verify) { // Verify skips to Senders
@@ -560,9 +560,9 @@ unsigned int ui_tx_intermediate_step_button(
     return 0;
 }
 
-unsigned int ui_tx_confirm_step_button(
-    unsigned int button_mask,
-    unsigned int __attribute__((unused)) button_mask_counter) {
+unsigned int ui_tx_confirm_step_button(unsigned int button_mask,
+                                       unsigned int __attribute__((unused))
+                                       button_mask_counter) {
     switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_LEFT:
             if (st_ctx.type == Verify) { // Return to Senders
@@ -595,9 +595,9 @@ unsigned int ui_tx_confirm_step_button(
     return 0;
 }
 
-unsigned int ui_tx_deny_step_button(
-    unsigned int button_mask,
-    unsigned int __attribute__((unused)) button_mask_counter) {
+unsigned int ui_tx_deny_step_button(unsigned int button_mask,
+                                    unsigned int __attribute__((unused))
+                                    button_mask_counter) {
     switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_LEFT:
             // Return to Confirm

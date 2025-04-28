@@ -11,9 +11,6 @@ static void validate_transfer(void) {
     if (st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts_count >
         2) {
         // More than two accounts in a transfer
-        PRINTF("CryptoTransfer with %u accounts\n",
-               st_ctx.transaction.data.cryptoTransfer.transfers
-                   .accountAmounts_count);
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
@@ -21,15 +18,11 @@ static void validate_transfer(void) {
             2 &&
         st_ctx.transaction.data.cryptoTransfer.tokenTransfers_count != 0) {
         // Can't also transfer tokens while sending hbar
-        PRINTF("CryptoTransfer with token transfers and account amounts: %u\n",
-               st_ctx.transaction.data.cryptoTransfer.tokenTransfers_count);
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
     if (st_ctx.transaction.data.cryptoTransfer.tokenTransfers_count > 1) {
         // More than one token transferred
-        PRINTF("CryptoTransfer with %u token transfers\n",
-               st_ctx.transaction.data.cryptoTransfer.tokenTransfers_count);
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
@@ -37,9 +30,6 @@ static void validate_transfer(void) {
         if (st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
                 .transfers_count != 2) {
             // More than two accounts in a token transfer
-            PRINTF("TokenTransfer with %u accounts\n",
-                   st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
-                       .transfers_count);
             THROW(EXCEPTION_MALFORMED_APDU);
         }
 
@@ -47,9 +37,6 @@ static void validate_transfer(void) {
                 .accountAmounts_count != 0) {
             // Can't also transfer Hbar if the transaction is an otherwise valid
             // token transfer
-            PRINTF("TokenTransfer with account amounts: %u\n",
-                   st_ctx.transaction.data.cryptoTransfer.transfers
-                       .accountAmounts_count);
             THROW(EXCEPTION_MALFORMED_APDU);
         }
     }
@@ -94,6 +81,8 @@ void handle_transaction_body() {
     MEMCLEAR(st_ctx.token_decimals);
     MEMCLEAR(st_ctx.token_name);
     MEMCLEAR(st_ctx.token_ticker);
+    MEMCLEAR(st_ctx.token_address_str);
+    MEMCLEAR(st_ctx.token_known);
 #endif
 
     // Step 1, Unknown Type, Screen 1 of 1
@@ -136,6 +125,7 @@ void handle_transaction_body() {
             reformat_updated_account();
 #endif
             break;
+            
         case Hedera_TransactionBody_tokenAssociate_tag:
             st_ctx.type = Associate;
             reformat_summary("Associate Token");
@@ -221,7 +211,6 @@ void handle_transaction_body() {
 
                 // Parse token address to string
                 address_to_string(&token_address, st_ctx.token_address_str);
-                PRINTF("Token Address: %s\n", st_ctx.token_address_str);
 
                 // Get info about token
                 st_ctx.token_known = token_info_get_by_address(
@@ -233,12 +222,6 @@ void handle_transaction_body() {
                     if (st_ctx.token_decimals !=
                         st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
                             .expected_decimals.value) {
-                        PRINTF(
-                            "Token %s has %u decimals, but transaction has %u",
-                            st_ctx.token_name, st_ctx.token_decimals,
-                            st_ctx.transaction.data.cryptoTransfer
-                                .tokenTransfers[0]
-                                .expected_decimals.value);
                         THROW(EXCEPTION_MALFORMED_APDU);
                     }
                 }
@@ -267,26 +250,12 @@ void handle_transaction_body() {
 
             } else {
                 // Unsupported
-                PRINTF("CryptoTransfer with %u accounts\n",
-                       st_ctx.transaction.data.cryptoTransfer.transfers
-                           .accountAmounts_count);
-                PRINTF("CryptoTransfer with %u token transfers\n",
-                       st_ctx.transaction.data.cryptoTransfer
-                           .tokenTransfers_count);
-                PRINTF("TokenTransfer with %u accounts\n",
-                       st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
-                           .transfers_count);
                 THROW(EXCEPTION_MALFORMED_APDU);
             }
             break;
 
         default:
             // Unsupported
-            PRINTF("Unknown transaction type: %u\n",
-                   st_ctx.transaction.which_data);
-            PRINTF("CryptoTransfer with %u accounts\n",
-                   st_ctx.transaction.data.cryptoTransfer.transfers
-                       .accountAmounts_count);
             THROW(EXCEPTION_MALFORMED_APDU);
             break;
     }
@@ -319,7 +288,6 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
     // Oops Oof Owie
     if (raw_transaction_length > MAX_TX_SIZE ||
         raw_transaction_length > (int)buffer - 4 || buffer == NULL) {
-        PRINTF("Invalid transaction length: %u\n", raw_transaction_length);
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
@@ -332,7 +300,6 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
     // Sign Transaction
     if (!hedera_sign(st_ctx.key_index, raw_transaction, raw_transaction_length,
                      G_io_apdu_buffer)) {
-        PRINTF("Failed to sign transaction\n");
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
@@ -344,7 +311,6 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
     if (!pb_decode(&stream, Hedera_TransactionBody_fields,
                    &st_ctx.transaction)) {
         // Oh no couldn't ...
-        PRINTF("Failed to decode transaction\n");
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 

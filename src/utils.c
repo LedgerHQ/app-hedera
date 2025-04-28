@@ -2,7 +2,6 @@
 
 void public_key_to_bytes(unsigned char *dst, uint8_t raw_pubkey[static RAW_PUBKEY_SIZE]) {
     if (dst == NULL || raw_pubkey == NULL) {
-        PRINTF("Invalid public key buffer\n");
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 

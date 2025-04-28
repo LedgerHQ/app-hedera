@@ -77,7 +77,6 @@ static char *hedera_format_tinybar(uint64_t tinybar) {
 static void validate_decimals(uint32_t decimals) {
     if (decimals >= 20) {
         // We only support decimal values less than 20
-        PRINTF("Invalid decimals: %u\n", decimals);
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 }
@@ -85,7 +84,6 @@ static void validate_decimals(uint32_t decimals) {
 static void validate_memo(const char memo[100]) {
     if (strlen(memo) > MAX_MEMO_SIZE) {
         // Hedera max length for memos
-        PRINTF("Invalid memo length: %u\n", strlen(memo));
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 }

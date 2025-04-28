@@ -44,7 +44,6 @@ void app_main() {
 
                 // malformed APDU
                 if (G_io_apdu_buffer[OFFSET_CLA] != CLA) {
-                    PRINTF("Invalid CLA: %02X\n", G_io_apdu_buffer[OFFSET_CLA]);
                     THROW(EXCEPTION_MALFORMED_APDU);
                 }
 
