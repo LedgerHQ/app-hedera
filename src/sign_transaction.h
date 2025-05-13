@@ -95,6 +95,9 @@ typedef struct sign_tx_context_s {
     char summary_line_1[DISPLAY_SIZE + 1];
     char summary_line_2[DISPLAY_SIZE + 1];
 
+    //Key Index in str
+    char key_index_str[DISPLAY_SIZE + 1];
+
 #if defined(TARGET_NANOS)
     union {
 #define TITLE_SIZE (DISPLAY_SIZE + 1)

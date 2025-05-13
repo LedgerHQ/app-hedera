@@ -198,9 +198,9 @@ static const bagl_element_t ui_tx_deny_step[] = {
     UI_ICON(LINE_2_ID, 0, 24, 128, BAGL_GLYPH_ICON_CROSS)};
 
 // Step 1: Transaction Summary
-unsigned int ui_tx_intermediate_step_button(unsigned int button_mask,
-                                            unsigned int __attribute__((unused))
-                                            button_mask_counter) {
+unsigned int ui_tx_intermediate_step_button(
+    unsigned int button_mask,
+    unsigned int __attribute__((unused)) button_mask_counter) {
     switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_RIGHT:
             if (st_ctx.type == Verify) { // Verify skips to Senders
@@ -560,9 +560,9 @@ unsigned int ui_tx_intermediate_step_button(
     return 0;
 }
 
-unsigned int ui_tx_confirm_step_button(unsigned int button_mask,
-                                       unsigned int __attribute__((unused))
-                                       button_mask_counter) {
+unsigned int ui_tx_confirm_step_button(
+    unsigned int button_mask,
+    unsigned int __attribute__((unused)) button_mask_counter) {
     switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_LEFT:
             if (st_ctx.type == Verify) { // Return to Senders
@@ -595,9 +595,9 @@ unsigned int ui_tx_confirm_step_button(unsigned int button_mask,
     return 0;
 }
 
-unsigned int ui_tx_deny_step_button(unsigned int button_mask,
-                                    unsigned int __attribute__((unused))
-                                    button_mask_counter) {
+unsigned int ui_tx_deny_step_button(
+    unsigned int button_mask,
+    unsigned int __attribute__((unused)) button_mask_counter) {
     switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_LEFT:
             // Return to Confirm
@@ -634,7 +634,7 @@ unsigned int io_seproxyhal_tx_reject(const bagl_element_t* e) {
     ui_idle();
     return 0;
 }
-
+UX_STEP_NOCB(summary_token_trans_step, pn, {&C_icon_eye, "Review transaction"});
 UX_STEP_NOCB(summary_step, bnn,
              {"Summary", st_ctx.summary_line_1, st_ctx.summary_line_2});
 
@@ -647,6 +647,9 @@ UX_STEP_NOCB(
     }
 );
 
+UX_STEP_NOCB(key_index_step, bnnn_paging,
+             {.title = "With key", .text = st_ctx.key_index_str});
+
 UX_STEP_NOCB(senders_step, bnnn_paging,
              {.title = (char*)st_ctx.senders_title,
               .text = (char*)st_ctx.senders});
@@ -656,8 +659,7 @@ UX_STEP_NOCB(recipients_step, bnnn_paging,
               .text = (char*)st_ctx.recipients});
 
 UX_STEP_NOCB(token_addr_step, bnnn_paging,
-             {.title = "Token address",
-              .text = (char*)st_ctx.token_address_str});
+             {.title = "Token ID", .text = (char*)st_ctx.token_address_str});
 
 UX_STEP_NOCB(token_name_step, bnnn_paging,
              {.title = "Associate Token", .text = (char*)st_ctx.token_ticker});
@@ -670,7 +672,7 @@ UX_STEP_NOCB(amount_step, bnnn_paging,
               .text = (char*)st_ctx.amount});
 
 UX_STEP_NOCB(fee_step, bnnn_paging,
-             {.title = "Max Fee", .text = (char*)st_ctx.fee});
+             {.title = "Max fees", .text = (char*)st_ctx.fee});
 
 UX_STEP_NOCB(memo_step, bnnn_paging,
              {.title = "Memo", .text = (char*)st_ctx.memo});
@@ -686,10 +688,10 @@ UX_DEF(ux_transfer_flow, &summary_step, &operator_step, &senders_step,
        &recipients_step,  &amount_step, &fee_step, &memo_step, &confirm_step,
        &reject_step);
 
-// Transfer UX Flow with Known Token
-UX_DEF(ux_transfer_flow_known_token, &summary_step, &operator_step,
-       &senders_step, &recipients_step, &token_addr_step, &amount_step, &fee_step, &memo_step, &confirm_step,
-       &reject_step);
+// Transfer Token UX Flow
+UX_DEF(ux_transfer_flow_token, &summary_token_trans_step, &key_index_step, &operator_step, &senders_step,
+       &recipients_step, &amount_step, &token_addr_step,  &fee_step, &memo_step,
+       &confirm_step, &reject_step);
 
 // Verify UX Flow
 UX_DEF(ux_verify_flow, &summary_step, &senders_step, &confirm_step,
@@ -788,18 +790,18 @@ static void create_transaction_flow(void) {
             infos[index].item = st_ctx.senders_title;
             infos[index].value = st_ctx.senders;
             ++index;
-            infos[index].item = "Recipient";
+            infos[index].item = "To";
             infos[index].value = st_ctx.recipients;
             ++index;
-            if (st_ctx.token_known) {
-                infos[index].item = "Token address";
-                infos[index].value = st_ctx.token_address_str;
-                ++index;
-            }
             infos[index].item = st_ctx.amount_title;
             infos[index].value = st_ctx.amount;
             ++index;
-            infos[index].item = "Max Fee";
+             if (st_ctx.type == TokenTransfer) {
+                infos[index].item = "Token ID";
+                infos[index].value = st_ctx.token_address_str;
+                ++index;
+            }
+            infos[index].item = "Max fees";
             infos[index].value = st_ctx.fee;
             ++index;
             infos[index].item = "Memo";
@@ -859,14 +861,11 @@ void ui_sign_transaction(void) {
             // FALLTHROUGH
         case Update:
             // FALLTHROUGH
-        case TokenTransfer:
-            // FALLTHROUGH
         case Transfer:
-            if (st_ctx.token_known) {
-                ux_flow_init(0, ux_transfer_flow_known_token, NULL);
-            } else {
-                ux_flow_init(0, ux_transfer_flow, NULL);
-            }
+            ux_flow_init(0, ux_transfer_flow, NULL);
+            break;
+        case TokenTransfer:
+            ux_flow_init(0, ux_transfer_flow_token, NULL);
             break;
         case TokenMint:
             // FALLTHROUGH
