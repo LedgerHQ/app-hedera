@@ -403,7 +403,7 @@ def test_hedera_transfer_known_token_2_ok(backend, firmware, scenario_navigator)
         navigation_helper_confirm(firmware, scenario_navigator)
 
 
-def test_hedera_transfer_known_token_wrong_decimal(backend, firmware, scenario_navigator):
+def test_hedera_transfer_known_token_sent_wrong_decimal(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_token_conf(
         token_shardNum=0,
@@ -415,8 +415,8 @@ def test_hedera_transfer_known_token_wrong_decimal(backend, firmware, scenario_n
         recipient_shardNum=100,
         recipient_realmNum=101,
         recipient_accountNum=102,
-        amount=1,  #Should be 0.000001 PACK
-        decimals=9,
+        amount=int(12.34*(10**6)),  #Should be 12.34 PACK
+        decimals=9, #Should be ignored
     )
 
     with hedera.send_sign_transaction(
@@ -425,13 +425,14 @@ def test_hedera_transfer_known_token_wrong_decimal(backend, firmware, scenario_n
         operator_realm_num=2,
         operator_account_num=3,
         transaction_fee=5,
-        memo="sending 0.000001 PACK",
+        memo="sending 12.34 PACK",
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
+        navigation_helper_reject(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
-    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+    assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
 def test_hedera_transfer_token_refused(backend, firmware, scenario_navigator):

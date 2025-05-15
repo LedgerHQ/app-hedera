@@ -3,7 +3,7 @@
 #include <string.h>
 
 static const token_info_t token_info_table[] = {
-    {{0, 0, 1154552}, "USDC", "hUSDC", 6},
+    {{0, 0, 456858}, "USDC", "hUSDC", 6},
     {{0, 0, 731861}, "SAUCE", "SAUCE", 6},
     {{0, 0, 3716059}, "Dovu", "DOVU", 8},
     {{0, 0, 4794920}, "PACK", "PACK", 6},

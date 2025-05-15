@@ -217,15 +217,6 @@ void handle_transaction_body() {
                     token_address, st_ctx.token_ticker, st_ctx.token_name,
                     &st_ctx.token_decimals);
 
-                // Veify decimals
-                if (st_ctx.token_known) {
-                    if (st_ctx.token_decimals !=
-                        st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
-                            .expected_decimals.value) {
-                        THROW(EXCEPTION_MALFORMED_APDU);
-                    }
-                }
-
                 if (st_ctx.token_known) {
                     reformat_summary_send_known_token();
                 } else {
