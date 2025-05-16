@@ -541,6 +541,28 @@ def test_hedera_token_associate_ok(backend, firmware, scenario_navigator):
     ):
         navigation_helper_confirm(firmware, scenario_navigator)
 
+def test_hedera_token_associate_known_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = token_associate_conf(
+        token_shardNum=0,
+        token_realmNum=0,
+        token_tokenNum=7893707, #GIB
+        sender_shardNum=1000,
+        sender_realmNum=1001,
+        sender_accountNum=1002,
+    )
+
+    with hedera.send_sign_transaction(
+        index=123321,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=321,
+        memo="this_is_the_memo",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
 
 def test_hedera_token_associate_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)

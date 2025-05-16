@@ -4,6 +4,18 @@
 
 sign_tx_context_t st_ctx;
 
+#if !defined(TARGET_NANOS)
+static void parse_and_lookup_token(token_addr_t* token_addr) {
+    // Parse token address to string
+    address_to_string(token_addr, st_ctx.token_address_str);
+
+    // Get info about token
+    st_ctx.token_known = token_info_get_by_address(
+        *token_addr, st_ctx.token_ticker, st_ctx.token_name,
+        &st_ctx.token_decimals);
+}
+#endif
+
 // Validates whether or not a transfer is legal:
 // Either a transfer between two accounts
 // Or a token transfer between two accounts
@@ -128,9 +140,15 @@ void handle_transaction_body() {
             
         case Hedera_TransactionBody_tokenAssociate_tag:
             st_ctx.type = Associate;
-            reformat_summary("Associate Token");
+            reformat_summary("associate token");
 
 #if !defined(TARGET_NANOS)
+            token_addr_t associate_token_address = {
+                st_ctx.transaction.data.tokenAssociate.tokens[0].shardNum,
+                st_ctx.transaction.data.tokenAssociate.tokens[0].realmNum,
+                st_ctx.transaction.data.tokenAssociate.tokens[0].tokenNum,
+            };
+            parse_and_lookup_token(&associate_token_address);
             reformat_token_associate();
 #endif
             break;
@@ -140,6 +158,12 @@ void handle_transaction_body() {
             reformat_summary("Dissociate Token");
 
 #if !defined(TARGET_NANOS)
+            token_addr_t dissociate_token_address = {
+                st_ctx.transaction.data.tokenDissociate.tokens[0].shardNum,
+                st_ctx.transaction.data.tokenDissociate.tokens[0].realmNum,
+                st_ctx.transaction.data.tokenDissociate.tokens[0].tokenNum,
+            };
+            parse_and_lookup_token(&dissociate_token_address);
             reformat_token_dissociate();
 #endif
             break;
@@ -206,16 +230,8 @@ void handle_transaction_body() {
                         .token.realmNum,
                     st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
                         .token.tokenNum,
-
                 };
-
-                // Parse token address to string
-                address_to_string(&token_address, st_ctx.token_address_str);
-
-                // Get info about token
-                st_ctx.token_known = token_info_get_by_address(
-                    token_address, st_ctx.token_ticker, st_ctx.token_name,
-                    &st_ctx.token_decimals);
+                parse_and_lookup_token(&token_address);
 
                 if (st_ctx.token_known) {
                     reformat_summary_send_known_token();

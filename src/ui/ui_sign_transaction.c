@@ -659,6 +659,12 @@ UX_STEP_NOCB(token_addr_step, bnnn_paging,
              {.title = "Token address",
               .text = (char*)st_ctx.token_address_str});
 
+UX_STEP_NOCB(token_name_step, bnnn_paging,
+             {.title = "Associate Token", .text = (char*)st_ctx.token_ticker});
+
+UX_STEP_NOCB(token_name_addr_step, bnnn_paging,
+             {.title = "Associate Token", .text = (char*)st_ctx.senders});
+
 UX_STEP_NOCB(amount_step, bnnn_paging,
              {.title = (char*)st_ctx.amount_title,
               .text = (char*)st_ctx.amount});
@@ -694,8 +700,12 @@ UX_DEF(ux_burn_mint_flow, &summary_step, &operator_step, &senders_step,
        &amount_step, &fee_step, &memo_step, &confirm_step, &reject_step);
 
 // Associate UX Flow
-UX_DEF(ux_associate_flow, &summary_step, &operator_step, &senders_step,
-       &fee_step, &memo_step, &confirm_step, &reject_step);
+UX_DEF(ux_associate_flow, &summary_token_trans_step, &key_index_step, &token_name_addr_step,
+       &fee_step, &confirm_step, &reject_step);
+
+// Associate Known Token UX Flow
+UX_DEF(ux_associate_known_token_flow, &summary_token_trans_step, &key_index_step, &token_name_step, &token_addr_step,
+       &fee_step, &confirm_step, &reject_step);
 
 #elif defined(HAVE_NBGL)
 
@@ -733,10 +743,26 @@ static void create_transaction_flow(void) {
 
     switch (st_ctx.type) {
         case Verify:
-            // FALLTHROUGH
-        case Associate:
             infos[index].item = st_ctx.senders_title;
             infos[index].value = st_ctx.senders;
+            ++index;
+            break;
+        case Associate:
+            if (st_ctx.token_known) {
+                infos[index].item = "Token";
+                infos[index].value = st_ctx.token_ticker;
+                ++index;
+                infos[index].item = "Token ID";
+                infos[index].value = st_ctx.token_address_str;
+                ++index;
+            }
+            else {
+                infos[index].item = "Token";
+                infos[index].value = st_ctx.token_address_str;
+                ++index;
+            }
+            infos[index].item = "Max fees";
+            infos[index].value = st_ctx.fee;
             ++index;
             break;
         case Create:
@@ -820,7 +846,11 @@ void ui_sign_transaction(void) {
         case Associate:
             // FALLTHROUGH
         case Dissociate:
-            ux_flow_init(0, ux_associate_flow, NULL);
+            if (st_ctx.token_known) {
+                ux_flow_init(0, ux_associate_known_token_flow, NULL);
+            } else {
+                ux_flow_init(0, ux_associate_flow, NULL);
+            }
             break;
         case Verify:
             ux_flow_init(0, ux_verify_flow, NULL);
