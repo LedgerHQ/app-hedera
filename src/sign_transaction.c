@@ -298,7 +298,7 @@ void handle_transaction_body() {
             PRINTF("Swap response validated\n");
             validate_transfer();
 
-            uint8_t tx = 0;
+            uint8_t tx = 64;
 
             write_u16_be(G_io_apdu_buffer, tx, 0x9000);
             tx += 2;

@@ -146,22 +146,6 @@ static void callback_match(bool match) {
     }
     ui_idle();
 }
-
-static void callback_export(bool accept) {
-    if (accept) {
-        // This function was marked as deprecated during development. 
-        // However, the new function has a completely different signature, 
-        // so we are ignoring the deprecation warning for now. 
-        // This usage will be removed in the future.
-        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        nbgl_useCaseAddressConfirmation((const char *)gpk_ctx.full_key,
-                                        callback_match);
-    } else {
-        io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
-        ui_idle();
-    }
-}
-
 static void ui_get_public_key_nbgl(void) {
     //Convert key_index to string
     char key_index_str[25];

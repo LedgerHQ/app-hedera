@@ -30,11 +30,10 @@ bool copy_transaction_parameters(create_transaction_parameters_t *params) {
         PRINTF("destination_address_extra_id expected\n");
         return false;
     }
-
+    
     if (params->destination_address_extra_id[0] != '\0') {
-        PRINTF("destination_address_extra_id expected empty, not '%s'\n",
+        PRINTF("WARNING: destination_address_extra_id expected empty, not '%s'\n",
                params->destination_address_extra_id);
-        return false;
     }
 
     swap_validated_t swap_validated;
@@ -105,6 +104,8 @@ bool swap_check_validity() {
 
     if (st_ctx.transaction.transactionFee != G_swap_validated.fee) {
         PRINTF("Gas fee on Transaction is different from validated package.\n");
+        PRINTF("Gas fee on Transaction: %d\n", (uint32_t) st_ctx.transaction.transactionFee);
+        PRINTF("Gas fee on Swap: %d\n", (uint32_t) G_swap_validated.fee);
         return false;
     }
 
