@@ -403,6 +403,102 @@ def test_hedera_transfer_known_token_2_ok(backend, firmware, scenario_navigator)
         navigation_helper_confirm(firmware, scenario_navigator)
 
 
+def test_hedera_transfer_max_supply_cal_token_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    # Max supply in Hedera is 2^63-1
+    max_supply = (2**63) - 1
+    
+    # Use PACK token which is on the CAL list
+    conf = crypto_transfer_token_conf(
+        token_shardNum=0,
+        token_realmNum=0,
+        token_tokenNum=4794920, # PACK
+        sender_shardNum=33,
+        sender_realmNum=0,
+        sender_accountNum=0,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=max_supply,
+        decimals=6,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="sending max supply PACK",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_transfer_max_supply_token_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    # Max supply in Hedera is 2^63-1
+    max_supply = (2**63) - 1
+    
+    # Use a non-CAL token
+    conf = crypto_transfer_token_conf(
+        token_shardNum=15,
+        token_realmNum=16,
+        token_tokenNum=17,
+        sender_shardNum=57,
+        sender_realmNum=58,
+        sender_accountNum=59,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=max_supply,
+        decimals=9,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="sending max supply token",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_transfer_longest_ticker_token_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    # Use a large number but not max supply
+    large_amount = (2**63) - 1
+    
+    # Use HEDERA4TRUMP token which has the longest ticker in CAL
+    conf = crypto_transfer_token_conf(
+        token_shardNum=0,
+        token_realmNum=0,
+        token_tokenNum=8115822, # HEDERA4TRUMP
+        sender_shardNum=42,
+        sender_realmNum=0,
+        sender_accountNum=999,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=large_amount,
+        decimals=8,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="sending large amount of HEDERA4TRUMP",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
 def test_hedera_transfer_known_token_sent_wrong_decimal(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_token_conf(

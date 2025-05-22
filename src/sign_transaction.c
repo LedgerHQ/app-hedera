@@ -232,13 +232,7 @@ void handle_transaction_body() {
                         .token.tokenNum,
                 };
                 parse_and_lookup_token(&token_address);
-
-                if (st_ctx.token_known) {
-                    reformat_summary_send_known_token();
-                } else {
-                    reformat_summary_send_token();
-                }
-
+                reformat_summary_send_token();
                 // Determine Sender based on amount
                 st_ctx.transfer_from_index = 0;
                 st_ctx.transfer_to_index = 1;

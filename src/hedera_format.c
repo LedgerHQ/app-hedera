@@ -112,20 +112,15 @@ void reformat_summary(const char *summary) {
 void reformat_summary_send_token(void) {
     hedera_safe_printf(
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_NANOS)
-        st_ctx.summary_line_1, "Send %llu.%llu.%llu",
-#elif defined(TARGET_STAX) || defined(TARGET_FLEX)
-        st_ctx.summary_line_1, "Send Token %llu.%llu.%llu",
-#endif
-        st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0].token.shardNum,
+        st_ctx.summary_line_1, "Send %llu.%llu.%llu", st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0].token.shardNum,
         st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0].token.realmNum,
         st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
             .token.tokenNum);
+#elif defined(TARGET_STAX) || defined(TARGET_FLEX)
+        st_ctx.summary_line_1, "send tokens");
+#endif
+        
 }
-
-void reformat_summary_send_known_token(void) {
-    hedera_safe_printf(st_ctx.summary_line_1, "send tokens");
-}
-
 // TITLES
 
 #if defined(TARGET_NANOS)
