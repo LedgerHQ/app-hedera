@@ -15,7 +15,10 @@ static bool get_pk() {
     }
 
     // Put Key bytes in APDU buffer
-    public_key_to_bytes(G_io_apdu_buffer, gpk_ctx.raw_pubkey);
+    uint8_t key_buffer[33];
+    public_key_to_bytes(key_buffer, gpk_ctx.raw_pubkey);
+    memcpy(G_io_apdu_buffer, key_buffer, 32);
+    memcpy(gpk_ctx.raw_pubkey, key_buffer, 32);
 
     // Populate Key Hex String
     bin2hex(gpk_ctx.full_key, G_io_apdu_buffer, KEY_SIZE);
@@ -31,10 +34,6 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
     UNUSED(p2);
     UNUSED(len);
     UNUSED(tx);
-
-    if (G_called_from_swap) {
-        THROW(EXCEPTION_OK);
-    }
 
     if (buffer == NULL || len < sizeof(uint32_t)) {
         THROW(EXCEPTION_INTERNAL);
@@ -64,12 +63,15 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
     if (p1 == 0) {
         ui_get_public_key();
     }
-
-    // Normally happens in approve export public key handler
-    if (p1 != 0) {
+    // Skip UI interaction when called from swap context
+    // Return public key and yield control to exchange handler
+    else {
         io_exchange_with_code(EXCEPTION_OK, 32);
-        ui_idle();
+        if (!G_called_from_swap) {
+            ui_idle();
+        }
     }
+    
 
     *flags |= IO_ASYNCH_REPLY;
 }

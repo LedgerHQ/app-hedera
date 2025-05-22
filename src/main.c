@@ -5,12 +5,17 @@
 #include "handlers.h"
 #include "os.h"
 #include "ui_common.h"
+
 #include "ux.h"
 #ifdef HAVE_SWAP
 #include "handle_check_address.h"
 #include "handle_get_printable_amount.h"
 #include "handle_swap_sign_transaction.h"
 #include "hedera_swap_utils.h"
+#endif
+
+#ifdef HAVE_NBGL
+#include "nbgl_use_case.h"
 #endif
 
 // This is the main loop that reads and writes APDUs. It receives request
@@ -138,6 +143,9 @@ static void start_app_from_lib(void) {
     G_called_from_swap = true;
     G_swap_response_ready = false;
     UX_INIT();
+    #ifdef HAVE_NBGL
+        nbgl_useCaseSpinner("Signing");
+    #endif 
     io_seproxyhal_init();
     USB_power(0);
     USB_power(1);
