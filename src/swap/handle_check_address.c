@@ -41,7 +41,11 @@ int handle_check_address(const check_address_parameters_t *params) {
                params->extra_id_to_check);
         return 0;
     }
-
+    if (params->address_parameters_length < 5 || params->address_parameters_length > 21  || (params->address_parameters_length-1) % 4 != 0) {
+        PRINTF("Invalid deriv path length: %d\n", params->address_parameters_length);
+        return 0;
+    }
+    
     uint8_t public_key[RAW_PUBKEY_SIZE];
     uint8_t public_key_str[RAW_PUBKEY_SIZE];
     
@@ -49,6 +53,12 @@ int handle_check_address(const check_address_parameters_t *params) {
     // The key index is the last 4 bytes of the buffer
     // It will work for both sending only index and full path
     uint32_t index = U4BE(params->address_parameters, params->address_parameters_length - 4);
+
+    // Handle case for new app-exchange with old account on Ledger Live
+    // Where for every account we have m/44/3030 path without index, so we assume index=0
+    if (params->address_parameters_length == 9) {
+        index = 0;
+    }
     derive_public_key(index, public_key, public_key_str);
 
     UNUSED(public_key);

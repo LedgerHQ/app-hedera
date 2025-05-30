@@ -6,6 +6,8 @@
 
 #include "crypto_helpers.h"
 #include "utils.h"
+#include <stddef.h>
+#include <stdbool.h>
 
 static void hedera_set_path(uint32_t index, uint32_t path[static 5]) {
     path[0] = PATH_ZERO;
@@ -30,7 +32,7 @@ bool hedera_get_pubkey(uint32_t index, uint8_t raw_pubkey[static RAW_PUBKEY_SIZE
 }
 
 bool hedera_sign(uint32_t index, const uint8_t* tx, uint8_t tx_len,
-                 /* out */ uint8_t* result) {
+                 /* out */ uint8_t* result, /* out */ size_t* sig_len_out) {
     uint32_t path[5];
     size_t sig_len = 64;
 
@@ -44,6 +46,6 @@ bool hedera_sign(uint32_t index, const uint8_t* tx, uint8_t tx_len,
                      &sig_len, NULL, 0)) {
         return false;
     }
-
+    if (sig_len_out) *sig_len_out = sig_len;
     return true;
 }

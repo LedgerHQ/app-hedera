@@ -587,7 +587,7 @@ unsigned int ui_tx_confirm_step_button(unsigned int button_mask,
             break;
         case BUTTON_EVT_RELEASED | BUTTON_LEFT | BUTTON_RIGHT:
             // Exchange Signature (OK)
-            io_exchange_with_code(EXCEPTION_OK, 64);
+            io_exchange_with_code(EXCEPTION_OK, st_ctx.signature_length);
             ui_idle();
             break;
     }
@@ -622,7 +622,7 @@ unsigned int ui_tx_deny_step_button(unsigned int button_mask,
 // Confirm Callback
 unsigned int io_seproxyhal_tx_approve(const bagl_element_t* e) {
     UNUSED(e);
-    io_exchange_with_code(EXCEPTION_OK, 64);
+    io_exchange_with_code(EXCEPTION_OK, st_ctx.signature_length);
     ui_idle();
     return 0;
 }
@@ -693,7 +693,7 @@ UX_DEF(ux_associate_flow, &summary_step, &operator_step, &senders_step,
 static void review_choice(bool confirm) {
     // Answer, display a status page and go back to main
     if (confirm) {
-        io_exchange_with_code(EXCEPTION_OK, 64);
+        io_exchange_with_code(EXCEPTION_OK, st_ctx.signature_length);
         nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_idle);
     } else {
         io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
