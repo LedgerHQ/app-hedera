@@ -298,7 +298,7 @@ void handle_transaction_body() {
             PRINTF("Swap response validated\n");
             validate_transfer();
 
-            uint8_t tx = 64;
+            uint8_t tx = st_ctx.signature_length;
 
             write_u16_be(G_io_apdu_buffer, tx, 0x9000);
             tx += 2;
@@ -356,7 +356,7 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
 
     // Sign Transaction
     if (!hedera_sign(st_ctx.key_index, raw_transaction, raw_transaction_length,
-                     G_io_apdu_buffer)) {
+                     G_io_apdu_buffer, &st_ctx.signature_length)) {
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 

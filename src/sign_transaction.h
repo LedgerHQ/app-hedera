@@ -170,6 +170,8 @@ typedef struct sign_tx_context_s {
 
     // Parsed transaction
     Hedera_TransactionBody transaction;
+
+    size_t signature_length;
 } sign_tx_context_t;
 
 extern sign_tx_context_t st_ctx;
