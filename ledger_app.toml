@@ -2,8 +2,6 @@
 build_directory = "./"
 sdk = "C"
 
-#Removed support for nanos
-#devices = ["nanos", "nanox", "nanos+", "stax", "flex"]
 devices = ["nanox", "nanos+", "stax", "flex"]
 
 
