@@ -1,6 +1,7 @@
 from ragger.backend.interface import RAPDU, RaisePolicy
 from ragger.navigator import NavInsID
 from ragger.firmware import Firmware
+from ragger.firmware.touch.use_cases import UseCaseReview
 
 from .apps.hedera import HederaClient, ErrorType
 from .apps.hedera_builder import crypto_create_account_conf
@@ -38,7 +39,7 @@ def test_hedera_get_public_key_ok(backend, firmware, navigator, test_name):
                 nav_ins = [NavInsID.RIGHT_CLICK,
                            NavInsID.BOTH_CLICK]
             else:
-                nav_ins = [NavInsID.USE_CASE_CHOICE_CONFIRM,
+                nav_ins = [NavInsID.USE_CASE_REVIEW_NEXT,
                            NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM]
             navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name + "_" + str(i), nav_ins)
 
@@ -56,7 +57,8 @@ def test_hedera_get_public_key_refused(backend, firmware, navigator, test_name):
                        NavInsID.RIGHT_CLICK,
                        NavInsID.BOTH_CLICK]
         else:
-            nav_ins = [NavInsID.USE_CASE_CHOICE_REJECT]
+            nav_ins = [NavInsID.USE_CASE_REVIEW_NEXT,
+                           NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CANCEL]
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
         navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, nav_ins)
 
@@ -66,7 +68,7 @@ def test_hedera_get_public_key_refused(backend, firmware, navigator, test_name):
     if not firmware.is_nano:
         with hedera.get_public_key_confirm(0):
             backend.raise_policy = RaisePolicy.RAISE_NOTHING
-            nav_ins = [NavInsID.USE_CASE_CHOICE_CONFIRM,
+            nav_ins = [NavInsID.USE_CASE_REVIEW_NEXT,
                        NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CANCEL]
             navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name + "_2", nav_ins)
 
@@ -347,6 +349,190 @@ def test_hedera_transfer_token_ok(backend, firmware, scenario_navigator):
         navigation_helper_confirm(firmware, scenario_navigator)
 
 
+def test_hedera_transfer_known_token_1_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=0,
+        token_realmNum=0,
+        token_tokenNum=5022567, #hBARK
+        sender_shardNum=12312312345,
+        sender_realmNum=0,
+        sender_accountNum=0,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=1,
+        decimals=0,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="sending 1 hBARK",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_transfer_known_token_2_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=0, 
+        token_realmNum=0,
+        token_tokenNum=4794920,#PACK
+        sender_shardNum=33,
+        sender_realmNum=0,
+        sender_accountNum=0,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=1,  #Should be 0.000001 PACK
+        decimals=6,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="sending 0.000001 PACK",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_transfer_max_supply_cal_token_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    # Max supply in Hedera is 2^63-1
+    max_supply = (2**63) - 1
+    
+    # Use PACK token which is on the CAL list
+    conf = crypto_transfer_token_conf(
+        token_shardNum=0,
+        token_realmNum=0,
+        token_tokenNum=4794920, # PACK
+        sender_shardNum=33,
+        sender_realmNum=0,
+        sender_accountNum=0,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=max_supply,
+        decimals=6,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="sending max supply PACK",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_transfer_max_supply_token_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    # Max supply in Hedera is 2^63-1
+    max_supply = (2**63) - 1
+    
+    # Use a non-CAL token
+    conf = crypto_transfer_token_conf(
+        token_shardNum=15,
+        token_realmNum=16,
+        token_tokenNum=17,
+        sender_shardNum=57,
+        sender_realmNum=58,
+        sender_accountNum=59,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=max_supply,
+        decimals=9,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="sending max supply token",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_transfer_longest_ticker_token_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    # Use a large number but not max supply
+    large_amount = (2**63) - 1
+    
+    # Use HEDERA4TRUMP token which has the longest ticker in CAL
+    conf = crypto_transfer_token_conf(
+        token_shardNum=0,
+        token_realmNum=0,
+        token_tokenNum=8115822, # HEDERA4TRUMP
+        sender_shardNum=42,
+        sender_realmNum=0,
+        sender_accountNum=999,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=large_amount,
+        decimals=8,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="sending large amount of HEDERA4TRUMP",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_transfer_known_token_sent_wrong_decimal(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=0,
+        token_realmNum=0,
+        token_tokenNum=4794920, #PACK
+        sender_shardNum=33,
+        sender_realmNum=0,
+        sender_accountNum=0,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=int(12.34*(10**6)),  #Should be 12.34 PACK
+        decimals=9, #Should be ignored
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="sending 12.34 PACK",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+        navigation_helper_reject(firmware, scenario_navigator)
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
+
+
 def test_hedera_transfer_token_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_token_conf(
@@ -448,6 +634,28 @@ def test_hedera_token_associate_ok(backend, firmware, scenario_navigator):
         operator_realm_num=2,
         operator_account_num=3,
         transaction_fee=5,
+        memo="this_is_the_memo",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+def test_hedera_token_associate_known_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = token_associate_conf(
+        token_shardNum=0,
+        token_realmNum=0,
+        token_tokenNum=7893707, #GIB
+        sender_shardNum=1000,
+        sender_realmNum=1001,
+        sender_accountNum=1002,
+    )
+
+    with hedera.send_sign_transaction(
+        index=123321,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=321,
         memo="this_is_the_memo",
         conf=conf,
     ):

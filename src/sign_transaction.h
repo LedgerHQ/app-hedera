@@ -15,6 +15,8 @@
 #include "transaction_body.pb.h"
 #include "ui_common.h"
 #include "utils.h"
+#include "tokens/cal/token_lookup.h"
+#include "tokens/token_address.h"
 
 enum TransactionStep {
     Summary = 1,
@@ -93,6 +95,9 @@ typedef struct sign_tx_context_s {
     char summary_line_1[DISPLAY_SIZE + 1];
     char summary_line_2[DISPLAY_SIZE + 1];
 
+    //Key Index in str
+    char key_index_str[DISPLAY_SIZE + 1];
+
 #if defined(TARGET_NANOS)
     union {
 #define TITLE_SIZE (DISPLAY_SIZE + 1)
@@ -151,6 +156,16 @@ typedef struct sign_tx_context_s {
 
     // Transaction Memo
     char memo[MAX_MEMO_SIZE + 1];
+
+    // Is known token 
+    bool token_known;
+
+    // Optional Token Info
+    char token_ticker[MAX_TICKER_LENG];
+    uint32_t token_decimals;
+    char token_name[MAX_TOKEN_LEN];
+    char token_address_str[MAX_HEDERA_ADDRESS_LENGTH*2 + 1];
+
 #endif
 
     // Parsed transaction

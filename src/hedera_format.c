@@ -99,6 +99,8 @@ void reformat_key(void) {
                        "#%u",
 #endif
                        st_ctx.key_index);
+
+    hedera_safe_printf(st_ctx.key_index_str, "#%u", st_ctx.key_index);
 }
 
 // SUMMARIES
@@ -108,16 +110,7 @@ void reformat_summary(const char *summary) {
 }
 
 void reformat_summary_send_token(void) {
-    hedera_safe_printf(
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_NANOS)
-        st_ctx.summary_line_1, "Send %llu.%llu.%llu",
-#elif defined(TARGET_STAX) || defined(TARGET_FLEX)
-        st_ctx.summary_line_1, "Send Token %llu.%llu.%llu",
-#endif
-        st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0].token.shardNum,
-        st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0].token.realmNum,
-        st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
-            .token.tokenNum);
+    hedera_safe_printf(st_ctx.summary_line_1, "send tokens");   
 }
 
 // TITLES
@@ -273,7 +266,7 @@ void reformat_verify_account() {
 }
 
 void reformat_sender_account(void) {
-    set_senders_title("Account");
+    set_senders_title("From");
 
     // st_ctx.senders --> st_ctx.full (NANOS)
     hedera_safe_printf(st_ctx.senders, "%llu.%llu.%llu",
@@ -288,8 +281,14 @@ void reformat_sender_account(void) {
                            .accountID.account);
 }
 
+void address_to_string(const token_addr_t *addr,
+                       char buf[MAX_HEDERA_ADDRESS_LENGTH + 1]) {
+    hedera_snprintf(buf, MAX_HEDERA_ADDRESS_LENGTH, "%llu.%llu.%llu",
+                    addr->addr_shard, addr->addr_realm, addr->addr_account);
+}
+
 void reformat_token_sender_account(void) {
-    set_senders_title("Sender");
+    set_senders_title("From");
 
     // st_ctx.senders --> st_ctx.full (NANOS)
     hedera_safe_printf(st_ctx.senders, "%llu.%llu.%llu",
@@ -330,7 +329,7 @@ void reformat_collect_rewards(void) {
 }
 
 void reformat_recipient_account(void) {
-    set_recipients_title("Recipient");
+    set_recipients_title("To");
 
     // st_ctx.recipients --> st_ctx.full (NANOS)
     hedera_safe_printf(st_ctx.recipients, "%llu.%llu.%llu",
@@ -346,7 +345,7 @@ void reformat_recipient_account(void) {
 }
 
 void reformat_token_recipient_account(void) {
-    set_recipients_title("Recipient");
+    set_recipients_title("To");
 
     // st_ctx.recipients --> st_ctx.full (NANOS)
     hedera_safe_printf(st_ctx.recipients, "%llu.%llu.%llu",
@@ -426,26 +425,28 @@ void reformat_amount_mint(void) {
 }
 
 void reformat_token_transfer(void) {
-    validate_decimals(st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
-                          .expected_decimals.value);
     set_amount_title("Amount");
-
-    // st_ctx.amount --> st_ctx.full (NANOS)
-    hedera_safe_printf(
-        st_ctx.amount, "%s",
-        hedera_format_amount(
-            st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
-                .transfers[st_ctx.transfer_to_index]
-                .amount,
-            st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
-                .expected_decimals.value));
+    uint64_t amount = st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
+                          .transfers[st_ctx.transfer_to_index]
+                          .amount;
+    uint32_t decimals = st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
+                            .expected_decimals.value;
+    validate_decimals(decimals);
+    if (st_ctx.token_known) {
+        hedera_safe_printf(st_ctx.amount, "%s %s",
+                           hedera_format_amount(amount, st_ctx.token_decimals),
+                           st_ctx.token_ticker);
+    } else {
+        hedera_safe_printf(st_ctx.amount, "%s",
+                           hedera_format_amount(amount, decimals));
+    }
 }
 
 // FEE
 
 void reformat_fee(void) {
 #if defined(TARGET_NANOS)
-    set_title("Max Fee");
+    set_title("Max fees");
 #endif
     // st_ctx.fee --> st_ctx.full (NANOS)
     hedera_safe_printf(
