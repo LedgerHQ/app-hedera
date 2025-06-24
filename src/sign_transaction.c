@@ -300,7 +300,7 @@ void handle_transaction_body() {
 
             uint8_t tx = st_ctx.signature_length;
 
-            write_u16_be(G_io_apdu_buffer, tx, 0x9000);
+            U2BE_ENCODE(G_io_apdu_buffer, tx, EXCEPTION_OK);
             tx += 2;
 
             // Send back the response, do not restart the event loop
@@ -310,7 +310,7 @@ void handle_transaction_body() {
             PRINTF("swap_check_validity failed\n");
             uint8_t tx = 0;
 
-            write_u16_be(G_io_apdu_buffer, tx, 0x6980);
+            U2BE_ENCODE(G_io_apdu_buffer, tx, EXCEPTION_INTERNAL);
             tx += 2;
 
             // Send back the response, do not restart the event loop
