@@ -7,10 +7,7 @@
 
 sign_tx_context_t st_ctx;
 
-static void write_u16_be(uint8_t *ptr, size_t offset, uint16_t value) {
-    ptr[offset + 0] = (uint8_t) (value >> 8);
-    ptr[offset + 1] = (uint8_t) (value >> 0);
-}
+
 
 // Validates whether or not a transfer is legal:
 // Either a transfer between two accounts
@@ -262,7 +259,7 @@ void handle_transaction_body() {
 
             uint8_t tx = st_ctx.signature_length;
 
-            write_u16_be(G_io_apdu_buffer, tx, 0x9000);
+            U2BE_ENCODE(G_io_apdu_buffer, tx, EXCEPTION_OK);
             tx += 2;
 
             // Send back the response, do not restart the event loop
@@ -272,7 +269,7 @@ void handle_transaction_body() {
             PRINTF("swap_check_validity failed\n");
             uint8_t tx = 0;
 
-            write_u16_be(G_io_apdu_buffer, tx, 0x6980);
+            U2BE_ENCODE(G_io_apdu_buffer, tx, EXCEPTION_INTERNAL);
             tx += 2;
 
             // Send back the response, do not restart the event loop

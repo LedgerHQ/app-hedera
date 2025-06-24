@@ -4,6 +4,7 @@
 #include "os.h"
 #include "string.h"
 #include "swap.h"
+#include "sign_transaction.h"
 #include "swap_utils.h"
 
 #include <inttypes.h>
@@ -12,7 +13,7 @@
 typedef struct swap_validated_s {
     bool initialized;
     uint64_t amount;
-    char recipient[(18 * 2) + 1];
+    char recipient[ACCOUNT_ID_SIZE];
     uint64_t fee;
 } swap_validated_t;
 
@@ -109,7 +110,7 @@ bool swap_check_validity() {
         return false;
     }
 
-    if (memcmp(st_ctx.recipients, G_swap_validated.recipient, (18 * 2) + 1) != 0) {
+    if (memcmp(st_ctx.recipients, G_swap_validated.recipient, sizeof(st_ctx.recipients)) != 0) {
         PRINTF("Recipient on Transaction is different from validated package.\n");
         PRINTF("Recipient requested in the transaction: %.*H\n", FULL_ADDRESS_LENGTH, st_ctx.recipients);
         PRINTF("Recipient validated in the swap: %.*H\n", FULL_ADDRESS_LENGTH, G_swap_validated.recipient);
