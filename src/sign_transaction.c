@@ -5,6 +5,10 @@
 #include <swap_utils.h>
 
 
+#include <swap_entrypoints.h>
+#include <swap_utils.h>
+
+
 sign_tx_context_t st_ctx;
 
 #if !defined(TARGET_NANOS)

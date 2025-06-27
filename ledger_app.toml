@@ -1,6 +1,7 @@
 [app]
 build_directory = "./"
 sdk = "C"
+#Nanos was deprecated - removed support
 devices = ["nanox", "nanos+", "stax", "flex"]
 
 
