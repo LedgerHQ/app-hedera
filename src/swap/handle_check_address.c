@@ -49,13 +49,13 @@ int handle_check_address(const check_address_parameters_t *params) {
     uint8_t public_key[RAW_PUBKEY_SIZE];
     uint8_t public_key_str[RAW_PUBKEY_SIZE];
     
-    // Read Key Index (last 4 bytes of buffer)
+    // Read Key Index (last 4 bytes of buffer, Big Endian format)
     // The key index is the last 4 bytes of the buffer
     // It will work for both sending only index and full path
     uint32_t index = U4BE(params->address_parameters, params->address_parameters_length - 4);
 
-    // Handle case for new app-exchange with old account on Ledger Live
-    // Where for every account we have m/44/3030 path without index, so we assume index=0
+    // Handle case for current Ledger Live hederaBip44 derivation mode
+    // Where Ledger Live sends m/44'/3030' path without index, so we assume index=0
     if (params->address_parameters_length == 9) {
         index = 0;
     }
