@@ -9,12 +9,15 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+// Constructs the fixed Hedera derivation path: m/44'/3030'/0'/0'/index'
+// Used for transaction signing and public key operations
+// Only the index parameter varies; all other path components are hardcoded
 static void hedera_set_path(uint32_t index, uint32_t path[static 5]) {
-    path[0] = PATH_ZERO;
-    path[1] = PATH_ONE;
-    path[2] = PATH_TWO;
-    path[3] = PATH_THREE;
-    path[4] = PATH_FOUR;
+    path[0] = PATH_ZERO;   // 44'
+    path[1] = PATH_ONE;    // 3030'
+    path[2] = PATH_TWO;    // 0'
+    path[3] = PATH_THREE;  // 0'
+    path[4] = PATH_FOUR;   // index'
 }
 
 bool hedera_get_pubkey(uint32_t index, uint8_t raw_pubkey[static RAW_PUBKEY_SIZE]) {

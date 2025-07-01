@@ -347,7 +347,7 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
-    // Key Index
+    // Key Index (Little Endian format)
     st_ctx.key_index = U4LE(buffer, 0);
 
     // copy raw transaction

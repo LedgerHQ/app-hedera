@@ -39,7 +39,7 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
         THROW(EXCEPTION_INTERNAL);
     }
     
-    // Read Key Index
+    // Read Key Index (Little Endian format)
     gpk_ctx.key_index = U4LE(buffer, 0);
 
     // If p1 != 0, silent mode, for use by apps that request the user's public
