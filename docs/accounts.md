@@ -86,7 +86,7 @@ Currently, the device app primarily supports index `#0` for transaction signing,
 
 ## Swaps 
 During the swapping process, we need to verify destination and refund addresses.
-Since we cannot directly verify an account ID with a public key, we must use the Trusted Service to fetch the public key related to an account ID in a signed payload.
+Since we cannot directly verify an account ID with a public key, `app-exchange` must use the Trusted Service to fetch the public key related to an account ID in a signed payload.
 
 ### Trusted Service
 To address this issue, Hedera uses a signed endpoint called the **Trusted Service**.
@@ -98,5 +98,7 @@ The service returns a response containing:
 - `account`: The account ID (shard.realm.num format)
 - `key`: The public key associated with the account
 - `signedDescriptor`: A cryptographic signature validating the relationship
+
+The Trusted Service is transparent to the Hedera app; all verification and account ID to key mapping for swaps is handled on the `app-exchange` side.
 
 This trusted service is essential for swap operations because Hedera's account system does not allow direct derivation of account IDs from public keys, unlike most other blockchain networks.
