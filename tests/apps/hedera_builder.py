@@ -10,6 +10,8 @@ from proto import crypto_transfer_pb2
 from proto import token_burn_pb2
 from proto import token_mint_pb2
 from proto import wrappers_pb2
+from proto import timestamp_pb2
+from proto import duration_pb2
 
 
 def hedera_transaction(
@@ -69,34 +71,72 @@ def crypto_create_account_conf(
 
 def crypto_update_account_conf(
     declineRewards: bool = None,
-    stakeTargetAccount: int = None,
     stakeTargetNode: int = None,
     targetShardNum: int = 0,
     targetRealmNum: int = 0,
     targetAccountNum: int = 666,
+    autoRenewPeriodSeconds: int = None,
+    expirationTimeSeconds: int = None,
+    receiverSigRequired: bool = None,
+    maxAutoTokenAssociations: int = None,
+    includeKey: bool = False,
+    accountMemo: str = None,
+    stakeTargetShardNum: int = None,
+    stakeTargetRealmNum: int = None,
+    stakeTargetAccount: int = None,
 ) -> Dict:
     account_id = basic_types_pb2.AccountID(
         shardNum=targetShardNum, realmNum=targetRealmNum, accountNum=targetAccountNum
     )
-    decline = wrappers_pb2.BoolValue(value=declineRewards)
+    
     crypto_update_account = crypto_update_pb2.CryptoUpdateTransactionBody(
-        accountIDToUpdate=account_id, decline_reward=decline
+        accountIDToUpdate=account_id
     )
-
-    if stakeTargetAccount:
-        stake_account_id = basic_types_pb2.AccountID(accountNum=stakeTargetAccount)
-        crypto_update_account = crypto_update_pb2.CryptoUpdateTransactionBody(
-            accountIDToUpdate=account_id,
-            staked_account_id=stake_account_id,
-            decline_reward=decline,
+    
+    # Add key if requested (for testing key change failure)
+    if includeKey:
+        dummy_key = basic_types_pb2.Key()
+        crypto_update_account.key.CopyFrom(dummy_key)
+    
+    # Add decline rewards if specified
+    if declineRewards is not None:
+        decline = wrappers_pb2.BoolValue(value=declineRewards)
+        crypto_update_account.decline_reward.CopyFrom(decline)
+    
+    # Add staking configuration
+    if stakeTargetAccount is not None:
+        stake_account_id = basic_types_pb2.AccountID(
+            shardNum=stakeTargetShardNum,
+            realmNum=stakeTargetRealmNum,
+            accountNum=stakeTargetAccount,
         )
+        crypto_update_account.staked_account_id.CopyFrom(stake_account_id)
+    elif stakeTargetNode is not None:
+        crypto_update_account.staked_node_id = stakeTargetNode
+    
+    # Add auto renew period if specified
+    if autoRenewPeriodSeconds is not None:
+        auto_renew_period = duration_pb2.Duration(seconds=autoRenewPeriodSeconds)
+        crypto_update_account.autoRenewPeriod.CopyFrom(auto_renew_period)
+    
+    # Add expiration time if specified
+    if expirationTimeSeconds is not None:
+        expiration_time = timestamp_pb2.Timestamp(seconds=expirationTimeSeconds)
+        crypto_update_account.expirationTime.CopyFrom(expiration_time)
+    
+    # Add receiver signature required if specified
+    if receiverSigRequired is not None:
+        receiver_sig = wrappers_pb2.BoolValue(value=receiverSigRequired)
+        crypto_update_account.receiverSigRequiredWrapper.CopyFrom(receiver_sig)
+    
+    # Add max automatic token associations if specified
+    if maxAutoTokenAssociations is not None:
+        max_tokens = wrappers_pb2.Int32Value(value=maxAutoTokenAssociations)
+        crypto_update_account.max_automatic_token_associations.CopyFrom(max_tokens)
 
-    if stakeTargetNode:
-        crypto_update_account = crypto_update_pb2.CryptoUpdateTransactionBody(
-            accountIDToUpdate=account_id,
-            staked_node_id=stakeTargetNode,
-            decline_reward=decline,
-        )
+    if accountMemo is not None:
+        account_memo_value = wrappers_pb2.StringValue(value=accountMemo)
+        crypto_update_account.memo.CopyFrom(account_memo_value)
 
     return {"cryptoUpdateAccount": crypto_update_account}
 

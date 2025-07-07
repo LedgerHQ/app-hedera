@@ -186,6 +186,44 @@ def test_hedera_crypto_create_account_stake_node_refused(backend, firmware, scen
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
+def test_hedera_crypto_create_account_stake_ledger_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_create_account_conf(
+        initialBalance=5, stakeTargetAccount=1337, declineRewards=True
+    )
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="this_is_the_memo",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_crypto_create_account_stake_ledger_refused(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_create_account_conf(
+        initialBalance=5, stakeTargetAccount=1337, declineRewards=False
+    )
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="this_is_the_memo",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+        navigation_helper_reject(firmware, scenario_navigator)
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
+
+
 def test_hedera_crypto_update_account_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_update_account_conf(
@@ -236,6 +274,8 @@ def test_hedera_crypto_update_account_stake_account_ok(backend, firmware, scenar
         targetRealmNum=901,
         targetAccountNum=7,
         stakeTargetAccount=666,
+        stakeTargetShardNum=555,
+        stakeTargetRealmNum=444,
         declineRewards=True,
     )
     with hedera.send_sign_transaction(
@@ -275,6 +315,56 @@ def test_hedera_crypto_update_account_stake_account_refused(backend, firmware, s
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
+def test_hedera_crypto_update_account_stake_ledger_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_update_account_conf(
+        targetShardNum=8,
+        targetRealmNum=901,
+        targetAccountNum=7,
+        stakeTargetAccount=1337,
+        stakeTargetShardNum=0,
+        stakeTargetRealmNum=0,
+        declineRewards=True,
+    )
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="this_is_the_memo",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_crypto_update_account_stake_ledger_refused(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_update_account_conf(
+        targetShardNum=8,
+        targetRealmNum=901,
+        targetAccountNum=7,
+        stakeTargetAccount=1337,
+        stakeTargetShardNum=0,
+        stakeTargetRealmNum=0,
+        declineRewards=False,
+    )
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="this_is_the_memo",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+        navigation_helper_reject(firmware, scenario_navigator)
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
+
+
 def test_hedera_crypto_update_account_stake_node_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_update_account_conf(
@@ -295,6 +385,31 @@ def test_hedera_crypto_update_account_stake_node_ok(backend, firmware, scenario_
     ):
         navigation_helper_confirm(firmware, scenario_navigator)
 
+def test_hedera_crypto_transfer_collect_rewards_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    # Create specilized transaction for collecting rewards
+    # Receipent => 0.0.800
+    # Amount => 1 tinybar
+    # Memo => Collect Staking Rewards
+    conf = crypto_transfer_hbar_conf(
+        sender_shardNum=0,
+        sender_realmNum=0,
+        sender_accountNum=12345,
+        recipient_shardNum=0,
+        recipient_realmNum=0,
+        recipient_accountNum=800,
+        amount=1, # 1 tinybar 
+    )
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=0,
+        operator_realm_num=0,
+        operator_account_num=12345,
+        transaction_fee=5,
+        memo="Collect Staking Rewards",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 def test_hedera_crypto_update_account_stake_node_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
@@ -319,6 +434,207 @@ def test_hedera_crypto_update_account_stake_node_refused(backend, firmware, scen
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
+
+
+def test_hedera_crypto_update_account_unstake_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_update_account_conf(
+        targetShardNum=0,
+        targetRealmNum=0,
+        targetAccountNum=654321,
+        stakeTargetShardNum=0,
+        stakeTargetRealmNum=0,
+        stakeTargetAccount=0,
+        declineRewards=False,
+    )
+    with hedera.send_sign_transaction(
+        index=1,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=int(10**8), # 1 Hbar
+        memo="Unstaking Hbar",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+def test_hedera_crypto_update_account_unstake_node_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_update_account_conf(
+        targetShardNum=0,
+        targetRealmNum=0,
+        targetAccountNum=654321,
+        stakeTargetNode=-1,
+        declineRewards=False,
+    )
+    with hedera.send_sign_transaction(
+        index=1,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=int(10**8), # 1 Hbar
+        memo="Unstaking Hbar",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+def test_hedera_crypto_update_account_unstake_node_refused(backend, firmware, scenario_navigator):
+
+    hedera = HederaClient(backend)
+    conf = crypto_update_account_conf(
+        targetShardNum=0,
+        targetRealmNum=0,
+        targetAccountNum=654321,
+        stakeTargetNode=-1,
+        declineRewards=False,
+    )
+    with hedera.send_sign_transaction(
+        index=1,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=int(10**8), # 1 Hbar
+        memo="Unstaking Hbar",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+        navigation_helper_reject(firmware, scenario_navigator)
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
+
+def test_hedera_crypto_update_account_invalid_zero_account(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_update_account_conf(
+        targetShardNum=0, targetRealmNum=0, targetAccountNum=0
+    )
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="this_is_the_memo",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+        #navigation_helper_reject(firmware, scenario_navigator)
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+
+
+def test_hedera_crypto_update_account_key_change_refused(backend, firmware, scenario_navigator):
+    """Test that crypto update fails when trying to change the key"""
+    hedera = HederaClient(backend)
+    conf = crypto_update_account_conf(
+        targetShardNum=1, 
+        targetRealmNum=2, 
+        targetAccountNum=3,
+        includeKey=True
+    )
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="key_change_test",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+
+
+def test_hedera_crypto_update_account_auto_renew_period_formatting_1(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_update_account_conf(
+        targetShardNum=5,
+        targetRealmNum=10,
+        targetAccountNum=12345,
+        autoRenewPeriodSeconds=134, # 134 seconds
+    )
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=10,
+        memo="period: 134 seconds",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+def test_hedera_crypto_update_account_auto_renew_period_formatting_2(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_update_account_conf(
+        targetShardNum=5,
+        targetRealmNum=10,
+        targetAccountNum=12345,
+        autoRenewPeriodSeconds=86400, # 1 day
+    )
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=10,
+        memo="period: 1 day",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+def test_hedera_crypto_update_account_auto_renew_period_formatting_long(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_update_account_conf(
+        targetShardNum=5,
+        targetRealmNum=10,
+        targetAccountNum=12345,
+        autoRenewPeriodSeconds=0x7FFFFFFFFFFFFFFF, # 106751991167300 days 55807 seconds
+    )
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=10,
+        memo="long time period",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+        
+        
+
+def test_hedera_crypto_update_account_all_fields_ok(backend, firmware, scenario_navigator):
+    """Test crypto update with all possible fields set"""
+    hedera = HederaClient(backend)
+    conf = crypto_update_account_conf(
+        targetShardNum=5,
+        targetRealmNum=10,
+        targetAccountNum=12345,
+        autoRenewPeriodSeconds=7776000,  # 90 days
+        expirationTimeSeconds=1735689600,  # Jan 1, 2025
+        receiverSigRequired=True,
+        maxAutoTokenAssociations=100,
+        stakeTargetNode=2,
+        declineRewards=False,
+        accountMemo="Nice Account Memo",
+    )
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=10,
+        memo="comprehensive_update_test",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
 
 
 def test_hedera_transfer_token_ok(backend, firmware, scenario_navigator):
@@ -588,6 +904,26 @@ def test_hedera_transfer_hbar_ok(backend, firmware, scenario_navigator):
     ):
         navigation_helper_confirm(firmware, scenario_navigator)
 
+def test_hedera_transfer_hbar_ok_with_key_index(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_hbar_conf(
+        sender_shardNum=12345, sender_realmNum=12346, sender_accountNum=12347,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=int(12.23 * 10**8), # 12.23 Hbar
+    )
+    
+    with hedera.send_sign_transaction(
+        index=123,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=1,
+        memo="Transaction with key 123",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
 
 def test_hedera_transfer_hbar_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
@@ -857,3 +1193,4 @@ def test_hedera_transfer_verify_refused(backend, firmware, scenario_navigator):
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
+

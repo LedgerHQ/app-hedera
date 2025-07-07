@@ -12,3 +12,35 @@ src/pb_*
 
 # Tests
 tests/snapshots-tmp/
+
+# Internal tools used by the team
+test_tools/
+
+# Fuzzing artifacts and build outputs
+fuzzing/build/
+fuzzing/artifacts/
+fuzzing/corpus/proto_varlen_parser/
+tests/unit/test_proto_varlen_parser
+tests/unit/test_proto_varlen_edge_cases
+tests/unit/test_proto_varlen_security
+tests/unit/Testing/
+*.o
+*.so
+*.exe
+fuzz_*
+*_fuzz
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CTestTestfile.cmake
+DartConfiguration.tcl
+Testing/
+
+# Sanitizer logs
+*asan*
+*ubsan*
+*msan*
+
