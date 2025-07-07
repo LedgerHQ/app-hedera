@@ -1,1 +1,19 @@
 build/
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+CTestTestfile.cmake
+DartConfiguration.tcl
+Testing/
+
+# Build artifacts
+*.so
+test_proto_varlen_*
+
+# Editor/IDE files
+*.swp
+*.swo
+*~

@@ -198,9 +198,9 @@ static const bagl_element_t ui_tx_deny_step[] = {
     UI_ICON(LINE_2_ID, 0, 24, 128, BAGL_GLYPH_ICON_CROSS)};
 
 // Step 1: Transaction Summary
-unsigned int ui_tx_intermediate_step_button(
-    unsigned int button_mask,
-    unsigned int __attribute__((unused)) button_mask_counter) {
+unsigned int ui_tx_summary_step_button(unsigned int button_mask,
+                                       unsigned int __attribute__((unused))
+                                       button_mask_counter) {
     switch (button_mask) {
         case BUTTON_EVT_RELEASED | BUTTON_RIGHT:
             if (st_ctx.type == Verify) { // Verify skips to Senders
@@ -671,6 +671,29 @@ UX_STEP_NOCB(amount_step, bnnn_paging,
              {.title = (char*)st_ctx.amount_title,
               .text = (char*)st_ctx.amount});
 
+UX_STEP_NOCB(auto_renew_period_step, bnnn_paging,
+             {.title = "Auto renew period",
+              .text = (char*)st_ctx.auto_renew_period});
+
+UX_STEP_NOCB(expiration_time_step, bnnn_paging,
+             {.title = "Account expires",
+              .text = (char*)st_ctx.expiration_time});
+
+UX_STEP_NOCB(receiver_sig_required_step, bnnn_paging,
+             {.title = "Recv sign required?",
+              .text = (char*)st_ctx.receiver_sig_required});
+
+UX_STEP_NOCB(max_auto_token_assoc_step, bn_paging,
+             {.title = "Max auto token assoc",
+              .text = (char*)st_ctx.max_auto_token_assoc});
+
+UX_STEP_NOCB(collect_rewards_step, bnnn_paging,
+             {.title = "Collect rewards?",
+              .text = (char*)st_ctx.collect_rewards});
+
+UX_STEP_NOCB(account_memo_step, bnnn_paging,
+             {.title = "Account memo", .text = (char*)st_ctx.account_memo});
+
 UX_STEP_NOCB(fee_step, bnnn_paging,
              {.title = "Max fees", .text = (char*)st_ctx.fee});
 
@@ -684,9 +707,8 @@ UX_STEP_VALID(reject_step, pb, io_seproxyhal_tx_reject(NULL),
               {&C_icon_crossmark, "Reject"});
 
 // Transfer UX Flow
-UX_DEF(ux_transfer_flow, &summary_step, &operator_step, &senders_step,
-       &recipients_step,  &amount_step, &fee_step, &memo_step, &confirm_step,
-       &reject_step);
+UX_DEF(ux_transfer_flow, &summary_token_trans_step, &key_index_step, &operator_step, &senders_step,
+       &recipients_step, &amount_step, &fee_step, &memo_step, &confirm_step, &reject_step);
 
 // Transfer Token UX Flow
 UX_DEF(ux_transfer_flow_token, &summary_token_trans_step, &key_index_step, &operator_step, &senders_step,
@@ -709,7 +731,42 @@ UX_DEF(ux_associate_flow, &summary_token_trans_step, &key_index_step, &token_nam
 UX_DEF(ux_associate_known_token_flow, &summary_token_trans_step, &key_index_step, &token_name_step, &token_addr_step,
        &fee_step, &confirm_step, &reject_step);
 
+// Update UX Flow
+UX_DEF(ux_update_flow, &summary_step, &operator_step, &senders_step,
+       &recipients_step, &amount_step, &auto_renew_period_step,
+       &expiration_time_step, &receiver_sig_required_step,
+       &max_auto_token_assoc_step, &account_memo_step, &fee_step, &memo_step,
+       &confirm_step, &reject_step);
+
+// Stake UX Flow
+UX_DEF(ux_stake_flow, &summary_token_trans_step, &key_index_step,
+       &operator_step, &amount_step, &recipients_step, &collect_rewards_step,
+       &fee_step, &confirm_step, &reject_step);
+
+// Unstake UX Flow
+UX_DEF(ux_unstake_flow, &summary_token_trans_step, &key_index_step,
+       &operator_step, &amount_step, &collect_rewards_step,
+       &fee_step, &confirm_step, &reject_step);
+
 #elif defined(HAVE_NBGL)
+
+// Macro to add field to infos array if it's set and not "-"
+#define ADD_INFO_IF_SET(field_value, field_title) \
+    do { \
+        if (strlen(field_value) > 0 && strcmp(field_value, "-") != 0) { \
+            infos[index].item = field_title; \
+            infos[index].value = field_value; \
+            ++index; \
+        } \
+    } while(0)
+
+// Macro to unconditionally add field to infos array
+#define ADD_INFO(field_value, field_title) \
+    do { \
+        infos[index].item = field_title; \
+        infos[index].value = field_value; \
+        ++index; \
+    } while(0)
 
 static void review_choice(bool confirm) {
     // Answer, display a status page and go back to main
@@ -725,8 +782,7 @@ static void review_choice(bool confirm) {
 // Max is 7 infos for transfer transaction
 // If a new flow is added or flows are modified to include more steps, don't
 // forget to update the infos array size!
-static nbgl_contentTagValue_t infos[8];
-// Content of the review flow
+static nbgl_contentTagValue_t infos[12]; 
 static nbgl_contentTagValueList_t content;
 static char review_start_title[64];
 static char review_final_title[64];
@@ -745,78 +801,75 @@ static void create_transaction_flow(void) {
 
     switch (st_ctx.type) {
         case Verify:
-            infos[index].item = st_ctx.senders_title;
-            infos[index].value = st_ctx.senders;
-            ++index;
+            ADD_INFO(st_ctx.senders, st_ctx.senders_title);
             break;
         case Associate:
             if (st_ctx.token_known) {
-                infos[index].item = "Token";
-                infos[index].value = st_ctx.token_ticker;
-                ++index;
-                infos[index].item = "Token ID";
-                infos[index].value = st_ctx.token_address_str;
-                ++index;
+                ADD_INFO(st_ctx.token_ticker, "Token");
+                ADD_INFO(st_ctx.token_address_str, "Token ID");
             }
             else {
-                infos[index].item = "Token";
-                infos[index].value = st_ctx.token_address_str;
-                ++index;
+                ADD_INFO(st_ctx.token_address_str, "Token");
             }
-            infos[index].item = "Max fees";
-            infos[index].value = st_ctx.fee;
-            ++index;
+            ADD_INFO(st_ctx.fee, "Max fees");
             break;
         case Create:
-            infos[index].item = "Operator";
-            infos[index].value = st_ctx.operator;
-            ++index;
-            infos[index].item = st_ctx.amount_title;
-            infos[index].value = st_ctx.amount;
-            ++index;
-            infos[index].item = "Max Fee";
-            infos[index].value = st_ctx.fee;
-            ++index;
-            infos[index].item = "Memo";
-            infos[index].value = st_ctx.memo;
-            ++index;
+            ADD_INFO(st_ctx.operator, "Operator");
+            ADD_INFO(st_ctx.amount, st_ctx.amount_title);
+            if (st_ctx.type == TokenTransfer) {
+                ADD_INFO(st_ctx.token_address_str, "Token ID");
+            }
+            ADD_INFO(st_ctx.fee, "Max fees");
+            ADD_INFO(st_ctx.memo, "Memo");
+            break;
+        case Update:
+            switch (st_ctx.update_type) {
+                case STAKE_UPDATE:
+                    ADD_INFO(st_ctx.operator, "Operator");
+                    ADD_INFO(st_ctx.amount, "Account");
+                    ADD_INFO(st_ctx.recipients, "Stake to");
+                    ADD_INFO_IF_SET(st_ctx.collect_rewards, "Collect rewards?");
+                    break;
+                case UNSTAKE_UPDATE:
+                    ADD_INFO(st_ctx.operator, "Operator");
+                    ADD_INFO(st_ctx.amount, "Account");
+                    ADD_INFO_IF_SET(st_ctx.collect_rewards, "Collect rewards?");
+                    break;
+                default:
+                    ADD_INFO(st_ctx.operator, "Operator");
+                    ADD_INFO_IF_SET(st_ctx.senders, st_ctx.senders_title);
+                    ADD_INFO_IF_SET(st_ctx.recipients, st_ctx.recipients_title);
+                    ADD_INFO_IF_SET(st_ctx.amount, st_ctx.amount_title);
+                    ADD_INFO_IF_SET(st_ctx.auto_renew_period, "Auto renew period");
+                    ADD_INFO_IF_SET(st_ctx.expiration_time, "Account expires");
+                    ADD_INFO_IF_SET(st_ctx.receiver_sig_required, "Receiver signature required?");
+                    ADD_INFO_IF_SET(st_ctx.max_auto_token_assoc, "Max auto token association");
+                    ADD_INFO_IF_SET(st_ctx.account_memo, "Account memo");
+                    if (strlen(st_ctx.memo) > 0) {
+                        ADD_INFO(st_ctx.memo, "Memo");
+                    }
+                    ADD_INFO_IF_SET(st_ctx.collect_rewards, "Collect rewards?");
+            }
+            ADD_INFO(st_ctx.fee, "Max fees");
             break;
         case TokenTransfer:
             // FALLTHROUGH
         case Transfer:
-            infos[index].item = "Operator";
-            infos[index].value = st_ctx.operator;
-            ++index;
-            infos[index].item = st_ctx.senders_title;
-            infos[index].value = st_ctx.senders;
-            ++index;
-            infos[index].item = "To";
-            infos[index].value = st_ctx.recipients;
-            ++index;
-            infos[index].item = st_ctx.amount_title;
-            infos[index].value = st_ctx.amount;
-            ++index;
-             if (st_ctx.type == TokenTransfer) {
-                infos[index].item = "Token ID";
-                infos[index].value = st_ctx.token_address_str;
-                ++index;
+            ADD_INFO(st_ctx.operator, "Operator");
+            ADD_INFO(st_ctx.senders, st_ctx.senders_title);
+            ADD_INFO(st_ctx.recipients, "To");
+            ADD_INFO(st_ctx.amount, st_ctx.amount_title);
+            if (st_ctx.type == TokenTransfer) {
+                ADD_INFO(st_ctx.token_address_str, "Token ID");
             }
-            infos[index].item = "Max fees";
-            infos[index].value = st_ctx.fee;
-            ++index;
-            infos[index].item = "Memo";
-            infos[index].value = st_ctx.memo;
-            ++index;
+            ADD_INFO(st_ctx.fee, "Max fees");
+            ADD_INFO(st_ctx.memo, "Memo");
             break;
         case TokenMint:
             // FALLTHROUGH
         case TokenBurn:
-            infos[index].item = st_ctx.senders_title;
-            infos[index].value = st_ctx.senders;
-            ++index;
-            infos[index].item = st_ctx.amount_title;
-            infos[index].value = st_ctx.amount;
-            ++index;
+            ADD_INFO(st_ctx.senders, st_ctx.senders_title);
+            ADD_INFO(st_ctx.amount, st_ctx.amount_title);
             break;
         default:
             // Unreachable
@@ -826,7 +879,7 @@ static void create_transaction_flow(void) {
     // If a new flow is added or flows are modified to include more steps, don't
     // forget to update the infos array size!
     content.nbMaxLinesForValue = 0;
-    content.smallCaseForValue = true;
+    content.smallCaseForValue = false;
     content.wrapping = true;
     content.pairs = infos;
     content.callback = NULL;
@@ -857,9 +910,20 @@ void ui_sign_transaction(void) {
         case Verify:
             ux_flow_init(0, ux_verify_flow, NULL);
             break;
-        case Create:
-            // FALLTHROUGH
         case Update:
+            switch (st_ctx.update_type) {
+                case STAKE_UPDATE:
+                    ux_flow_init(0, ux_stake_flow, NULL);
+                    break;
+                case UNSTAKE_UPDATE:
+                    ux_flow_init(0, ux_unstake_flow, NULL);
+                    break;
+                default:
+                    ux_flow_init(0, ux_update_flow, NULL);
+                    break;
+            }
+            break;
+        case Create:
             // FALLTHROUGH
         case Transfer:
             ux_flow_init(0, ux_transfer_flow, NULL);
