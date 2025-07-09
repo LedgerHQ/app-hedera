@@ -10,6 +10,7 @@
 #include "crypto_update.pb.h"
 #include "handlers.h"
 #include "hedera.h"
+#include "app_globals.h"
 #include "hedera_format.h"
 #include "app_io.h"
 #include "transaction_body.pb.h"
@@ -140,13 +141,13 @@ typedef struct sign_tx_context_s {
     uint8_t display_count; // Number Screens
 #else
     // Transaction Operator
-    char operator[DISPLAY_SIZE * 2 + 1];
+    char operator[ACCOUNT_ID_SIZE];
 
     // Transaction Senders
-    char senders[DISPLAY_SIZE * 2 + 1];
+    char senders[ACCOUNT_ID_SIZE];
 
     // Transaction Recipients
-    char recipients[DISPLAY_SIZE * 2 + 1];
+    char recipients[ACCOUNT_ID_SIZE];
 
     // Transaction Amount
     char amount[DISPLAY_SIZE * 2 + 1];
@@ -170,6 +171,8 @@ typedef struct sign_tx_context_s {
 
     // Parsed transaction
     Hedera_TransactionBody transaction;
+
+    size_t signature_length;
 } sign_tx_context_t;
 
 extern sign_tx_context_t st_ctx;

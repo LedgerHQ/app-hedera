@@ -1,6 +1,13 @@
+#include "handle_swap_sign_transaction.h"
 #include "sign_transaction.h"
-
 #include "tokens/cal/token_lookup.h"
+#include <swap_entrypoints.h>
+#include <swap_utils.h>
+
+
+#include <swap_entrypoints.h>
+#include <swap_utils.h>
+
 
 sign_tx_context_t st_ctx;
 
@@ -269,6 +276,54 @@ void handle_transaction_body() {
     }
 #endif
 
+#ifdef HAVE_SWAP
+    // If we are in swap context, do not redisplay the message data
+    // Instead, ensure they are identical with what was previously displayed
+    if (G_called_from_swap) {
+        if (G_swap_response_ready) {
+            // Safety against trying to make the app sign multiple TX
+            // This code should never be triggered as the app is supposed to exit after
+            // sending the signed transaction
+            PRINTF("Safety against double signing triggered\n");
+            os_sched_exit(-1);
+        } else {
+            // We will quit the app after this transaction, whether it succeeds or fails
+            PRINTF("Swap response is ready, the app will quit after the next send\n");
+            // This boolean will make the io_send_sw family instant reply + return to
+            // exchange
+            G_swap_response_ready = true;
+        }
+        if (swap_check_validity()) {
+            PRINTF("Swap response validated\n");
+            validate_transfer();
+
+            uint8_t tx = st_ctx.signature_length;
+
+            U2BE_ENCODE(G_io_apdu_buffer, tx, EXCEPTION_OK);
+            tx += 2;
+
+            // Send back the response, do not restart the event loop
+            io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+            finalize_exchange_sign_transaction(true);
+        } else {
+            PRINTF("swap_check_validity failed\n");
+            uint8_t tx = 0;
+
+            U2BE_ENCODE(G_io_apdu_buffer, tx, EXCEPTION_INTERNAL);
+            tx += 2;
+
+            // Send back the response, do not restart the event loop
+            io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+
+            finalize_exchange_sign_transaction(false);
+        }
+    } else {
+        ui_sign_transaction();
+    }
+#else
+    ui_sign_transaction();
+#endif
+
     ui_sign_transaction();
 }
 
@@ -292,7 +347,7 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
-    // Key Index
+    // Key Index (Little Endian format)
     st_ctx.key_index = U4LE(buffer, 0);
 
     // copy raw transaction
@@ -300,7 +355,7 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
 
     // Sign Transaction
     if (!hedera_sign(st_ctx.key_index, raw_transaction, raw_transaction_length,
-                     G_io_apdu_buffer)) {
+                     G_io_apdu_buffer, &st_ctx.signature_length)) {
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 

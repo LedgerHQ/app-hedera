@@ -5,6 +5,8 @@
 #define BIP32_PATH 5
 #define DISPLAY_SIZE 18 // characters @ 11pt sys font
 
+#define HASH_LENGTH        32
+#define PUBKEY_LENGTH      HASH_LENGTH
 #define RAW_PUBKEY_SIZE 65
 #define MAX_TX_SIZE 512
 #define FULL_ADDRESS_LENGTH 54
@@ -54,3 +56,8 @@ static const uint8_t LINE_2_ID = 0x06;
 
 // Ok
 #define EXCEPTION_OK 0x9000
+
+/**
+ * Status word for fail on swap validity check.
+ */
+#define SW_SWAP_CHECKING_FAIL 0xB00A
