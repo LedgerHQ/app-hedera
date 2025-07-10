@@ -98,7 +98,7 @@ UX_DEF(ux_idle_flow, &ux_idle_flow_1_step, &ux_idle_flow_2_step,
 #define SETTING_INFO_NB 2
 static const char* const info_types[SETTING_INFO_NB] = {"Version", "Developer"};
 static const char* const info_contents[SETTING_INFO_NB] = {APPVERSION,
-                                                           "(c) 2024 Ledger"};
+                                                           "(c) 2025 Ledger"};
 
 static const nbgl_contentInfoList_t infoList = {
     .nbInfos = SETTING_INFO_NB,
