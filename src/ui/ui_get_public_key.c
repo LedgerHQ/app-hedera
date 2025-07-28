@@ -146,7 +146,6 @@ static void callback_match(bool match) {
     }
     ui_idle();
 }
-
 static void ui_get_public_key_nbgl(void) {
     //Convert key_index to string
     char key_index_str[25];

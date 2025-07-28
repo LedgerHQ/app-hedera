@@ -6,17 +6,22 @@
 
 #include "crypto_helpers.h"
 #include "utils.h"
+#include <stddef.h>
+#include <stdbool.h>
 
+// Constructs the fixed Hedera derivation path: m/44'/3030'/0'/0'/index'
+// Used for transaction signing and public key operations
+// Only the index parameter varies; all other path components are hardcoded
 static void hedera_set_path(uint32_t index, uint32_t path[static 5]) {
-    path[0] = PATH_ZERO;
-    path[1] = PATH_ONE;
-    path[2] = PATH_TWO;
-    path[3] = PATH_THREE;
-    path[4] = PATH_FOUR;
+    path[0] = PATH_ZERO;   // 44'
+    path[1] = PATH_ONE;    // 3030'
+    path[2] = PATH_TWO;    // 0'
+    path[3] = PATH_THREE;  // 0'
+    path[4] = PATH_FOUR;   // index'
 }
 
 bool hedera_get_pubkey(uint32_t index, uint8_t raw_pubkey[static RAW_PUBKEY_SIZE]) {
-    static uint32_t path[5];
+    uint32_t path[5];
 
     hedera_set_path(index, path);
 
@@ -30,8 +35,8 @@ bool hedera_get_pubkey(uint32_t index, uint8_t raw_pubkey[static RAW_PUBKEY_SIZE
 }
 
 bool hedera_sign(uint32_t index, const uint8_t* tx, uint8_t tx_len,
-                 /* out */ uint8_t* result) {
-    static uint32_t path[5];
+                 /* out */ uint8_t* result, /* out */ size_t* sig_len_out) {
+    uint32_t path[5];
     size_t sig_len = 64;
 
     hedera_set_path(index, path);
@@ -44,6 +49,6 @@ bool hedera_sign(uint32_t index, const uint8_t* tx, uint8_t tx_len,
                      &sig_len, NULL, 0)) {
         return false;
     }
-
+    if (sig_len_out) *sig_len_out = sig_len;
     return true;
 }
