@@ -11,7 +11,7 @@ src/pb_*
 *.pyc
 
 # Tests
-tests/snapshots-tmp/
+snapshots-tmp/
 
 # Internal tools used by the team
 test_tools/
