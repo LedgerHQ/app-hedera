@@ -3,16 +3,16 @@ from ragger.navigator import NavInsID
 from ragger.firmware import Firmware
 from ragger.firmware.touch.use_cases import UseCaseReview
 
-from .apps.hedera import HederaClient, ErrorType
-from .apps.hedera_builder import crypto_create_account_conf
-from .apps.hedera_builder import crypto_update_account_conf
-from .apps.hedera_builder import crypto_transfer_token_conf
-from .apps.hedera_builder import crypto_transfer_hbar_conf
-from .apps.hedera_builder import crypto_transfer_verify
-from .apps.hedera_builder import token_associate_conf
-from .apps.hedera_builder import token_dissociate_conf
-from .apps.hedera_builder import token_burn_conf
-from .apps.hedera_builder import token_mint_conf
+from tests.application_client.hedera import HederaClient, ErrorType
+from tests.application_client.hedera_builder import crypto_create_account_conf
+from tests.application_client.hedera_builder import crypto_update_account_conf
+from tests.application_client.hedera_builder import crypto_transfer_token_conf
+from tests.application_client.hedera_builder import crypto_transfer_hbar_conf
+from tests.application_client.hedera_builder import crypto_transfer_verify
+from tests.application_client.hedera_builder import token_associate_conf
+from tests.application_client.hedera_builder import token_dissociate_conf
+from tests.application_client.hedera_builder import token_burn_conf
+from tests.application_client.hedera_builder import token_mint_conf
 
 from .utils import ROOT_SCREENSHOT_PATH, navigation_helper_confirm, navigation_helper_reject
 
