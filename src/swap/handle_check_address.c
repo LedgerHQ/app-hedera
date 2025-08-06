@@ -10,9 +10,9 @@ static void derive_public_key(uint32_t index, uint8_t public_key[RAW_PUBKEY_SIZE
                               uint8_t public_key_str[RAW_PUBKEY_SIZE]) {
     hedera_get_pubkey(index, public_key);
  
-
-    public_key_to_bytes(G_io_apdu_buffer, public_key);
-    bin2hex(public_key_str, G_io_apdu_buffer, KEY_SIZE);
+    uint8_t buffer[RAW_PUBKEY_SIZE];
+    public_key_to_bytes(buffer, public_key);
+    bin2hex(public_key_str, buffer, KEY_SIZE);
     public_key_str[KEY_SIZE] = '\0';
 }
 
