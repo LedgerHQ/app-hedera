@@ -95,13 +95,11 @@ static void validate_memo(const char memo[100]) {
     hedera_snprintf(element, sizeof(element) - 1, __VA_ARGS__)
 
 void reformat_key(void) {
-    hedera_safe_printf(st_ctx.summary_line_2,
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_NANOS)
-                       "with Key #%u?",
+    hedera_safe_printf(st_ctx.summary_line_2, "with Key #%u?", st_ctx.key_index);
 #elif defined(TARGET_STAX) || defined(TARGET_FLEX)
-                       "#%u",
+    hedera_safe_printf(st_ctx.summary_line_2, "#%u", st_ctx.key_index);
 #endif
-                       st_ctx.key_index);
 
     hedera_safe_printf(st_ctx.key_index_str, "#%u", st_ctx.key_index);
 }
@@ -122,47 +120,26 @@ void reformat_summary_send_token(void) {
 
 // TITLES
 
-#if defined(TARGET_NANOS)
-static void set_title(const char *title) {
-    hedera_safe_printf(st_ctx.title, "%s (%u/%u)", title, st_ctx.display_index,
-                       st_ctx.display_count);
-}
-#endif
+
 
 static void set_senders_title(const char *title) {
-#if defined(TARGET_NANOS)
-    set_title(title);
-#else
     // st_ctx.senders_title --> st_ctx.title (NANOS)
     hedera_safe_printf(st_ctx.senders_title, "%s", title);
-#endif
 }
 
 static void set_recipients_title(const char *title) {
-#if defined(TARGET_NANOS)
-    set_title(title);
-#else
     // st_ctx.recipients_title --> st_ctx.title (NANOS)
     hedera_safe_printf(st_ctx.recipients_title, "%s", title);
-#endif
 }
 
 static void set_amount_title(const char *title) {
-#if defined(TARGET_NANOS)
-    set_title(title);
-#else
     // st_ctx.senders_title --> st_ctx.title (NANOS)
     hedera_safe_printf(st_ctx.amount_title, "%s", title);
-#endif
 }
 
 // OPERATOR
 
 void reformat_operator(void) {
-#if defined(TARGET_NANOS)
-    set_title("Operator");
-#endif
-
     // st_ctx.operator --> st_ctx.full (NANOS)
     hedera_safe_printf(st_ctx.operator, "%llu.%llu.%llu",
                        st_ctx.transaction.transactionID.accountID.shardNum,
@@ -309,6 +286,10 @@ void reformat_sender_account(void) {
 
 void address_to_string(const token_addr_t *addr,
                        char buf[MAX_HEDERA_ADDRESS_LENGTH + 1]) {
+    if (addr == NULL || buf == NULL) {
+        return;
+    }
+    
     hedera_snprintf(buf, MAX_HEDERA_ADDRESS_LENGTH, "%llu.%llu.%llu",
                     addr->addr_shard, addr->addr_realm, addr->addr_account);
 }

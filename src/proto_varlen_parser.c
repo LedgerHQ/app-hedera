@@ -56,6 +56,10 @@ static bool extract_string_from_string_value(const uint8_t *sv_data,
                                              const uint8_t *sv_end,
                                              char *output,
                                              const size_t output_size) {
+    if (!sv_data || !sv_end || !output || output_size == 0) {
+        return false;
+    }
+    
     while (sv_data < sv_end) {
         uint64_t sv_tag = 0;
         if (!decode_varint(&sv_data, sv_end, &sv_tag)) {
@@ -112,6 +116,10 @@ static bool parse_crypto_update_body(const uint8_t *crypto_data,
                                      const uint8_t *crypto_end,
                                      uint32_t field_number, char *output,
                                      const size_t output_size) {
+    if (!crypto_data || !crypto_end || !output || output_size == 0) {
+        return false;
+    }
+    
     while (crypto_data < crypto_end) {
         uint64_t crypto_tag = 0;
         if (!decode_varint(&crypto_data, crypto_end, &crypto_tag)) {
@@ -212,6 +220,10 @@ bool extract_nested_string_field(const uint8_t *buffer, size_t buffer_size,
 // decoding
 static bool skip_field(const uint8_t **data, const uint8_t *end,
                        const uint32_t wire_type) {
+    if (!data || !*data || !end) {
+        return false;
+    }
+    
     switch (wire_type) {
         case WIRE_TYPE_VARINT: {
             uint64_t dummy = 0;

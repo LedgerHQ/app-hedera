@@ -13,8 +13,11 @@
 
 sign_tx_context_t st_ctx;
 
-#if !defined(TARGET_NANOS)
 static void parse_and_lookup_token(token_addr_t* token_addr) {
+    if (token_addr == NULL) {
+        return;
+    }
+    
     // Parse token address to string
     address_to_string(token_addr, st_ctx.token_address_str);
 
@@ -23,7 +26,6 @@ static void parse_and_lookup_token(token_addr_t* token_addr) {
         *token_addr, st_ctx.token_ticker, st_ctx.token_name,
         &st_ctx.token_decimals);
 }
-#endif
 
 // Validates whether or not a transfer is legal:
 // Either a transfer between two accounts
@@ -107,10 +109,6 @@ static void validate_crypto_update(void) {
 void handle_transaction_body() {
     MEMCLEAR(st_ctx.summary_line_1);
     MEMCLEAR(st_ctx.summary_line_2);
-#if defined(TARGET_NANOS)
-    MEMCLEAR(st_ctx.full);
-    MEMCLEAR(st_ctx.partial);
-#else
     MEMCLEAR(st_ctx.amount_title);
     MEMCLEAR(st_ctx.senders_title);
     MEMCLEAR(st_ctx.operator);
@@ -128,15 +126,9 @@ void handle_transaction_body() {
     MEMCLEAR(st_ctx.expiration_time);
     MEMCLEAR(st_ctx.receiver_sig_required);
     MEMCLEAR(st_ctx.max_auto_token_assoc);
-#endif
 
     // Step 1, Unknown Type, Screen 1 of 1
     st_ctx.type = Unknown;
-#if defined(TARGET_NANOS)
-    st_ctx.step = Summary;
-    st_ctx.display_index = 1;
-    st_ctx.display_count = 1;
-#endif
 
     // Legacy flow with Summary
     // 1.<Do Action>
@@ -148,10 +140,8 @@ void handle_transaction_body() {
     // 2. With Key #X?
     reformat_key_index();
 
-#if !defined(TARGET_NANOS)
     // All flows except Verify
     if (!is_verify_account()) reformat_operator();
-#endif
 
     // Handle parsed protobuf message of transaction body
     switch (st_ctx.transaction.which_data) {
@@ -159,11 +149,9 @@ void handle_transaction_body() {
             st_ctx.type = Create;
             reformat_summary("Create Account");
 
-#if !defined(TARGET_NANOS)
             reformat_stake_target();
             reformat_collect_rewards();
             reformat_amount_balance();
-#endif
             break;
 
         case Hedera_TransactionBody_cryptoUpdateAccount_tag:
@@ -200,7 +188,6 @@ void handle_transaction_body() {
             st_ctx.type = Associate;
             reformat_summary("associate token");
 
-#if !defined(TARGET_NANOS)
             token_addr_t associate_token_address = {
                 st_ctx.transaction.data.tokenAssociate.tokens[0].shardNum,
                 st_ctx.transaction.data.tokenAssociate.tokens[0].realmNum,
@@ -213,9 +200,7 @@ void handle_transaction_body() {
         case Hedera_TransactionBody_tokenDissociate_tag:
             st_ctx.type = Dissociate;
             reformat_summary("Dissociate Token");
-#endif
 
-#if !defined(TARGET_NANOS)
             token_addr_t dissociate_token_address = {
                 st_ctx.transaction.data.tokenDissociate.tokens[0].shardNum,
                 st_ctx.transaction.data.tokenDissociate.tokens[0].realmNum,
@@ -223,27 +208,22 @@ void handle_transaction_body() {
             };
             parse_and_lookup_token(&dissociate_token_address);
             reformat_token_dissociate();
-#endif
             break;
 
         case Hedera_TransactionBody_tokenBurn_tag:
             st_ctx.type = TokenBurn;
             reformat_summary("Burn Token");
 
-#if !defined(TARGET_NANOS)
             reformat_token_burn();
             reformat_amount_burn();
-#endif
             break;
 
         case Hedera_TransactionBody_tokenMint_tag:
             st_ctx.type = TokenMint;
             reformat_summary("Mint Token");
 
-#if !defined(TARGET_NANOS)
             reformat_token_mint();
             reformat_amount_mint();
-#endif
             break;
 
         case Hedera_TransactionBody_cryptoTransfer_tag:
@@ -272,11 +252,9 @@ void handle_transaction_body() {
                     st_ctx.transfer_to_index = 0;
                 }
 
-#if !defined(TARGET_NANOS)
                 reformat_sender_account();
                 reformat_recipient_account();
                 reformat_amount_transfer();
-#endif
 
             } else if (is_token_transfer()) {
                 st_ctx.type = TokenTransfer;
@@ -301,11 +279,9 @@ void handle_transaction_body() {
                     st_ctx.transfer_to_index = 0;
                 }
 
-#if !defined(TARGET_NANOS)
                 reformat_token_sender_account();
                 reformat_token_recipient_account();
                 reformat_token_transfer();
-#endif
 
             } else {
                 // Unsupported
@@ -319,13 +295,11 @@ void handle_transaction_body() {
             break;
     }
 
-#if !defined(TARGET_NANOS)
     // All flows except Verify
     if (!is_verify_account()) {
         reformat_fee();
         reformat_memo();
     }
-#endif
 
 #ifdef HAVE_SWAP
     // If we are in swap context, do not redisplay the message data
