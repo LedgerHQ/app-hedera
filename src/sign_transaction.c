@@ -1,5 +1,7 @@
 #include "handle_swap_sign_transaction.h"
 #include "sign_transaction.h"
+#include "proto_varlen_parser.h"
+
 #include "tokens/cal/token_lookup.h"
 #include <swap_entrypoints.h>
 #include <swap_utils.h>
@@ -11,8 +13,11 @@
 
 sign_tx_context_t st_ctx;
 
-#if !defined(TARGET_NANOS)
 static void parse_and_lookup_token(token_addr_t* token_addr) {
+    if (token_addr == NULL) {
+        return;
+    }
+    
     // Parse token address to string
     address_to_string(token_addr, st_ctx.token_address_str);
 
@@ -21,7 +26,6 @@ static void parse_and_lookup_token(token_addr_t* token_addr) {
         *token_addr, st_ctx.token_ticker, st_ctx.token_name,
         &st_ctx.token_decimals);
 }
-#endif
 
 // Validates whether or not a transfer is legal:
 // Either a transfer between two accounts
@@ -82,13 +86,29 @@ static bool is_token_transfer(void) {
     return (st_ctx.transaction.data.cryptoTransfer.tokenTransfers_count == 1);
 }
 
+static void validate_crypto_update(void) {
+
+    //Validate account is not 0.0.0
+    if (st_ctx.transaction.data.cryptoUpdateAccount.accountIDToUpdate.which_account == 3) {
+
+        int64_t account_num = st_ctx.transaction.data.cryptoUpdateAccount.accountIDToUpdate.account.accountNum;
+        int64_t realm_num = st_ctx.transaction.data.cryptoUpdateAccount.accountIDToUpdate.realmNum;
+        int64_t shard_num = st_ctx.transaction.data.cryptoUpdateAccount.accountIDToUpdate.shardNum;
+        
+        if (account_num == 0 && realm_num == 0 && shard_num == 0) {
+            THROW(EXCEPTION_MALFORMED_APDU);
+        }
+    }
+    
+    // Currently we don't support updating the key, because it requires double signing
+    if (st_ctx.transaction.data.cryptoUpdateAccount.has_key) {
+        THROW(EXCEPTION_MALFORMED_APDU);
+    }
+}
+
 void handle_transaction_body() {
     MEMCLEAR(st_ctx.summary_line_1);
     MEMCLEAR(st_ctx.summary_line_2);
-#if defined(TARGET_NANOS)
-    MEMCLEAR(st_ctx.full);
-    MEMCLEAR(st_ctx.partial);
-#else
     MEMCLEAR(st_ctx.amount_title);
     MEMCLEAR(st_ctx.senders_title);
     MEMCLEAR(st_ctx.operator);
@@ -102,24 +122,26 @@ void handle_transaction_body() {
     MEMCLEAR(st_ctx.token_ticker);
     MEMCLEAR(st_ctx.token_address_str);
     MEMCLEAR(st_ctx.token_known);
-#endif
+    MEMCLEAR(st_ctx.auto_renew_period);
+    MEMCLEAR(st_ctx.expiration_time);
+    MEMCLEAR(st_ctx.receiver_sig_required);
+    MEMCLEAR(st_ctx.max_auto_token_assoc);
 
     // Step 1, Unknown Type, Screen 1 of 1
     st_ctx.type = Unknown;
-#if defined(TARGET_NANOS)
-    st_ctx.step = Summary;
-    st_ctx.display_index = 1;
-    st_ctx.display_count = 1;
-#endif
 
-    // <Do Action>
-    // with Key #X?
+    // Legacy flow with Summary
+    // 1.<Do Action>
+    //   with Key #X?
     reformat_key();
 
-#if !defined(TARGET_NANOS)
+    // New flow with Key Index
+    // 1. Review transaction
+    // 2. With Key #X?
+    reformat_key_index();
+
     // All flows except Verify
     if (!is_verify_account()) reformat_operator();
-#endif
 
     // Handle parsed protobuf message of transaction body
     switch (st_ctx.transaction.which_data) {
@@ -127,29 +149,45 @@ void handle_transaction_body() {
             st_ctx.type = Create;
             reformat_summary("Create Account");
 
-#if !defined(TARGET_NANOS)
             reformat_stake_target();
             reformat_collect_rewards();
             reformat_amount_balance();
-#endif
             break;
 
         case Hedera_TransactionBody_cryptoUpdateAccount_tag:
-            st_ctx.type = Update;
-            reformat_summary("Update Account");
+            validate_crypto_update(); // THROWs
 
-#if !defined(TARGET_NANOS)
-            reformat_stake_target();
-            reformat_collect_rewards();
-            reformat_updated_account();
-#endif
+            st_ctx.type = Update;
+            st_ctx.update_type = identify_special_update(&st_ctx.transaction.data.cryptoUpdateAccount);
+            switch (st_ctx.update_type) {
+                case STAKE_UPDATE:
+                    reformat_summary("stake Hbar");
+                    reformat_account_to_update();
+                    reformat_stake_in_stake_flow();
+                    reformat_collect_rewards_in_stake_flow();
+                    break;
+                case UNSTAKE_UPDATE:
+                    reformat_summary("unstake Hbar");
+                    reformat_unstake_account_to_update();
+                    reformat_collect_rewards_in_stake_flow();
+                    break;
+                default:
+                    reformat_summary("update account");
+                    reformat_updated_account();
+                    reformat_stake_target();
+                    reformat_auto_renew_period();
+                    reformat_expiration_time();
+                    reformat_receiver_sig_required();
+                    reformat_max_automatic_token_associations();
+                    reformat_collect_rewards();
+                    break;
+            }
             break;
             
         case Hedera_TransactionBody_tokenAssociate_tag:
             st_ctx.type = Associate;
             reformat_summary("associate token");
 
-#if !defined(TARGET_NANOS)
             token_addr_t associate_token_address = {
                 st_ctx.transaction.data.tokenAssociate.tokens[0].shardNum,
                 st_ctx.transaction.data.tokenAssociate.tokens[0].realmNum,
@@ -157,14 +195,12 @@ void handle_transaction_body() {
             };
             parse_and_lookup_token(&associate_token_address);
             reformat_token_associate();
-#endif
             break;
 
         case Hedera_TransactionBody_tokenDissociate_tag:
             st_ctx.type = Dissociate;
             reformat_summary("Dissociate Token");
 
-#if !defined(TARGET_NANOS)
             token_addr_t dissociate_token_address = {
                 st_ctx.transaction.data.tokenDissociate.tokens[0].shardNum,
                 st_ctx.transaction.data.tokenDissociate.tokens[0].realmNum,
@@ -172,27 +208,22 @@ void handle_transaction_body() {
             };
             parse_and_lookup_token(&dissociate_token_address);
             reformat_token_dissociate();
-#endif
             break;
 
         case Hedera_TransactionBody_tokenBurn_tag:
             st_ctx.type = TokenBurn;
             reformat_summary("Burn Token");
 
-#if !defined(TARGET_NANOS)
             reformat_token_burn();
             reformat_amount_burn();
-#endif
             break;
 
         case Hedera_TransactionBody_tokenMint_tag:
             st_ctx.type = TokenMint;
             reformat_summary("Mint Token");
 
-#if !defined(TARGET_NANOS)
             reformat_token_mint();
             reformat_amount_mint();
-#endif
             break;
 
         case Hedera_TransactionBody_cryptoTransfer_tag:
@@ -221,11 +252,9 @@ void handle_transaction_body() {
                     st_ctx.transfer_to_index = 0;
                 }
 
-#if !defined(TARGET_NANOS)
                 reformat_sender_account();
                 reformat_recipient_account();
                 reformat_amount_transfer();
-#endif
 
             } else if (is_token_transfer()) {
                 st_ctx.type = TokenTransfer;
@@ -250,11 +279,9 @@ void handle_transaction_body() {
                     st_ctx.transfer_to_index = 0;
                 }
 
-#if !defined(TARGET_NANOS)
                 reformat_token_sender_account();
                 reformat_token_recipient_account();
                 reformat_token_transfer();
-#endif
 
             } else {
                 // Unsupported
@@ -268,13 +295,11 @@ void handle_transaction_body() {
             break;
     }
 
-#if !defined(TARGET_NANOS)
     // All flows except Verify
     if (!is_verify_account()) {
         reformat_fee();
         reformat_memo();
     }
-#endif
 
 #ifdef HAVE_SWAP
     // If we are in swap context, do not redisplay the message data
@@ -368,6 +393,14 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
                    &st_ctx.transaction)) {
         // Oh no couldn't ...
         THROW(EXCEPTION_MALFORMED_APDU);
+    }
+
+    // Extract account memo from cryptoUpdateAccount using second-stage protobuf decoding
+    // This handles the nested StringValue structure that nanopb doesn't decode automatically
+    if(st_ctx.transaction.which_data == Hedera_TransactionBody_cryptoUpdateAccount_tag) {
+        if(!extract_nested_string_field(raw_transaction, raw_transaction_length, 14, st_ctx.account_memo, sizeof(st_ctx.account_memo))) {
+            strcpy(st_ctx.account_memo, "-");
+        }
     }
 
     handle_transaction_body();
