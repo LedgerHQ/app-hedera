@@ -136,6 +136,9 @@ static void reformat_amount(void) {
 unsigned int ui_tx_summary_step_button(unsigned int button_mask,
                                        unsigned int button_mask_counter);
 
+unsigned int ui_tx_summary_middle_step_button(unsigned int button_mask,
+                                       unsigned int button_mask_counter);
+
 // Step 2 - 7
 void handle_intermediate_left_press();
 void handle_intermediate_right_press();
@@ -154,6 +157,18 @@ unsigned int ui_tx_deny_step_button(unsigned int button_mask,
 // Step 1: Transaction Summary
 static const bagl_element_t ui_tx_summary_step[] = {
     UI_BACKGROUND(), UI_ICON_RIGHT(RIGHT_ICON_ID, BAGL_GLYPH_ICON_RIGHT),
+
+    // ()       >>
+    // Line 1
+    // Line 2
+
+    UI_TEXT(LINE_1_ID, 0, 12, 128, st_ctx.summary_line_1),
+    UI_TEXT(LINE_2_ID, 0, 26, 128, st_ctx.summary_line_2)};
+
+// Step 1: Transaction Summary (Variant with left and right arrows)
+static const bagl_element_t ui_tx_summary_middle_step[] = {
+    UI_BACKGROUND(), UI_ICON_LEFT(LEFT_ICON_ID, BAGL_GLYPH_ICON_LEFT),
+    UI_ICON_RIGHT(RIGHT_ICON_ID, BAGL_GLYPH_ICON_RIGHT),
 
     // ()       >>
     // Line 1
@@ -197,11 +212,59 @@ static const bagl_element_t ui_tx_deny_step[] = {
     UI_TEXT(LINE_1_ID, 0, 12, 128, "Deny"),
     UI_ICON(LINE_2_ID, 0, 24, 128, BAGL_GLYPH_ICON_CROSS)};
 
+static const bagl_element_t ui_tx_warning_step[] = {
+    UI_BACKGROUND(), UI_ICON_RIGHT(RIGHT_ICON_ID, BAGL_GLYPH_ICON_RIGHT),
+
+    // ()       >>
+    //  Warning
+    //  Token transfer - review carefully
+
+    UI_TEXT(LINE_1_ID, 0, 12, 128, "Blind Signing"),
+    UI_ICON(LINE_2_ID, 0, 22, 128, BAGL_GLYPH_ICON_EYE_BADGE)
+};
+
+// Small helper to display the appropriate Summary screen on Nano S
+static void display_summary(void) {
+    if (st_ctx.type == TokenTransfer) {
+        UX_DISPLAY(ui_tx_summary_middle_step, NULL);
+    } else {
+        UX_DISPLAY(ui_tx_summary_step, NULL);
+    }
+}
+
+
+// Step 0: Blind signing warning
+unsigned int ui_tx_warning_step_button(unsigned int button_mask,
+                                       unsigned int __attribute__((unused))
+                                       button_mask_counter) {
+    switch (button_mask) {
+        case BUTTON_EVT_RELEASED | BUTTON_LEFT:
+            break;
+        case BUTTON_EVT_RELEASED | BUTTON_RIGHT:
+            // Proceed to Summary
+            st_ctx.step = Summary;
+            st_ctx.display_index = 1;
+            UX_DISPLAY(ui_tx_summary_middle_step, NULL);
+            break;
+    }
+    return 0;
+}
+
 // Step 1: Transaction Summary
 unsigned int ui_tx_summary_step_button(unsigned int button_mask,
                                        unsigned int __attribute__((unused))
                                        button_mask_counter) {
     switch (button_mask) {
+        case BUTTON_EVT_RELEASED | BUTTON_LEFT:
+            if (st_ctx.type == TokenTransfer) {
+                st_ctx.step = BlindWarning;
+                st_ctx.display_index = 1;
+                update_display_count();
+                reformat_senders();
+                shift_display();
+                UX_DISPLAY(ui_tx_warning_step, NULL);
+            }
+            break;
         case BUTTON_EVT_RELEASED | BUTTON_RIGHT:
             if (st_ctx.type == Verify) { // Verify skips to Senders
                 st_ctx.step = Senders;
@@ -223,6 +286,12 @@ unsigned int ui_tx_summary_step_button(unsigned int button_mask,
     return 0;
 }
 
+unsigned int ui_tx_summary_middle_step_button(unsigned int button_mask,
+                                       unsigned int __attribute__((unused))
+                                       button_mask_counter) {
+    return ui_tx_summary_step_button(button_mask, button_mask_counter);
+}
+
 void handle_intermediate_left_press() {
     // Navigate Left (scroll or return to previous step)
     switch (st_ctx.step) {
@@ -231,7 +300,7 @@ void handle_intermediate_left_press() {
             if (first_screen()) {
                 st_ctx.step = Summary;
                 st_ctx.display_index = 1;
-                UX_DISPLAY(ui_tx_summary_step, NULL);
+                display_summary();
             } else { // Scroll Left
                 st_ctx.display_index--;
                 update_display_count();
@@ -248,7 +317,7 @@ void handle_intermediate_left_press() {
                 if (st_ctx.type == Verify) {
                     st_ctx.step = Summary;
                     st_ctx.display_index = 1;
-                    UX_DISPLAY(ui_tx_summary_step, NULL);
+                    display_summary();
                 } else {
                     st_ctx.step = Operator;
                     st_ctx.display_index = 1;
@@ -376,9 +445,22 @@ void handle_intermediate_left_press() {
             UX_REDISPLAY();
         } break;
 
-        case Summary:
+        case Summary: {
+            if (first_screen()) { // Return to Blind sign warning
+                st_ctx.step = Fee;
+                st_ctx.display_index = 1;
+            } else { // Scroll left
+                st_ctx.display_index--;
+            }
+            update_display_count();
+            reformat_fee();
+            shift_display();
+            UX_REDISPLAY();
+        } break;
+
         case Confirm:
         case Deny:
+        case BlindWarning:
             // this handler does not apply to these steps
             break;
     }
@@ -534,6 +616,7 @@ void handle_intermediate_right_press() {
         case Summary:
         case Confirm:
         case Deny:
+        case BlindWarning:
             // this handler does not apply to these steps
             break;
     }
@@ -798,7 +881,15 @@ static void create_transaction_flow(void) {
 void ui_sign_transaction(void) {
 #if defined(TARGET_NANOS)
 
-    UX_DISPLAY(ui_tx_summary_step, NULL);
+    // Show the warning screen first for TokenTransfer on Nano S
+    if (st_ctx.type == TokenTransfer) {
+        st_ctx.step = BlindWarning;
+        st_ctx.display_index = 1;
+        st_ctx.display_count = 1;
+        UX_DISPLAY(ui_tx_warning_step, NULL);
+    } else {
+        UX_DISPLAY(ui_tx_summary_step, NULL);
+    }
 
 #elif defined(TARGET_NANOX) || defined(TARGET_NANOS2)
 
