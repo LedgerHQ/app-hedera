@@ -17,6 +17,9 @@
 #include "utils.h"
 
 enum TransactionStep {
+#if defined(TARGET_NANOS)
+    BlindWarning = 0,
+#endif
     Summary = 1,
     Operator = 2,
     Senders = 3,
