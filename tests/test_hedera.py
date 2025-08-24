@@ -346,6 +346,115 @@ def test_hedera_transfer_token_ok(backend, firmware, scenario_navigator):
     ):
         navigation_helper_confirm(firmware, scenario_navigator)
 
+def test_hedera_transfer_token_2_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=15,
+        token_realmNum=16,
+        token_tokenNum=17,
+        sender_shardNum=57,
+        sender_realmNum=58,
+        sender_accountNum=59,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=20,
+        decimals=0,
+    )
+
+    with hedera.send_sign_transaction(
+            index=0,
+            operator_shard_num=1,
+            operator_realm_num=2,
+            operator_account_num=3,
+            transaction_fee=5,
+            memo="this_is_the_memo",
+            conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+def test_hedera_transfer_token_3_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=15,
+        token_realmNum=16,
+        token_tokenNum=17,
+        sender_shardNum=57,
+        sender_realmNum=58,
+        sender_accountNum=59,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=20,
+        decimals=2,
+    )
+
+    with hedera.send_sign_transaction(
+            index=0,
+            operator_shard_num=1,
+            operator_realm_num=2,
+            operator_account_num=3,
+            transaction_fee=5,
+            memo="this_is_the_memo",
+            conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+def test_hedera_transfer_token_4_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=15,
+        token_realmNum=16,
+        token_tokenNum=17,
+        sender_shardNum=57,
+        sender_realmNum=58,
+        sender_accountNum=59,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=1230000000,
+        decimals=9,
+    )
+
+    with hedera.send_sign_transaction(
+            index=0,
+            operator_shard_num=1,
+            operator_realm_num=2,
+            operator_account_num=3,
+            transaction_fee=5,
+            memo="",
+            conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+def test_hedera_transfer_token_5_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=15,
+        token_realmNum=16,
+        token_tokenNum=17,
+        sender_shardNum=57,
+        sender_realmNum=58,
+        sender_accountNum=59,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=8,
+        decimals=12,
+    )
+
+    with hedera.send_sign_transaction(
+            index=0,
+            operator_shard_num=1,
+            operator_realm_num=2,
+            operator_account_num=3,
+            transaction_fee=5,
+            memo="",
+            conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
 
 def test_hedera_transfer_token_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
