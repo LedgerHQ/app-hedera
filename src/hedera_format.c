@@ -435,7 +435,7 @@ void reformat_amount_mint(void) {
 void reformat_token_transfer(void) {
     validate_decimals(st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
                           .expected_decimals.value);
-    set_amount_title("Amount");
+    set_amount_title("Raw amount");
 
     // st_ctx.amount --> st_ctx.full (NANOS)
     hedera_safe_printf(
