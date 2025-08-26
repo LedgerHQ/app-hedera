@@ -45,7 +45,7 @@ ICON_STAX = icons/stax_app_hedera.gif
 ICON_FLEX = icons/flex_app_hedera.gif
 
 # Application allowed derivation curves.
-CURVE_APP_LOAD_PARAMS = ed25519
+CURVE_APP_LOAD_PARAMS = ed25519 secp256k1
 
 # Application allowed derivation paths.
 PATH_APP_LOAD_PARAMS = "44'/3030'"   # purpose=coin(44) / coin_type=Hedera HBAR(3030)
@@ -71,6 +71,10 @@ ENABLE_BLUETOOTH = 1
 ########################################
 ENABLE_NBGL_QRCODE = 1
 
+########################################
+#          Features enablers           #
+########################################
+ENABLE_SWAP = 1
 ########################################
 #          Features disablers          #
 ########################################
