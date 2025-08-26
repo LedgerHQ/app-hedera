@@ -38,7 +38,7 @@ def test_hedera_get_public_key_ok(backend, firmware, navigator, test_name):
                 nav_ins = [NavInsID.RIGHT_CLICK,
                            NavInsID.BOTH_CLICK]
             else:
-                nav_ins = [NavInsID.USE_CASE_CHOICE_CONFIRM,
+                nav_ins = [NavInsID.USE_CASE_REVIEW_NEXT,
                            NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM]
             navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name + "_" + str(i), nav_ins)
 
@@ -56,7 +56,8 @@ def test_hedera_get_public_key_refused(backend, firmware, navigator, test_name):
                        NavInsID.RIGHT_CLICK,
                        NavInsID.BOTH_CLICK]
         else:
-            nav_ins = [NavInsID.USE_CASE_CHOICE_REJECT]
+            nav_ins = [NavInsID.USE_CASE_REVIEW_NEXT,
+                       NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CANCEL]
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
         navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, nav_ins)
 
@@ -66,7 +67,7 @@ def test_hedera_get_public_key_refused(backend, firmware, navigator, test_name):
     if not firmware.is_nano:
         with hedera.get_public_key_confirm(0):
             backend.raise_policy = RaisePolicy.RAISE_NOTHING
-            nav_ins = [NavInsID.USE_CASE_CHOICE_CONFIRM,
+            nav_ins = [NavInsID.USE_CASE_REVIEW_NEXT,
                        NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CANCEL]
             navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name + "_2", nav_ins)
 

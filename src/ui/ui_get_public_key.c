@@ -147,20 +147,13 @@ static void callback_match(bool match) {
     ui_idle();
 }
 
-static void callback_export(bool accept) {
-    if (accept) {
-        nbgl_useCaseAddressConfirmation((const char *)gpk_ctx.full_key,
-                                        callback_match);
-    } else {
-        io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
-        ui_idle();
-    }
-}
-
 static void ui_get_public_key_nbgl(void) {
-    nbgl_useCaseChoice(&C_icon_hedera_64x64, "Export Public Key?",
-                       gpk_ctx.ui_approve_l2, "Allow", "Don't allow",
-                       callback_export);
+        //Convert key_index to string
+        char key_index_str[25];
+        snprintf(key_index_str, sizeof(key_index_str), "#%u", gpk_ctx.key_index);
+        nbgl_useCaseAddressReview((const char *)gpk_ctx.full_key, NULL,
+                                  &C_icon_hedera_64x64, "Export Public Key?", key_index_str,
+                                  callback_match);
 }
 
 #endif // TARGET
