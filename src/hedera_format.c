@@ -22,6 +22,7 @@ static char *hedera_format_amount(uint64_t amount, uint8_t decimals) {
     if (decimals >= 20) return buf;
 
     int i = 0;
+    bool contains_decimal_place = false;
 
     while (i < (BUF_SIZE - 1) && (amount > 0 || i < decimals)) {
         int digit = amount % 10;
@@ -31,6 +32,7 @@ static char *hedera_format_amount(uint64_t amount, uint8_t decimals) {
 
         if (i == decimals) {
             buf[i++] = '.';
+            contains_decimal_place = true;
         }
     }
 
@@ -50,6 +52,11 @@ static char *hedera_format_amount(uint64_t amount, uint8_t decimals) {
         buf[i] = tmp;
 
         j += 1;
+    }
+
+    if (!contains_decimal_place) {
+        // We can skip decimal places trimming (as there are none)
+        return buf;
     }
 
     for (j = size - 1; j > 0; j--) {
@@ -428,7 +435,7 @@ void reformat_amount_mint(void) {
 void reformat_token_transfer(void) {
     validate_decimals(st_ctx.transaction.data.cryptoTransfer.tokenTransfers[0]
                           .expected_decimals.value);
-    set_amount_title("Amount");
+    set_amount_title("Raw amount");
 
     // st_ctx.amount --> st_ctx.full (NANOS)
     hedera_safe_printf(

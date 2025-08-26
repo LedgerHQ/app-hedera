@@ -38,7 +38,7 @@ def test_hedera_get_public_key_ok(backend, firmware, navigator, test_name):
                 nav_ins = [NavInsID.RIGHT_CLICK,
                            NavInsID.BOTH_CLICK]
             else:
-                nav_ins = [NavInsID.USE_CASE_CHOICE_CONFIRM,
+                nav_ins = [NavInsID.USE_CASE_REVIEW_NEXT,
                            NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM]
             navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name + "_" + str(i), nav_ins)
 
@@ -56,7 +56,8 @@ def test_hedera_get_public_key_refused(backend, firmware, navigator, test_name):
                        NavInsID.RIGHT_CLICK,
                        NavInsID.BOTH_CLICK]
         else:
-            nav_ins = [NavInsID.USE_CASE_CHOICE_REJECT]
+            nav_ins = [NavInsID.USE_CASE_REVIEW_NEXT,
+                       NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CANCEL]
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
         navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, nav_ins)
 
@@ -66,7 +67,7 @@ def test_hedera_get_public_key_refused(backend, firmware, navigator, test_name):
     if not firmware.is_nano:
         with hedera.get_public_key_confirm(0):
             backend.raise_policy = RaisePolicy.RAISE_NOTHING
-            nav_ins = [NavInsID.USE_CASE_CHOICE_CONFIRM,
+            nav_ins = [NavInsID.USE_CASE_REVIEW_NEXT,
                        NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CANCEL]
             navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name + "_2", nav_ins)
 
@@ -345,6 +346,115 @@ def test_hedera_transfer_token_ok(backend, firmware, scenario_navigator):
         conf=conf,
     ):
         navigation_helper_confirm(firmware, scenario_navigator)
+
+def test_hedera_transfer_token_2_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=15,
+        token_realmNum=16,
+        token_tokenNum=17,
+        sender_shardNum=57,
+        sender_realmNum=58,
+        sender_accountNum=59,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=20,
+        decimals=0,
+    )
+
+    with hedera.send_sign_transaction(
+            index=0,
+            operator_shard_num=1,
+            operator_realm_num=2,
+            operator_account_num=3,
+            transaction_fee=5,
+            memo="this_is_the_memo",
+            conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+def test_hedera_transfer_token_3_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=15,
+        token_realmNum=16,
+        token_tokenNum=17,
+        sender_shardNum=57,
+        sender_realmNum=58,
+        sender_accountNum=59,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=20,
+        decimals=2,
+    )
+
+    with hedera.send_sign_transaction(
+            index=0,
+            operator_shard_num=1,
+            operator_realm_num=2,
+            operator_account_num=3,
+            transaction_fee=5,
+            memo="this_is_the_memo",
+            conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+def test_hedera_transfer_token_4_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=15,
+        token_realmNum=16,
+        token_tokenNum=17,
+        sender_shardNum=57,
+        sender_realmNum=58,
+        sender_accountNum=59,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=1230000000,
+        decimals=9,
+    )
+
+    with hedera.send_sign_transaction(
+            index=0,
+            operator_shard_num=1,
+            operator_realm_num=2,
+            operator_account_num=3,
+            transaction_fee=5,
+            memo="",
+            conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+def test_hedera_transfer_token_5_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_token_conf(
+        token_shardNum=15,
+        token_realmNum=16,
+        token_tokenNum=17,
+        sender_shardNum=57,
+        sender_realmNum=58,
+        sender_accountNum=59,
+        recipient_shardNum=100,
+        recipient_realmNum=101,
+        recipient_accountNum=102,
+        amount=8,
+        decimals=12,
+    )
+
+    with hedera.send_sign_transaction(
+            index=0,
+            operator_shard_num=1,
+            operator_realm_num=2,
+            operator_account_num=3,
+            transaction_fee=5,
+            memo="",
+            conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
 
 
 def test_hedera_transfer_token_refused(backend, firmware, scenario_navigator):
