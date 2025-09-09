@@ -1,7 +1,6 @@
 #include "sign_contract_call.h"
 #include "printf.h"
 #include "app_io.h"
-#include <os_io_legacy.h>
 #include <string.h>
 
 // Define the supported function selectors
