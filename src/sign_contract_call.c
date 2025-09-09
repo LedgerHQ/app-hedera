@@ -58,6 +58,7 @@ void handle_sign_contract_call(uint8_t p1, uint8_t p2, uint8_t* buffer,
     UNUSED(p1);
     UNUSED(p2);
     UNUSED(tx);
+    UNUSED(flags);
 
     // Raw contract call data
     uint8_t raw_contract_call[MAX_CONTRACT_CALL_TX_SIZE];
