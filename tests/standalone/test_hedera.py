@@ -14,6 +14,7 @@ from tests.application_client.hedera_builder import token_dissociate_conf
 from tests.application_client.hedera_builder import token_burn_conf
 from tests.application_client.hedera_builder import token_mint_conf
 from tests.application_client.hedera_builder import contract_call_transaction, contract_call_conf
+from tests.application_client.hedera_builder import encode_erc20_transfer_web3, encode_erc20_with_wrong_selector
 
 from .utils import ROOT_SCREENSHOT_PATH, navigation_helper_confirm, navigation_helper_reject
 
@@ -1195,36 +1196,168 @@ def test_hedera_transfer_verify_refused(backend, firmware, scenario_navigator):
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
-def test_hedera_contract_call_ok(backend, firmware, navigator, test_name):
-    """Test a basic contract call transaction with shard/realm/num format."""
+def test_hedera_contract_call_erc20_transfer_ok(backend, firmware, navigator, test_name):
+    """Test ERC-20 transfer with correct selector using Web3 encoding - should succeed and verify signature"""
     hedera = HederaClient(backend)
     
+    to_address = "123456789abcdef0112233445566778899aabbcc"
+    amount = 232
+    key_index = 0
+    
+    # Get the public key for verification
+    public_key = hedera.get_public_key_non_confirm(key_index).data
+    backend.wait_for_home_screen()
+    
+    # Use Web3 to encode ERC-20 transfer
+    params = encode_erc20_transfer_web3(to_address, amount)
+    
+    rapdu = hedera.sign_contract_call(
+        index=key_index,
+        gas=100000,
+        amount=0,
+        function_parameters=params,  # This is already bytes from Web3 encoding
+        evm_address=bytes.fromhex("00112233445566778899aabbccddeeff00112233"),
+    )
+
+    assert rapdu.status == 0x9000
+    
+    # Verify the signature
+    signature = rapdu.data
+    transaction = contract_call_transaction(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        evm_address=bytes.fromhex("00112233445566778899aabbccddeeff00112233")
+    )
+    
+    # The device receives index+transaction but only signs the transaction part
+    transaction_with_index = key_index.to_bytes(4, "little") + transaction
+    
+    # Verify the signature
+    is_valid = hedera.verify_signature(public_key, transaction_with_index, signature)
+    assert is_valid, "Contract call signature verification failed"
+
+
+def test_hedera_contract_call_erc20_transfer_wrong_selector_rejected(backend, firmware, navigator, test_name):
+    """Test ERC-20 transfer with wrong selector using Web3 encoding - should be rejected"""
+    hedera = HederaClient(backend)
+    
+    to_address = "deadbeefdeadbeefcafebabefaceb00c12345678"
+    amount = 1
+    wrong_selector = 0xDEADBEEF
+    
+    # Use Web3 encoding with wrong selector
+    params = encode_erc20_with_wrong_selector(to_address, amount, wrong_selector)
+    
+
+    backend.raise_policy = RaisePolicy.RAISE_NOTHING
     rapdu = hedera.sign_contract_call(
         index=0,
         gas=100000,
-        amount=32,  # No HBAR sent
-        function_parameters=b"abcdefghijklmnopqrstuvwxyz",  # Random function parameters
-        contract_shard_num=0,
-        contract_realm_num=0,
-        contract_num=12345
+        amount=0,
+        function_parameters=params,  # This is already bytes from Web3 encoding
+        evm_address=bytes.fromhex("11223344556677889900aabbccddeeff00112233"),
     )
 
-    assert rapdu.status == 0x9000
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
 
 
-def test_hedera_contract_call_evm_address_ok(backend, firmware, navigator, test_name):
-    """Test a contract call transaction with EVM address format."""
+def test_hedera_contract_call_multiple_keys_signature_verification(backend, firmware, navigator, test_name):
+    """Test contract call signature verification with different key indices"""
     hedera = HederaClient(backend)
     
-    # Example EVM address (20 bytes)
-    evm_address = b'\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78'
+    # Test with different key indices
+    test_cases = [
+        (0, "123456789abcdef0112233445566778899aabbcc", 100),
+        (1, "deadbeefdeadbeefcafebabefaceb00c12345678", 500),
+        (2, "cafebabecafebabecafebabecafebabecafebabe", 1000),
+    ]
     
-    rapdu = hedera.sign_contract_call(
-        index=0,
-        gas=200000,
-        amount=1000,  # 1000 tinybar
-        function_parameters=b"transfer(address,uint256)",  # ERC20 transfer function
-        evm_address=evm_address
-    )
+    for key_index, to_address, amount in test_cases:
+        # Get the public key for verification
+        public_key = hedera.get_public_key_non_confirm(key_index).data
+        backend.wait_for_home_screen()
+        
+        # Use Web3 to encode ERC-20 transfer
+        params = encode_erc20_transfer_web3(to_address, amount)
+        
+        # Sign the contract call
+        rapdu = hedera.sign_contract_call(
+            index=key_index,
+            gas=100000,
+            amount=0,
+            function_parameters=params,
+            evm_address=bytes.fromhex("00112233445566778899aabbccddeeff00112233"),
+        )
+        
+        # Check that signing was successful
+        assert rapdu.status == 0x9000, f"Signing failed for key index {key_index}"
+        
+        # Get the signature from the response
+        signature = rapdu.data
+        
+        # Verify the signature
+        transaction = contract_call_transaction(
+            gas=100000,
+            amount=0,
+            function_parameters=params,
+            evm_address=bytes.fromhex("00112233445566778899aabbccddeeff00112233")
+        )
+        
+        # The device receives index+transaction but only signs the transaction part
+        transaction_with_index = key_index.to_bytes(4, "little") + transaction
+        
+        # Verify the signature
+        is_valid = hedera.verify_signature(public_key, transaction_with_index, signature)
+        assert is_valid, f"Contract call signature verification failed for key index {key_index}"
 
+
+def test_hedera_contract_call_signature_verification_wrong_key(backend, firmware, navigator, test_name):
+    """Test that signature verification fails with wrong public key"""
+    hedera = HederaClient(backend)
+    
+    # Test parameters
+    key_index = 0
+    to_address = "123456789abcdef0112233445566778899aabbcc"
+    amount = 1000
+    
+    # Get the public key for verification
+    public_key = hedera.get_public_key_non_confirm(key_index).data
+    backend.wait_for_home_screen()
+    
+    # Use Web3 to encode ERC-20 transfer
+    params = encode_erc20_transfer_web3(to_address, amount)
+    
+    # Sign the contract call
+    rapdu = hedera.sign_contract_call(
+        index=key_index,
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        evm_address=bytes.fromhex("00112233445566778899aabbccddeeff00112233"),
+    )
+    
+    # Check that signing was successful
     assert rapdu.status == 0x9000
+    
+    # Get the signature from the response
+    signature = rapdu.data
+    
+    # Get a different public key (wrong one for verification)
+    wrong_public_key = hedera.get_public_key_non_confirm(1).data
+    backend.wait_for_home_screen()
+    
+    # Verify the signature with wrong public key
+    transaction = contract_call_transaction(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        evm_address=bytes.fromhex("00112233445566778899aabbccddeeff00112233")
+    )
+    
+    # The device receives index+transaction but only signs the transaction part
+    transaction_with_index = key_index.to_bytes(4, "little") + transaction
+    
+    # Verify the signature with wrong public key - should fail
+    is_valid = hedera.verify_signature(wrong_public_key, transaction_with_index, signature)
+    assert not is_valid, "Signature verification should fail with wrong public key"

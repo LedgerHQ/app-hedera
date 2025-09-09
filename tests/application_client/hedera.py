@@ -194,11 +194,8 @@ class HederaClient:
                                                contract_realm_num=contract_realm_num,
                                                contract_num=contract_num,
                                                evm_address=evm_address)
-        print(f"Transaction: {transaction}")
 
         payload = index.to_bytes(4, "little") + transaction
-
-        print(f"Payload: {payload}")
 
         return self._client.exchange(CLA, INS.INS_SIGN_CONTRACT_CALL, P1_NON_CONFIRM, 0, payload)
 

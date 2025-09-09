@@ -1,5 +1,7 @@
 from typing import Dict
+import json
 
+from web3 import Web3
 from proto import transaction_body_pb2
 from proto import basic_types_pb2
 from proto import crypto_create_pb2
@@ -458,3 +460,41 @@ def contract_call_conf(
     )
 
     return {"contractCall": contract_call}
+
+
+# === Web3-based ERC-20 Encoding Functions ===
+
+# ERC-20 ABI for transfer function
+ERC20_ABI = [
+    {
+        "inputs": [
+            {"internalType": "address", "name": "_to", "type": "address"},
+            {"internalType": "uint256", "name": "_value", "type": "uint256"}
+        ],
+        "name": "transfer",
+        "outputs": [{"internalType": "bool", "name": "success", "type": "bool"}],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]
+
+def encode_erc20_transfer_web3(to_address: str, amount: int) -> bytes:
+    """Encode ERC-20 transfer using Web3 - same as Ethereum app pattern"""
+    contract = Web3().eth.contract(abi=ERC20_ABI, address=None)
+    # Convert string address to bytes if needed
+    if isinstance(to_address, str):
+        to_bytes = bytes.fromhex(to_address.replace('0x', ''))
+    else:
+        to_bytes = to_address
+    # encode_abi returns hex string, convert to bytes
+    hex_data = contract.encode_abi("transfer", [to_bytes, amount])
+    return bytes.fromhex(hex_data[2:])  # Remove 0x prefix
+
+def encode_erc20_with_wrong_selector(to_address: str, amount: int, wrong_selector: int) -> bytes:
+    """Encode ERC-20 transfer with wrong selector for rejection testing"""
+    # First encode normally
+    correct_data = encode_erc20_transfer_web3(to_address, amount)
+    # Replace first 4 bytes (selector) with wrong one
+    wrong_selector_bytes = wrong_selector.to_bytes(4, 'big')
+    return wrong_selector_bytes + correct_data[4:]
+

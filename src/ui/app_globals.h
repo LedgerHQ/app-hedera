@@ -14,7 +14,7 @@
 #define ACCOUNT_ID_SIZE 19 * 3 + 2 + 1
 #define KEY_SIZE 64
 #define MAX_MEMO_SIZE 200
-#define SIGNATURE_SIZE 32
+#define SIGNATURE_SIZE 64
 
 #define HBAR 100000000 // tinybar
 #define HBAR_BUF_SIZE 26
