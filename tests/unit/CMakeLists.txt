@@ -65,10 +65,20 @@ target_compile_options(test_proto_varlen_edge_cases PUBLIC ${CMOCKA_CFLAGS_OTHER
 target_link_directories(test_proto_varlen_edge_cases PUBLIC ${CMOCKA_LIBRARY_DIRS})
 add_test(test_proto_varlen_edge_cases ${CMAKE_CURRENT_BINARY_DIR}/test_proto_varlen_edge_cases)
 
-# Contract call long varlen field tests (simple validation without nanopb dependencies)
-add_executable(test_contract_call_simple proto_varlen/test_contract_call_simple.c)
-target_link_libraries(test_contract_call_simple ${CMOCKA_LIBRARIES})
-target_include_directories(test_contract_call_simple PUBLIC ${CMOCKA_INCLUDE_DIRS})
-target_compile_options(test_contract_call_simple PUBLIC ${CMOCKA_CFLAGS_OTHER})
-target_link_directories(test_contract_call_simple PUBLIC ${CMOCKA_LIBRARY_DIRS})
-add_test(test_contract_call_simple ${CMAKE_CURRENT_BINARY_DIR}/test_contract_call_simple)
+# Contract call nanopb tests (using actual nanopb for protobuf decoding)
+add_executable(test_contract_call_nanopb 
+    proto_varlen/test_contract_call_nanopb.c
+    ../../vendor/nanopb/pb_common.c
+    ../../vendor/nanopb/pb_decode.c
+    ../../vendor/nanopb/pb_encode.c
+    ../../proto/contract_call.pb.c
+    ../../proto/basic_types.pb.c
+    ../../proto/timestamp.pb.c
+    ../../proto/wrappers.pb.c
+)
+target_link_libraries(test_contract_call_nanopb ${CMOCKA_LIBRARIES})
+target_include_directories(test_contract_call_nanopb PUBLIC ${CMOCKA_INCLUDE_DIRS} ../../proto ../../vendor/nanopb . ../../)
+target_compile_options(test_contract_call_nanopb PUBLIC ${CMOCKA_CFLAGS_OTHER})
+target_compile_definitions(test_contract_call_nanopb PRIVATE PB_SYSTEM_HEADER="nanopb_system.h")
+target_link_directories(test_contract_call_nanopb PUBLIC ${CMOCKA_LIBRARY_DIRS})
+add_test(test_contract_call_nanopb ${CMAKE_CURRENT_BINARY_DIR}/test_contract_call_nanopb)

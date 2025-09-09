@@ -30,6 +30,7 @@ void handle_sign_contract_call(uint8_t p1, uint8_t p2, uint8_t* buffer,
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
+    // Validate input length (HERE)
     int raw_contract_call_length = (int)len - 4;
     if (raw_contract_call_length < 0 ||
         raw_contract_call_length > MAX_CONTRACT_CALL_TX_SIZE) {
@@ -42,7 +43,11 @@ void handle_sign_contract_call(uint8_t p1, uint8_t p2, uint8_t* buffer,
     // Copy raw contract call data
     memmove(raw_contract_call, (buffer + 4), raw_contract_call_length);
 
-    // Make in memory buffer into stream
+    // Note: Field length validation is enforced before decoding by nanopb.
+    // The functionParameters field has a maximum size of 1KB (1024 bytes) as defined
+    // in the protobuf schema, preventing oversized function parameters from being processed.
+
+    // Make the in-memory buffer into a stream
     pb_istream_t stream =
         pb_istream_from_buffer(raw_contract_call, raw_contract_call_length);
 

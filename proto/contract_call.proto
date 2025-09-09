@@ -90,7 +90,9 @@
       * 
       * We accept 1KB max size for the function parameters, sufficient for most common EVM operations
       * like transfers, approvals, deposits, withdrawals, and simple contract calls.
- * Complex multi-parameter functions may approach this limit but are rare in practice.
+      * Complex multi-parameter functions may approach this limit but are rare in practice.
+      * It has to be equal to TX_MSG_LEN for contract calls. 
+      * Because nanopb does not validate the length of the sized bytes field, and we need to enforce the length when processing whole transaction.
       */
 
      bytes functionParameters = 4 [ (nanopb).max_size = 1024 ];
