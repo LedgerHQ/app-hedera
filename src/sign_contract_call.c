@@ -32,8 +32,7 @@ void handle_sign_contract_call(uint8_t p1, uint8_t p2, uint8_t* buffer,
 
     // Validate input length (HERE)
     int raw_contract_call_length = (int)len - 4;
-    if (raw_contract_call_length < 0 ||
-        raw_contract_call_length > MAX_CONTRACT_CALL_TX_SIZE) {
+    if (raw_contract_call_length > MAX_CONTRACT_CALL_TX_SIZE) {
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
