@@ -5,6 +5,7 @@
 #include "handlers.h"
 #include "os.h"
 #include "ui_common.h"
+#include "sign_contract_call.h"
 
 #include "ux.h"
 #ifdef HAVE_SWAP
@@ -97,6 +98,15 @@ void app_main() {
                                                 G_io_apdu_buffer + OFFSET_CDATA,
                                                 G_io_apdu_buffer[OFFSET_LC],
                                                 &flags, &tx);
+                        break;
+                        
+                    case INS_SIGN_CONTRACT_CALL:
+                        // handlers -> sign_contract_call
+                        handle_sign_contract_call(G_io_apdu_buffer[OFFSET_P1],
+                                                  G_io_apdu_buffer[OFFSET_P2],
+                                                  G_io_apdu_buffer + OFFSET_CDATA,
+                                                  G_io_apdu_buffer[OFFSET_LC],
+                                                  &flags, &tx);
                         break;
 
                     default:

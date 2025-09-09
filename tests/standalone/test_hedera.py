@@ -13,6 +13,7 @@ from tests.application_client.hedera_builder import token_associate_conf
 from tests.application_client.hedera_builder import token_dissociate_conf
 from tests.application_client.hedera_builder import token_burn_conf
 from tests.application_client.hedera_builder import token_mint_conf
+from tests.application_client.hedera_builder import contract_call_transaction, contract_call_conf
 
 from .utils import ROOT_SCREENSHOT_PATH, navigation_helper_confirm, navigation_helper_reject
 
@@ -1194,3 +1195,36 @@ def test_hedera_transfer_verify_refused(backend, firmware, scenario_navigator):
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
+def test_hedera_contract_call_ok(backend, firmware, navigator, test_name):
+    """Test a basic contract call transaction with shard/realm/num format."""
+    hedera = HederaClient(backend)
+    
+    rapdu = hedera.sign_contract_call(
+        index=0,
+        gas=100000,
+        amount=32,  # No HBAR sent
+        function_parameters=b"abcdefghijklmnopqrstuvwxyz",  # Random function parameters
+        contract_shard_num=0,
+        contract_realm_num=0,
+        contract_num=12345
+    )
+
+    assert rapdu.status == 0x9000
+
+
+def test_hedera_contract_call_evm_address_ok(backend, firmware, navigator, test_name):
+    """Test a contract call transaction with EVM address format."""
+    hedera = HederaClient(backend)
+    
+    # Example EVM address (20 bytes)
+    evm_address = b'\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78'
+    
+    rapdu = hedera.sign_contract_call(
+        index=0,
+        gas=200000,
+        amount=1000,  # 1000 tinybar
+        function_parameters=b"transfer(address,uint256)",  # ERC20 transfer function
+        evm_address=evm_address
+    )
+
+    assert rapdu.status == 0x9000
