@@ -19,6 +19,7 @@
 #include "tokens/cal/token_lookup.h"
 #include "tokens/token_address.h"
 #include "staking.h"
+#include "sign_contract_call.h"
 
 enum TransactionStep {
     Summary = 1,
@@ -43,6 +44,7 @@ enum TransactionType {
     TokenTransfer = 6,
     TokenMint = 7,
     TokenBurn = 8,
+    ContractCall = 9,
 };
 
 /*

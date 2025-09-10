@@ -7,7 +7,6 @@
 #define INS_GET_APP_CONFIGURATION 0x01
 #define INS_GET_PUBLIC_KEY 0x02
 #define INS_SIGN_TRANSACTION 0x04
-#define INS_SIGN_CONTRACT_CALL 0x05
 
 typedef void handler_fn_t(uint8_t p1, uint8_t p2, uint8_t* buffer, uint16_t len,
                           /* out */ volatile unsigned int* flags,
@@ -16,4 +15,3 @@ typedef void handler_fn_t(uint8_t p1, uint8_t p2, uint8_t* buffer, uint16_t len,
 extern handler_fn_t handle_get_app_configuration;
 extern handler_fn_t handle_get_public_key;
 extern handler_fn_t handle_sign_transaction;
-extern handler_fn_t handle_sign_contract_call;

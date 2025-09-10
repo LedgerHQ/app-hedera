@@ -13,6 +13,7 @@
 #include "proto/token_burn.pb.h"
 #include "proto/token_dissociate.pb.h"
 #include "proto/token_mint.pb.h"
+#include "proto/contract_call.pb.h"
 
 #if PB_PROTO_HEADER_VERSION != 40
 #error Regenerate this file with the current version of nanopb generator.
@@ -50,9 +51,10 @@ typedef struct _Hedera_TransactionBody {
  100) */
     char memo[100]; 
     /* *
- Create a new cryptocurrency account */
+ Call a contract */
     pb_size_t which_data;
     union {
+        Hedera_ContractCallTransactionBody contractCall;
         Hedera_CryptoCreateTransactionBody cryptoCreateAccount;
         Hedera_CryptoTransferTransactionBody cryptoTransfer;
         Hedera_CryptoUpdateTransactionBody cryptoUpdateAccount;
@@ -69,8 +71,8 @@ extern "C" {
 #endif
 
 /* Initializer values for message structs */
-#define Hedera_TransactionBody_init_default      {false, Hedera_TransactionID_init_default, false, Hedera_AccountID_init_default, 0, false, Hedera_Duration_init_default, 0, "", 0, {Hedera_CryptoCreateTransactionBody_init_default}}
-#define Hedera_TransactionBody_init_zero         {false, Hedera_TransactionID_init_zero, false, Hedera_AccountID_init_zero, 0, false, Hedera_Duration_init_zero, 0, "", 0, {Hedera_CryptoCreateTransactionBody_init_zero}}
+#define Hedera_TransactionBody_init_default      {false, Hedera_TransactionID_init_default, false, Hedera_AccountID_init_default, 0, false, Hedera_Duration_init_default, 0, "", 0, {Hedera_ContractCallTransactionBody_init_default}}
+#define Hedera_TransactionBody_init_zero         {false, Hedera_TransactionID_init_zero, false, Hedera_AccountID_init_zero, 0, false, Hedera_Duration_init_zero, 0, "", 0, {Hedera_ContractCallTransactionBody_init_zero}}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define Hedera_TransactionBody_transactionID_tag 1
@@ -79,6 +81,7 @@ extern "C" {
 #define Hedera_TransactionBody_transactionValidDuration_tag 4
 #define Hedera_TransactionBody_generateRecord_tag 5
 #define Hedera_TransactionBody_memo_tag          6
+#define Hedera_TransactionBody_contractCall_tag  7
 #define Hedera_TransactionBody_cryptoCreateAccount_tag 11
 #define Hedera_TransactionBody_cryptoTransfer_tag 14
 #define Hedera_TransactionBody_cryptoUpdateAccount_tag 15
@@ -95,6 +98,7 @@ X(a, STATIC,   SINGULAR, UINT64,   transactionFee,    3) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  transactionValidDuration,   4) \
 X(a, STATIC,   SINGULAR, BOOL,     generateRecord,    5) \
 X(a, STATIC,   SINGULAR, STRING,   memo,              6) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (data,contractCall,data.contractCall),   7) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (data,cryptoCreateAccount,data.cryptoCreateAccount),  11) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (data,cryptoTransfer,data.cryptoTransfer),  14) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (data,cryptoUpdateAccount,data.cryptoUpdateAccount),  15) \
@@ -107,6 +111,7 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (data,tokenDissociate,data.tokenDissociate), 
 #define Hedera_TransactionBody_transactionID_MSGTYPE Hedera_TransactionID
 #define Hedera_TransactionBody_nodeAccountID_MSGTYPE Hedera_AccountID
 #define Hedera_TransactionBody_transactionValidDuration_MSGTYPE Hedera_Duration
+#define Hedera_TransactionBody_data_contractCall_MSGTYPE Hedera_ContractCallTransactionBody
 #define Hedera_TransactionBody_data_cryptoCreateAccount_MSGTYPE Hedera_CryptoCreateTransactionBody
 #define Hedera_TransactionBody_data_cryptoTransfer_MSGTYPE Hedera_CryptoTransferTransactionBody
 #define Hedera_TransactionBody_data_cryptoUpdateAccount_MSGTYPE Hedera_CryptoUpdateTransactionBody
@@ -123,7 +128,7 @@ extern const pb_msgdesc_t Hedera_TransactionBody_msg;
 /* Maximum encoded size of messages (where known) */
 #if defined(Hedera_CryptoUpdateTransactionBody_size)
 #define Hedera_TransactionBody_size              (282 + sizeof(union Hedera_TransactionBody_data_size_union))
-union Hedera_TransactionBody_data_size_union {char f15[(6 + Hedera_CryptoUpdateTransactionBody_size)]; char f0[478];};
+union Hedera_TransactionBody_data_size_union {char f15[(6 + Hedera_CryptoUpdateTransactionBody_size)]; char f0[1098];};
 #endif
 
 #ifdef __cplusplus
