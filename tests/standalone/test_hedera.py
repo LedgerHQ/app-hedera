@@ -1285,3 +1285,53 @@ def test_hedera_erc20_wrong_selector(backend, firmware, scenario_navigator):
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+
+def test_hedera_erc20_transfer_good_signature_contract_id(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    key_index = 0
+    to_address = "123456789abcdef0112233445566778899aabbcc"
+    amount = 54354354332132213
+
+    public_key = hedera.get_public_key_non_confirm(key_index).data
+    backend.wait_for_home_screen()
+
+    params = encode_erc20_transfer_web3(to_address, amount)
+
+    conf = contract_call_conf(
+        gas=100000,
+        amount=123456789,
+        function_parameters=params,
+        contract_shard_num=1,
+        contract_realm_num=2,
+        contract_num=3456,
+    )
+
+    with hedera.send_sign_transaction(
+        index=key_index,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="ContractCall",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == STATUS_OK
+    signature = rapdu.data
+
+    transaction = hedera_transaction(
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="ContractCall",
+        conf=conf,
+    )
+
+    transaction_with_index = key_index.to_bytes(4, "little") + transaction
+
+    assert hedera.verify_signature(public_key, transaction_with_index, signature)
