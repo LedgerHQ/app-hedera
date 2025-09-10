@@ -1,13 +1,11 @@
 #include "sign_contract_call.h"
+#include "evm_parser.h"
 #include "printf.h"
 #include "app_io.h"
 #include <string.h>
 
-// Define the supported function selectors
-const uint32_t SUPPORTED_FUNCTION_SELECTORS[] = {
-    ERC20_TRANSFER_FUNCTION_SELECTOR,
-};
-const uint32_t SUPPORTED_FUNCTION_SELECTORS_COUNT = sizeof(SUPPORTED_FUNCTION_SELECTORS) / sizeof(SUPPORTED_FUNCTION_SELECTORS[0]);
+// UI/UX Context
+sign_tx_context_t st_ctx;
 
 // // lightweight helpers to print 64-bit values without %lld support
 // static void print_int64_field(const char* label, int64_t value) {
@@ -20,27 +18,83 @@ const uint32_t SUPPORTED_FUNCTION_SELECTORS_COUNT = sizeof(SUPPORTED_FUNCTION_SE
 //     }
 // }
 
-static bool is_supported_function(uint8_t* evm_transaction_data) {
-    uint32_t function_selector = U4BE(evm_transaction_data, 0);
-    for (size_t i = 0; i < SUPPORTED_FUNCTION_SELECTORS_COUNT; i++) {
-        if (function_selector == SUPPORTED_FUNCTION_SELECTORS[i]) {
-            return true;
-        }
-    }
-    return false;
-}
-
 bool parse_and_validate_contract_call(Hedera_ContractCallTransactionBody* contract_call_tx) {
-    if (!is_supported_function(contract_call_tx->functionParameters.bytes)) {
-        PRINTF("Clear signing for EVM call with function selector 0x%08x is not supported\n", U4BE(contract_call_tx->functionParameters.bytes, 0));
-        return false;
+
+    MEMCLEAR(st_ctx.recipients);
+    MEMCLEAR(st_ctx.amount);
+    MEMCLEAR(st_ctx.senders);
+    MEMCLEAR(st_ctx.key_index_str);
+    MEMCLEAR(st_ctx.senders_title);
+    MEMCLEAR(st_ctx.recipients_title);
+    MEMCLEAR(st_ctx.amount_title);
+    MEMCLEAR(st_ctx.operator);
+    MEMCLEAR(st_ctx.senders);
+
+    reformat_key_index();
+    set_senders_title("From");
+    st_ctx.senders = "To implement";
+
+    uint32_t function_selector = U4BE(contract_call_tx->functionParameters.bytes, 0);
+    
+    switch (function_selector) {
+        case EVM_ERC20_TRANSFER_SELECTOR: {
+            // Parse ERC-20 transfer(address,uint256) parameters
+            transfer_calldata_t transfer_data;
+            if (parse_transfer_function(contract_call_tx->functionParameters.bytes,
+                                       contract_call_tx->functionParameters.size,
+                                       &transfer_data)) {
+
+                if (!evm_addr_to_str(&transfer_data.to, st_ctx.recipients, sizeof(st_ctx.recipients))) {
+                    PRINTF("Failed to stringify EVM address\n");
+                    return false;
+                }
+
+                if (!evm_word_to_str(transfer_data.amount.bytes, st_ctx.amount, sizeof(st_ctx.amount))) {
+                    PRINTF("Failed to stringify amount word\n");
+                    return false;
+                }
+
+                set_amount_title("Raw token amount");
+
+            } else {
+                PRINTF("Failed to parse ERC-20 transfer parameters\n");
+                return false;
+            }
+            break;
+        }
+        // To future developers: Add more function selectors here :D
+        default:
+            PRINTF("Unsupported function selector: %x\n", function<<<<<<< HEAD
+                static bool is_supported_function(uint8_t* evm_transaction_data) {
+                    uint32_t function_selector = U4BE(evm_transaction_data, 0);
+                    for (size_t i = 0; i < SUPPORTED_FUNCTION_SELECTORS_COUNT; i++) {
+                        if (function_selector == SUPPORTED_FUNCTION_SELECTORS[i]) {
+                            return true;
+                        }
+                    }
+                    return false;
+                =======
+                void handle_contract_call_body() {
+                    
+                   
+                    io_exchange_with_code(EXCEPTION_OK, SIGNATURE_SIZE);
+                >>>>>>> 624aa703 (feat: add EVM decoding)
+                }_selector);
+            return false;
     }
 
-    if (contract_call_tx->functionParameters.size > MAX_CONTRACT_CALL_TX_SIZE) {
-        PRINTF("Function parameters exceed the limit\n");
-        return false;
-    }
-    //TODO: Parse and validate contract call
+    hedera_safe_printf(st_ctx.fee, "%llu", contract_call_tx->gas);
+    
+    
+    PRINTF("==========================================\n");
+    PRINTF("Formatted fields\n");
+    PRINTF("Key Index: %s\n", st_ctx.key_index_str);
+    PRINTF("From: %s\n", st_ctx.senders);
+    PRINTF("function_selector: %x\n", function_selector);
+    PRINTF("Recipients: %s\n", st_ctx.recipients);
+    PRINTF("Amount: %s\n", st_ctx.amount);
+    PRINTF("Fee: %s\n", st_ctx.fee);
+    PRINTF("==========================================\n");
     return true;
 }
 

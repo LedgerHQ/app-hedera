@@ -13,11 +13,9 @@
 #include "app_io.h"
 #include "proto/contract_call.pb.h"
 #include "utils.h"
+#include "hedera_format.h"
+#include "evm_parser.h"
 
-#define ERC20_TRANSFER_FUNCTION_SELECTOR 0xa9059cbbUL // transfer(address,uint256)
-
-extern const uint32_t SUPPORTED_FUNCTION_SELECTORS[];
-extern const uint32_t SUPPORTED_FUNCTION_SELECTORS_COUNT;
 
 // Contract call handler function
 void handle_contract_call_body();
