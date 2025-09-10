@@ -6,8 +6,6 @@
 
 void reformat_key(void);
 
-void set_amount_title(const char *title);
-
 void reformat_operator(void);
 
 void reformat_summary(const char *summary);
@@ -74,4 +72,5 @@ void reformat_max_automatic_token_associations(void);
 
 void reformat_collect_rewards_in_stake_flow(void);
 
-void reformat_sender(account_id_t *account_id);
+#define hedera_safe_printf(element, ...) \
+    hedera_snprintf(element, sizeof(element) - 1, __VA_ARGS__)

@@ -1202,7 +1202,7 @@ def test_hedera_erc20_transfer_good_signature(backend, firmware, scenario_naviga
     # Random-like parameters (deterministic values for test stability)
     key_index = 0
     to_address = "123456789abcdef0112233445566778899aabbcc"
-    amount = 232
+    amount = 54354354332132213
 
     # Get the public key for verification (non-interactive)
     public_key = hedera.get_public_key_non_confirm(key_index).data
@@ -1214,7 +1214,7 @@ def test_hedera_erc20_transfer_good_signature(backend, firmware, scenario_naviga
     # Build contract call
     conf = contract_call_conf(
         gas=100000,
-        amount=0,
+        amount=123456789,
         function_parameters=params,
         evm_address=bytes.fromhex("00112233445566778899aabbccddeeff00112233"),
     )
@@ -1257,7 +1257,7 @@ def test_hedera_erc20_wrong_selector(backend, firmware, scenario_navigator):
     # ERC-20 allowance selector (not supported): 0xdd62ed3e
     wrong_selector = 0xDD62ED3E
     to_address = "deadbeefdeadbeefcafebabefaceb00c12345678"
-    amount = 1
+    amount = 543543543
 
     # Build payload with wrong selector
     params = encode_erc20_with_wrong_selector(to_address, amount, wrong_selector)
@@ -1265,9 +1265,11 @@ def test_hedera_erc20_wrong_selector(backend, firmware, scenario_navigator):
     # Build contract call and send without navigation; expect immediate APDU error
     conf = contract_call_conf(
         gas=100000,
-        amount=0,
+        amount=123456789,
         function_parameters=params,
-        evm_address=bytes.fromhex("11223344556677889900aabbccddeeff00112233"),
+        contract_shard_num=1,
+        contract_realm_num=2,
+        contract_num=3,
     )
 
     with hedera.send_sign_transaction(
