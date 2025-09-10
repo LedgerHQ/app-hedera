@@ -6,6 +6,8 @@
 
 void reformat_key(void);
 
+void set_amount_title(const char *title);
+
 void reformat_operator(void);
 
 void reformat_summary(const char *summary);
@@ -71,3 +73,5 @@ void reformat_receiver_sig_required(void);
 void reformat_max_automatic_token_associations(void);
 
 void reformat_collect_rewards_in_stake_flow(void);
+
+void reformat_sender(account_id_t *account_id);

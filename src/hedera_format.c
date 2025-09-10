@@ -104,6 +104,10 @@ void reformat_key(void) {
     hedera_safe_printf(st_ctx.key_index_str, "#%u", st_ctx.key_index);
 }
 
+void reformat_sender(account_id_t *account_id) {
+    address_to_string(account_id, st_ctx.senders);
+}
+
 void reformat_key_index(void) {
     hedera_safe_printf(st_ctx.key_index_str, "#%u", st_ctx.key_index);
 }
