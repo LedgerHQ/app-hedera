@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+#include "ui/app_globals.h"
+
 // Validate that calldata contains selector + two 32-byte words
 static bool evm_min_len_ok(size_t len) {
     // 4 bytes selector + 2 * 32 bytes params
@@ -47,9 +49,8 @@ static void hex_from_bytes(const uint8_t *in, size_t in_len, char *out) {
     }
 }
 
-bool evm_addr_to_str(const evm_address_t *addr, char *out, size_t out_len) {
+bool evm_addr_to_str(const evm_address_t *addr, char *out) {
     if (addr == NULL || out == NULL) return false;
-    if (out_len < EVM_ADDRESS_STR_SIZE) return false;
     out[0] = '0';
     out[1] = 'x';
     hex_from_bytes(addr->bytes, sizeof(addr->bytes), out + 2);
@@ -57,9 +58,8 @@ bool evm_addr_to_str(const evm_address_t *addr, char *out, size_t out_len) {
     return true;
 }
 
-bool evm_word_to_str(const uint8_t *word32, char *out, size_t out_len) {
+bool evm_word_to_str(const uint8_t *word32, char *out) {
     if (word32 == NULL || out == NULL) return false;
-    if (out_len < EVM_WORD_STR_SIZE) return false;
     out[0] = '0';
     out[1] = 'x';
     hex_from_bytes(word32, 32, out + 2);
@@ -67,4 +67,61 @@ bool evm_word_to_str(const uint8_t *word32, char *out, size_t out_len) {
     return true;
 }
 
+bool evm_word_to_amount(const uint8_t *word32, char out[MAX_UINT256_LENGTH]) {
+    if (word32 == NULL || out == NULL) return false;
+    uint256_to_decimal(word32, 32, out, MAX_UINT256_LENGTH);
+    return true;
+}
 
+// Helper function to check if buffer is all zeros
+static bool allzeroes(const void *buf, size_t n) {
+    const uint8_t *p = (const uint8_t *)buf;
+    for (size_t i = 0; i < n; i++) {
+        if (p[i] != 0) return false;
+    }
+    return true;
+}
+
+// Snippet from app-ethereum/ethereum-plugin-sdk/src/common_utils.c
+bool uint256_to_decimal(const uint8_t *value, size_t value_len, char *out, size_t out_len) {
+    if (value_len > EVM_WORD_SIZE) {
+        // value len is bigger than EVM_WORD_SIZE ?!
+        return false;
+    }
+
+    uint16_t n[16] = {0};
+    // Copy and right-align the number
+    memcpy((uint8_t *) n + EVM_WORD_SIZE - value_len, value, value_len);
+
+    // Special case when value is 0
+    if (allzeroes(n, EVM_WORD_SIZE)) {
+        if (out_len < 2) {
+            // Not enough space to hold "0" and \0.
+            return false;
+        }
+        strlcpy(out, "0", out_len);
+        return true;
+    }
+
+    uint16_t *p = n;
+    for (int i = 0; i < 16; i++) {
+        n[i] = __builtin_bswap16(*p++);
+    }
+    int pos = out_len;
+    while (!allzeroes(n, sizeof(n))) {
+        if (pos == 0) {
+            return false;
+        }
+        pos -= 1;
+        unsigned int carry = 0;
+        for (int i = 0; i < 16; i++) {
+            int rem = ((carry << 16) | n[i]) % 10;
+            n[i] = ((carry << 16) | n[i]) / 10;
+            carry = rem;
+        }
+        out[pos] = '0' + carry;
+    }
+    memmove(out, out + pos, out_len - pos);
+    out[out_len - pos] = 0;
+    return true;
+}

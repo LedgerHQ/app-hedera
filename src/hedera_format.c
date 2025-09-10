@@ -91,9 +91,6 @@ static void validate_memo(const char memo[100]) {
     }
 }
 
-#define hedera_safe_printf(element, ...) \
-    hedera_snprintf(element, sizeof(element) - 1, __VA_ARGS__)
-
 void reformat_key(void) {
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_NANOS)
     hedera_safe_printf(st_ctx.summary_line_2, "with Key #%u?", st_ctx.key_index);
@@ -102,10 +99,6 @@ void reformat_key(void) {
 #endif
 
     hedera_safe_printf(st_ctx.key_index_str, "#%u", st_ctx.key_index);
-}
-
-void reformat_sender(account_id_t *account_id) {
-    address_to_string(account_id, st_ctx.senders);
 }
 
 void reformat_key_index(void) {

@@ -147,13 +147,13 @@ typedef struct sign_tx_context_s {
     char operator[ACCOUNT_ID_SIZE];
 
     // Transaction Senders
-    char senders[ACCOUNT_ID_SIZE];
+    char senders[ACCOUNT_ID_SIZE]; // Used in ERC20 transactions as Contract ID
 
     // Transaction Recipients
     char recipients[ACCOUNT_ID_SIZE];
 
     // Transaction Amount
-    char amount[DISPLAY_SIZE * 2 + 1];
+    char amount[MAX_UINT256_LENGTH];
 
     // Transaction Fee
     char fee[DISPLAY_SIZE * 2 + 1];
@@ -173,9 +173,9 @@ typedef struct sign_tx_context_s {
     // Subtype of crypto update (generic, stake, unstake) - NOT FOR UI - used for choosing the correct UI flow
     update_type_t update_type;
     // Auto Renew Period (X days Y hours Z seconds)
-    char auto_renew_period[DISPLAY_SIZE*5];
+    char auto_renew_period[DISPLAY_SIZE*5]; // Used in ERC20 transactions as Gas Limit
     // Expiration Time
-    char expiration_time[DISPLAY_SIZE*2];
+    char expiration_time[DISPLAY_SIZE*2]; // Used in ERC20 transactions as Contract Amount
     // Receiver Signature Required? (yes / no)
     char receiver_sig_required[6];
     // Max Auto Token Association 

@@ -38,11 +38,19 @@ bool parse_transfer_function(const uint8_t *calldata,
 #define EVM_WORD_STR_SIZE    (2 + 64 + 1)
 
 // Convert a 20-byte EVM address to a 0x-prefixed lowercase hex string.
-// out_len should be at least EVM_ADDRESS_STR_SIZE. Returns true on success.
-bool evm_addr_to_str(const evm_address_t *addr, char *out, size_t out_len);
+// Returns true on success.
+bool evm_addr_to_str(const evm_address_t *addr, char *out);
+
+// Convert a 32-byte ABI word to a decimal string. eg. "1000000000000000000"
+// Returns true on success.
+bool evm_word_to_amount(const uint8_t *word32, char *out);
 
 // Convert a 32-byte ABI word to a 0x-prefixed lowercase hex string.
-// out_len should be at least EVM_WORD_STR_SIZE. Returns true on success.
-bool evm_word_to_str(const uint8_t *word32, char *out, size_t out_len);
+// Returns true on success.
+bool evm_word_to_str(const uint8_t *word32, char *out);
+
+// Convert a uint256 value to its decimal string representation.
+// Leading zeros are removed. Returns true on success.
+bool uint256_to_decimal(const uint8_t *value, size_t value_len, char *out, size_t out_len);
 
 

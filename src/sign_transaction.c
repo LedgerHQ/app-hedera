@@ -291,6 +291,7 @@ void handle_transaction_body() {
 
         case Hedera_TransactionBody_contractCall_tag:
             st_ctx.type = ContractCall;
+            reformat_operator();
             reformat_summary("transfer ERC20 token");
             handle_contract_call_body();
             break;
