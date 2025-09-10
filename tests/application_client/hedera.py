@@ -8,14 +8,13 @@ from ragger.backend.interface import BackendInterface, RAPDU
 from ragger.bip import pack_derivation_path
 from ragger.utils import create_currency_config
 
-from .hedera_builder import hedera_transaction, contract_call_transaction
+from .hedera_builder import hedera_transaction
 
 
 class INS(IntEnum):
     INS_GET_APP_CONFIGURATION   = 0x01
     INS_GET_PUBLIC_KEY          = 0x02
     INS_SIGN_TRANSACTION        = 0x04
-    INS_SIGN_CONTRACT_CALL      = 0x05
 
 CLA = 0xE0
 
@@ -162,75 +161,5 @@ class HederaClient:
         payload = index.to_bytes(4, "little") + transaction
 
         with self._client.exchange_async(CLA, INS.INS_SIGN_TRANSACTION, P1_CONFIRM, 0, payload):
-            sleep(0.5)
-            yield
-
-    def sign_contract_call(self,
-                          index: int,
-                          gas: int,
-                          amount: int,
-                          function_parameters: bytes = b"",
-                          contract_shard_num: int = None,
-                          contract_realm_num: int = None,
-                          contract_num: int = None,
-                          evm_address: bytes = None) -> bytes:
-        """
-        Sign a contract call transaction with the key at the specified index.
-
-        :param index: The index to use when signing the transaction.
-        :param gas: Gas limit for the contract call
-        :param amount: Amount of tinybar to send with the call
-        :param function_parameters: ABI-encoded function parameters
-        :param contract_shard_num: Contract shard number (if using shard/realm/num format)
-        :param contract_realm_num: Contract realm number (if using shard/realm/num format)
-        :param contract_num: Contract number (if using shard/realm/num format)
-        :param evm_address: 20-byte EVM address (alternative to shard/realm/num)
-        :return: The signed transaction.
-        """
-        transaction = contract_call_transaction(gas=gas,
-                                               amount=amount,
-                                               function_parameters=function_parameters,
-                                               contract_shard_num=contract_shard_num,
-                                               contract_realm_num=contract_realm_num,
-                                               contract_num=contract_num,
-                                               evm_address=evm_address)
-
-        payload = index.to_bytes(4, "little") + transaction
-
-        return self._client.exchange(CLA, INS.INS_SIGN_CONTRACT_CALL, P1_NON_CONFIRM, 0, payload)
-
-    @contextmanager
-    def sign_contract_call_confirm(self,
-                                  index: int,
-                                  gas: int,
-                                  amount: int,
-                                  function_parameters: bytes = b"",
-                                  contract_shard_num: int = None,
-                                  contract_realm_num: int = None,
-                                  contract_num: int = None,
-                                  evm_address: bytes = None) -> Generator[None, None, None]:
-        """
-        Sign a contract call transaction with confirmation.
-
-        :param index: The index to use when signing the transaction.
-        :param gas: Gas limit for the contract call
-        :param amount: Amount of tinybar to send with the call
-        :param function_parameters: ABI-encoded function parameters
-        :param contract_shard_num: Contract shard number (if using shard/realm/num format)
-        :param contract_realm_num: Contract realm number (if using shard/realm/num format)
-        :param contract_num: Contract number (if using shard/realm/num format)
-        :param evm_address: 20-byte EVM address (alternative to shard/realm/num)
-        """
-        transaction = contract_call_transaction(gas=gas,
-                                               amount=amount,
-                                               function_parameters=function_parameters,
-                                               contract_shard_num=contract_shard_num,
-                                               contract_realm_num=contract_realm_num,
-                                               contract_num=contract_num,
-                                               evm_address=evm_address)
-
-        payload = index.to_bytes(4, "little") + transaction
-
-        with self._client.exchange_async(CLA, INS.INS_SIGN_CONTRACT_CALL, P1_CONFIRM, 0, payload):
             sleep(0.5)
             yield

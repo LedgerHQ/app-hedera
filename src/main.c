@@ -100,14 +100,6 @@ void app_main() {
                                                 &flags, &tx);
                         break;
                         
-                    case INS_SIGN_CONTRACT_CALL:
-                        // handlers -> sign_contract_call
-                        handle_sign_contract_call(G_io_apdu_buffer[OFFSET_P1],
-                                                  G_io_apdu_buffer[OFFSET_P2],
-                                                  G_io_apdu_buffer + OFFSET_CDATA,
-                                                  G_io_apdu_buffer[OFFSET_LC],
-                                                  &flags, &tx);
-                        break;
 
                     default:
                         THROW(EXCEPTION_UNKNOWN_INS);

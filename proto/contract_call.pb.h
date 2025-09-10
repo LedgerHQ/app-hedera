@@ -47,12 +47,6 @@ typedef struct _Hedera_ContractCallTransactionBody {
  <p>
  If this is non-zero, the function MUST be `payable`. */
     int64_t amount; 
-    /* *
- The smart contract function to call.
- <p>
- This MUST contain The application binary interface (ABI) encoding of the
- function call per the Ethereum contract ABI standard, giving the
- function signature and arguments being passed to the function. */
     Hedera_ContractCallTransactionBody_functionParameters_t functionParameters; 
 } Hedera_ContractCallTransactionBody;
 

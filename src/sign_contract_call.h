@@ -20,7 +20,4 @@ extern const uint32_t SUPPORTED_FUNCTION_SELECTORS[];
 extern const uint32_t SUPPORTED_FUNCTION_SELECTORS_COUNT;
 
 // Contract call handler function
-void handle_sign_contract_call(uint8_t p1, uint8_t p2, uint8_t* buffer,
-                              uint16_t len,
-                              /* out */ volatile unsigned int* flags,
-                              /* out */ volatile unsigned int* tx);
+void handle_contract_call_body();
