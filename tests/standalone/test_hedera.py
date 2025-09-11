@@ -1196,13 +1196,18 @@ def test_hedera_transfer_verify_refused(backend, firmware, scenario_navigator):
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
+
+# ================================
+# ERC-20 tokens:
+# ================================
+
 def test_hedera_erc20_transfer_good_signature(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
 
     # Random-like parameters (deterministic values for test stability)
     key_index = 54
     to_address = "123456789abcdef0112233445566778899aabbcc"
-    amount = 54354354332132213
+    amount = int("1"*4 + "2"*4 + "3"*4 + "4"*4 + "5"*4 + "6"*4 + "7"*4 + "8"*4 + "9"*4 + "0"*4)
 
     # Get the public key for verification (non-interactive)
     public_key = hedera.get_public_key_non_confirm(key_index).data
@@ -1229,7 +1234,7 @@ def test_hedera_erc20_transfer_good_signature(backend, firmware, scenario_naviga
         memo="ContractCall",
         conf=conf,
     ):
-        pass
+        navigation_helper_confirm(firmware, scenario_navigator)
 
     signature = hedera.get_async_response().data
 
@@ -1315,6 +1320,7 @@ def test_hedera_erc20_transfer_good_signature_contract_id(backend, firmware, sce
         conf=conf,
     ):
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
+        navigation_helper_confirm(firmware, scenario_navigator)
 
     rapdu = hedera.get_async_response()
     assert rapdu.status == STATUS_OK

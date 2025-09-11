@@ -292,7 +292,7 @@ void handle_transaction_body() {
         case Hedera_TransactionBody_contractCall_tag:
             st_ctx.type = ContractCall;
             reformat_operator();
-            reformat_summary("transfer ERC20 token");
+            reformat_summary("send ERC20 token");
             handle_contract_call_body();
             break;
 
@@ -357,10 +357,6 @@ void handle_transaction_body() {
 #endif
 
     ui_sign_transaction();
-
-    if (st_ctx.type == ContractCall) {
-        io_exchange_with_code(EXCEPTION_OK, st_ctx.signature_length);
-    }
 }
 
 // Sign Handler

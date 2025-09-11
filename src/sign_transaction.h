@@ -96,7 +96,7 @@ typedef struct sign_tx_context_s {
     uint8_t transfer_from_index;
 
     // Transaction Summary
-    char summary_line_1[DISPLAY_SIZE + 1];
+    char summary_line_1[FULL_ADDRESS_LENGTH + 1];
     char summary_line_2[DISPLAY_SIZE + 1];
 
     //Key Index in str
