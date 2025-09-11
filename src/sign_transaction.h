@@ -152,8 +152,8 @@ typedef struct sign_tx_context_s {
     // Transaction Recipients
     char recipients[ACCOUNT_ID_SIZE];
 
-    // Transaction Amount (raw uint256 decimal string). Needs NUL terminator.
-    char amount[MAX_UINT256_LENGTH + 1];
+    // Transaction Amount, (in ERC20 raw uint256 decimal string). Needs NUL terminator and safe one byte margin.
+    char amount[MAX_UINT256_LENGTH + 2];
 
     // Transaction Fee
     char fee[DISPLAY_SIZE * 2 + 1];
