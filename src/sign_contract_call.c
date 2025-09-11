@@ -20,6 +20,84 @@
 //     }
 // }
 
+// Handle ERC-20 transfer function call
+static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contract_call_tx) {
+    // Parse ERC-20 transfer(address,uint256) parameters
+    transfer_calldata_t transfer_data;
+    if (parse_transfer_function(
+            contract_call_tx->functionParameters.bytes,
+            contract_call_tx->functionParameters.size,
+            &transfer_data)) {
+        if (!evm_addr_to_str(&transfer_data.to, st_ctx.recipients)) {
+            PRINTF("Failed to stringify EVM address\n");
+            return false;
+        }
+
+        if (!evm_word_to_amount(transfer_data.amount.bytes,
+                                st_ctx.amount)) {
+            PRINTF("Failed to stringify amount word\n");
+            return false;
+        }
+
+    } else {
+        PRINTF("Failed to parse ERC-20 transfer parameters\n");
+        return false;
+    }
+
+    // Print contract ID
+    if (contract_call_tx->contractID.which_contract ==
+        Hedera_ContractID_contractNum_tag) {
+        token_addr_t contract_id = {
+            contract_call_tx->contractID.shardNum,
+            contract_call_tx->contractID.realmNum,
+            contract_call_tx->contractID.contract.contractNum,
+        };
+        // 0.0.XXXX format for contract ID
+        address_to_string(&contract_id, st_ctx.senders);
+    } else if (contract_call_tx->contractID.which_contract ==
+               Hedera_ContractID_evm_address_tag) {
+        // 0xXXXX format for EVM address
+        if (contract_call_tx->contractID.contract.evm_address.size != EVM_ADDRESS_SIZE) {
+            PRINTF("Invalid EVM address size: %d\n", 
+                   contract_call_tx->contractID.contract.evm_address.size);
+            return false;
+        }
+        evm_address_t evm_address;
+        // Copy the 20-byte EVM address from protobuf bytes array
+        memcpy(evm_address.bytes,
+               contract_call_tx->contractID.contract.evm_address.bytes,
+               EVM_ADDRESS_SIZE);
+        char evm_addr_str[EVM_ADDRESS_STR_SIZE];
+        if (!evm_addr_to_str(&evm_address, evm_addr_str)) {
+            PRINTF("Failed to stringify EVM address\n");
+            return false;
+        }
+        hedera_safe_printf(st_ctx.senders, "%s", evm_addr_str);
+    } else {
+        PRINTF("Unsupported contract ID type: %d\n", 
+               contract_call_tx->contractID.which_contract);
+        return false;
+    }
+    
+    // Validate and print gas
+    if (contract_call_tx->gas <= 0) {
+        PRINTF("Invalid gas value: %lld\n", contract_call_tx->gas);
+        return false;
+    }
+    hedera_safe_printf(st_ctx.auto_renew_period, "%llu",
+                       contract_call_tx->gas);
+    
+    // Validate and print amount in tinybar
+    if (contract_call_tx->amount < 0) {
+        PRINTF("Invalid amount value: %lld\n", contract_call_tx->amount);
+        return false;
+    }
+    hedera_safe_printf(st_ctx.expiration_time, "%llu hbar",
+                       contract_call_tx->amount);
+    
+    return true;
+}
+
 bool validate_and_reformat_contract_call(
     Hedera_ContractCallTransactionBody* contract_call_tx) {
     if (contract_call_tx == NULL) {
@@ -36,80 +114,11 @@ bool validate_and_reformat_contract_call(
         U4BE(contract_call_tx->functionParameters.bytes, 0);
 
     switch (function_selector) {
-        case EVM_ERC20_TRANSFER_SELECTOR: {
-            // Parse ERC-20 transfer(address,uint256) parameters
-            transfer_calldata_t transfer_data;
-            if (parse_transfer_function(
-                    contract_call_tx->functionParameters.bytes,
-                    contract_call_tx->functionParameters.size,
-                    &transfer_data)) {
-                if (!evm_addr_to_str(&transfer_data.to, st_ctx.recipients)) {
-                    PRINTF("Failed to stringify EVM address\n");
-                    return false;
-                }
-
-                if (!evm_word_to_amount(transfer_data.amount.bytes,
-                                        st_ctx.amount)) {
-                    PRINTF("Failed to stringify amount word\n");
-                    return false;
-                }
-
-            } else {
-                PRINTF("Failed to parse ERC-20 transfer parameters\n");
+        case EVM_ERC20_TRANSFER_SELECTOR:
+            if (!handle_erc20_transfer_call(contract_call_tx)) {
                 return false;
             }
-
-            // Print contract ID
-            if (contract_call_tx->contractID.which_contract ==
-                Hedera_ContractID_contractNum_tag) {
-                token_addr_t contract_id = {
-                    contract_call_tx->contractID.shardNum,
-                    contract_call_tx->contractID.realmNum,
-                    contract_call_tx->contractID.contract.contractNum,
-                };
-                // 0.0.XXXX format for contract ID
-                address_to_string(&contract_id, st_ctx.senders);
-            } else if (contract_call_tx->contractID.which_contract ==
-                       Hedera_ContractID_evm_address_tag) {
-                // 0xXXXX format for EVM address
-                if (contract_call_tx->contractID.contract.evm_address.size != EVM_ADDRESS_SIZE) {
-                    PRINTF("Invalid EVM address size: %d\n", 
-                           contract_call_tx->contractID.contract.evm_address.size);
-                    return false;
-                }
-                evm_address_t evm_address;
-                // Copy the 20-byte EVM address from protobuf bytes array
-                memcpy(evm_address.bytes,
-                       contract_call_tx->contractID.contract.evm_address.bytes,
-                       EVM_ADDRESS_SIZE);
-                char evm_addr_str[EVM_ADDRESS_STR_SIZE];
-                if (!evm_addr_to_str(&evm_address, evm_addr_str)) {
-                    PRINTF("Failed to stringify EVM address\n");
-                    return false;
-                }
-                hedera_safe_printf(st_ctx.senders, "%s", evm_addr_str);
-            } else {
-                PRINTF("Unsupported contract ID type: %d\n", 
-                       contract_call_tx->contractID.which_contract);
-                return false;
-            }
-            // Validate and print gas
-            if (contract_call_tx->gas <= 0) {
-                PRINTF("Invalid gas value: %lld\n", contract_call_tx->gas);
-                return false;
-            }
-            hedera_safe_printf(st_ctx.auto_renew_period, "%llu",
-                               contract_call_tx->gas);
-            
-            // Validate and print amount in tinybar
-            if (contract_call_tx->amount < 0) {
-                PRINTF("Invalid amount value: %lld\n", contract_call_tx->amount);
-                return false;
-            }
-            hedera_safe_printf(st_ctx.expiration_time, "%llu hbar",
-                               contract_call_tx->amount);
             break;
-        }
         // To future developers: Add more supported function selectors here :D
         default:
             PRINTF("Unsupported function selector: %x\n", function_selector);
