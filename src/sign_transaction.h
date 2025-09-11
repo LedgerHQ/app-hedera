@@ -152,8 +152,8 @@ typedef struct sign_tx_context_s {
     // Transaction Recipients
     char recipients[ACCOUNT_ID_SIZE];
 
-    // Transaction Amount
-    char amount[MAX_UINT256_LENGTH];
+    // Transaction Amount (raw uint256 decimal string). Needs NUL terminator.
+    char amount[MAX_UINT256_LENGTH + 1];
 
     // Transaction Fee
     char fee[DISPLAY_SIZE * 2 + 1];

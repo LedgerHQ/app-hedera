@@ -47,6 +47,13 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
     // Print contract ID
     if (contract_call_tx->contractID.which_contract ==
         Hedera_ContractID_contractNum_tag) {
+        // Reject negative contract identifiers
+        if (contract_call_tx->contractID.shardNum < 0 ||
+            contract_call_tx->contractID.realmNum < 0 ||
+            contract_call_tx->contractID.contract.contractNum < 0) {
+            PRINTF("Negative contract ID parts not allowed\n");
+            return false;
+        }
         token_addr_t contract_id = {
             contract_call_tx->contractID.shardNum,
             contract_call_tx->contractID.realmNum,
@@ -115,6 +122,13 @@ bool validate_and_reformat_contract_call(
 
     switch (function_selector) {
         case EVM_ERC20_TRANSFER_SELECTOR:
+            // ERC-20 transfer must be exactly 4 + 32 + 32 bytes
+            if (contract_call_tx->functionParameters.size !=
+                (EVM_SELECTOR_SIZE + 2 * EVM_WORD_SIZE)) {
+                PRINTF("Invalid ERC-20 transfer params length: %d\n",
+                       (int)contract_call_tx->functionParameters.size);
+                return false;
+            }
             if (!handle_erc20_transfer_call(contract_call_tx)) {
                 return false;
             }
