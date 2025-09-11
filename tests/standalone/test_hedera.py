@@ -2,6 +2,7 @@ from ragger.backend.interface import RAPDU, RaisePolicy
 from ragger.navigator import NavInsID
 from ragger.firmware import Firmware
 from ragger.firmware.touch.use_cases import UseCaseReview
+import pytest
 
 from tests.application_client.hedera import HederaClient, ErrorType, STATUS_OK
 from tests.application_client.hedera_builder import crypto_create_account_conf
@@ -1338,3 +1339,466 @@ def test_hedera_erc20_transfer_good_signature_contract_id(backend, firmware, sce
     transaction_with_index = key_index.to_bytes(4, "little") + transaction
 
     assert hedera.verify_signature(public_key, transaction_with_index, signature)
+
+
+def test_hedera_erc20_allow_nonzero_hbar_amount_in_token_transfer(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    key_index = 0
+    to_address = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
+    token_amount = 123456789  # any non-zero token transfer amount
+
+    params = encode_erc20_transfer_web3(to_address, token_amount)
+
+    # Non-zero HBAR amount should be allowed for ERC-20 transfer
+    conf = contract_call_conf(
+        gas=21000,
+        amount=1,  # 1 tinybar
+        function_parameters=params,
+        evm_address=bytes.fromhex("00112233445566778899aabbccddeeff00112233"),
+    )
+
+    with hedera.send_sign_transaction(
+        index=key_index,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="ContractCall",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == STATUS_OK
+    signature = rapdu.data
+    public_key = hedera.get_public_key_non_confirm(key_index).data
+    transaction = hedera_transaction(
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="ContractCall",
+        conf=conf,
+    )
+    transaction_with_index = key_index.to_bytes(4, "little") + transaction
+    assert hedera.verify_signature(public_key, transaction_with_index, signature)
+
+
+def test_hedera_erc20_allow_zero_to_address(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    key_index = 123
+    to_address = "0" * 40  # 0x000...000
+    token_amount = 1
+
+    params = encode_erc20_transfer_web3(to_address, token_amount)
+
+    conf = contract_call_conf(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        contract_shard_num=0,
+        contract_realm_num=0,
+        contract_num=1234,
+    )
+
+    with hedera.send_sign_transaction(
+        index=key_index,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="ERC20 zero to",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == STATUS_OK
+    signature = rapdu.data
+    public_key = hedera.get_public_key_non_confirm(key_index).data
+    transaction = hedera_transaction(
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="ERC20 zero to",
+        conf=conf,
+    )
+    transaction_with_index = key_index.to_bytes(4, "little") + transaction
+    assert hedera.verify_signature(public_key, transaction_with_index, signature)
+
+
+def test_hedera_erc20_allow_zero_token_amount(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    key_index = 321
+    to_address = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+    token_amount = 0
+
+    params = encode_erc20_transfer_web3(to_address, token_amount)
+
+    conf = contract_call_conf(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        contract_shard_num=1,
+        contract_realm_num=2,
+        contract_num=3,
+    )
+
+    with hedera.send_sign_transaction(
+        index=key_index,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="ERC20 zero amount",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == STATUS_OK
+    signature = rapdu.data
+    public_key = hedera.get_public_key_non_confirm(key_index).data
+    transaction = hedera_transaction(
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="ERC20 zero amount",
+        conf=conf,
+    )
+    transaction_with_index = key_index.to_bytes(4, "little") + transaction
+    assert hedera.verify_signature(public_key, transaction_with_index, signature)
+
+
+def test_hedera_erc20_negative_gas_value(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    gas_value = -1  # minimal gas for display; ensure no trimming issues
+    to_address = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
+    token_amount = 1
+
+    params = encode_erc20_transfer_web3(to_address, token_amount)
+
+    conf = contract_call_conf(
+        gas=gas_value,
+        amount=0,
+        function_parameters=params,
+        contract_shard_num=1,
+        contract_realm_num=2,
+        contract_num=3,
+    )
+
+    with hedera.send_sign_transaction(
+        index=321,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="Gas negative",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+def test_hedera_erc20_negative_contract_value(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    to_address = "123456789abcdef0112233445566778899aabbcc"
+    token_amount = 1000
+    params = encode_erc20_transfer_web3(to_address, token_amount)
+    conf = contract_call_conf(
+        gas=100000,
+        amount=-1,
+        function_parameters=params,
+        contract_shard_num=7,
+        contract_realm_num=8,
+        contract_num=9,
+    )
+    with hedera.send_sign_transaction(
+        index=1337,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="Contract negative",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+
+def test_hedera_erc20_negative_contract_id(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    to_address = "123456789abcdef0112233445566778899aabbcc"
+    token_amount = 1000
+    params = encode_erc20_transfer_web3(to_address, token_amount)
+    conf = contract_call_conf(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        contract_shard_num=7,
+        contract_realm_num=8,
+        contract_num=-9,
+    )
+    with hedera.send_sign_transaction(
+        index=1337,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="Contract negative",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+def test_hedera_erc20_token_amount_1000_raw_display(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    to_address = "123456789abcdef0112233445566778899aabbcc"
+    token_amount = 1000
+    params = encode_erc20_transfer_web3(to_address, token_amount)
+
+    conf = contract_call_conf(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        contract_shard_num=7,
+        contract_realm_num=8,
+        contract_num=9,
+    )
+
+    with hedera.send_sign_transaction(
+        index=1337,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="Token 1000",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_erc20_token_amount_uint256_max_display_full(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    to_address = "feedfacecafebabedeadbeef0011223344556677"
+    token_amount = (1 << 256) - 1
+    params = encode_erc20_transfer_web3(to_address, token_amount)
+
+    conf = contract_call_conf(
+        gas=(1 << 63) - 1,  # int64 max
+        amount=(1 << 63) - 1,  # int64 max
+        function_parameters=params,
+        contract_shard_num=(1 << 63) - 1,
+        contract_realm_num=(1 << 63) - 1,
+        contract_num=(1 << 63) - 1,
+    )
+
+    with hedera.send_sign_transaction(
+        index=1337,
+        operator_shard_num=(1 << 63) - 1,
+        operator_realm_num=(1 << 63) - 1,
+        operator_account_num=(1 << 63) - 1,
+        transaction_fee=(1 << 64) - 1,
+        memo="Token max",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_erc20_addresses_hex_full_display(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    # Patterned addresses to detect trimming
+    to_address = ("12" * 19) + "31"  # 0x1212...1231
+    params = encode_erc20_transfer_web3(to_address, 777)
+
+    conf = contract_call_conf(
+        gas=123456,
+        amount=0,
+        function_parameters=params,
+        evm_address=bytes.fromhex(("ab" * 19) + "cd"),
+    )
+
+    with hedera.send_sign_transaction(
+        index=1337,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="Addr full",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_erc20_reject_approve_selector(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    wrong_selector = 0x095EA7B3  # approve(address,uint256)
+    to_address = "deadbeefdeadbeefcafebabefaceb00c12345678"
+    amount = 123
+
+    params = encode_erc20_with_wrong_selector(to_address, amount, wrong_selector)
+
+    conf = contract_call_conf(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        contract_shard_num=1,
+        contract_realm_num=2,
+        contract_num=3,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="approve selector",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+
+def test_hedera_erc20_reject_decimals_selector(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    wrong_selector = 0x313CE567  # decimals()
+    to_address = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    amount = 0
+
+    params = encode_erc20_with_wrong_selector(to_address, amount, wrong_selector)
+
+    conf = contract_call_conf(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        contract_shard_num=1,
+        contract_realm_num=2,
+        contract_num=3,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="decimals selector",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+
+def test_hedera_erc20_reject_last_param_too_short(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    to_address = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
+    amount = 999
+    base = encode_erc20_transfer_web3(to_address, amount)
+    # Remove one trailing byte
+    params = base[:-1]
+
+    conf = contract_call_conf(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        evm_address=bytes.fromhex("00112233445566778899aabbccddeeff00112233"),
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="param short",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+
+def test_hedera_erc20_reject_last_param_too_long(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    to_address = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
+    amount = 999
+    base = encode_erc20_transfer_web3(to_address, amount)
+    # Add one extra padding byte
+    params = base + b"\x00"
+
+    conf = contract_call_conf(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        contract_shard_num=1,
+        contract_realm_num=2,
+        contract_num=3,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="param long",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+
+def test_hedera_erc20_user_rejects(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    to_address = "123456789abcdef0112233445566778899aabbcc"
+    amount = 12345
+    params = encode_erc20_transfer_web3(to_address, amount)
+
+    conf = contract_call_conf(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        contract_shard_num=1,
+        contract_realm_num=2,
+        contract_num=3,
+    )
+
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="User reject",
+        conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+        navigation_helper_reject(firmware, scenario_navigator)
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED

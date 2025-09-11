@@ -71,7 +71,10 @@ bool evm_word_to_str(const uint8_t *word32, char *out) {
 
 bool evm_word_to_amount(const uint8_t *word32, char out[MAX_UINT256_LENGTH]) {
     if (word32 == NULL || out == NULL) return false;
-    return uint256_to_decimal(word32, EVM_WORD_SIZE, out, MAX_UINT256_LENGTH);
+    // Pass buffer length that allows for a terminating NUL when the number
+    // uses the full 78 digits (2^256-1 has 78 decimal digits).
+    memset(out, 0, MAX_UINT256_LENGTH + 1);
+    return uint256_to_decimal(word32, EVM_WORD_SIZE, out, MAX_UINT256_LENGTH + 1);
 }
 
 // Helper function to check if buffer is all zeros
