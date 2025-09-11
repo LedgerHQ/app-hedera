@@ -13,7 +13,6 @@
 #include "app_io.h"
 #include "proto/contract_call.pb.h"
 #include "utils.h"
-#include "hedera_format.h"
 #include "evm_parser.h"
 
 

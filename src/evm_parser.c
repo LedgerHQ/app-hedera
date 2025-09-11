@@ -13,12 +13,12 @@ static bool evm_min_len_ok(size_t len) {
 // Copy the last 20 bytes of a 32-byte ABI-encoded address word
 static void evm_address_from_word(const uint8_t *word32, evm_address_t *addr) {
     // ABI encodes address right-aligned in 32 bytes (12 leading zero bytes)
-    memmove(addr->bytes, word32 + (EVM_WORD_SIZE - sizeof(addr->bytes)), sizeof(addr->bytes));
+    memmove(addr->bytes, word32 + EVM_ADDRESS_PADDING_SIZE, EVM_ADDRESS_SIZE);
 }
 
 // Copy a full 32-byte word as big-endian into raw uint256
 static void uint256_from_word(const uint8_t *word32, uint256_raw_t *out) {
-    memmove(out->bytes, word32, sizeof(out->bytes));
+    memmove(out->bytes, word32, EVM_WORD_SIZE);
 }
 
 bool parse_transfer_function(const uint8_t *calldata,
@@ -42,6 +42,8 @@ bool parse_transfer_function(const uint8_t *calldata,
 
 static void hex_from_bytes(const uint8_t *in, size_t in_len, char *out) {
     static const char HEX[] = "0123456789abcdef";
+    if (in == NULL || out == NULL) return;
+    
     for (size_t i = 0; i < in_len; i++) {
         uint8_t b = in[i];
         out[2 * i] = HEX[b >> 4];
@@ -53,8 +55,8 @@ bool evm_addr_to_str(const evm_address_t *addr, char *out) {
     if (addr == NULL || out == NULL) return false;
     out[0] = '0';
     out[1] = 'x';
-    hex_from_bytes(addr->bytes, sizeof(addr->bytes), out + 2);
-    out[2 + 40] = '\0';
+    hex_from_bytes(addr->bytes, EVM_ADDRESS_SIZE, out + 2);
+    out[2 + (EVM_ADDRESS_SIZE * 2)] = '\0';
     return true;
 }
 
@@ -62,15 +64,14 @@ bool evm_word_to_str(const uint8_t *word32, char *out) {
     if (word32 == NULL || out == NULL) return false;
     out[0] = '0';
     out[1] = 'x';
-    hex_from_bytes(word32, 32, out + 2);
-    out[2 + 64] = '\0';
+    hex_from_bytes(word32, EVM_WORD_SIZE, out + 2);
+    out[2 + (EVM_WORD_SIZE * 2)] = '\0';
     return true;
 }
 
 bool evm_word_to_amount(const uint8_t *word32, char out[MAX_UINT256_LENGTH]) {
     if (word32 == NULL || out == NULL) return false;
-    uint256_to_decimal(word32, 32, out, MAX_UINT256_LENGTH);
-    return true;
+    return uint256_to_decimal(word32, EVM_WORD_SIZE, out, MAX_UINT256_LENGTH);
 }
 
 // Helper function to check if buffer is all zeros

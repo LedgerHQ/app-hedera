@@ -22,6 +22,16 @@
 
 bool validate_and_reformat_contract_call(
     Hedera_ContractCallTransactionBody* contract_call_tx) {
+    if (contract_call_tx == NULL) {
+        PRINTF("Contract call transaction is NULL\n");
+        return false;
+    }
+    
+    if (contract_call_tx->functionParameters.size < EVM_SELECTOR_SIZE) {
+        PRINTF("Function parameters too short for selector\n");
+        return false;
+    }
+    
     uint32_t function_selector =
         U4BE(contract_call_tx->functionParameters.bytes, 0);
 
@@ -59,24 +69,43 @@ bool validate_and_reformat_contract_call(
                 };
                 // 0.0.XXXX format for contract ID
                 address_to_string(&contract_id, st_ctx.senders);
-            } else {
+            } else if (contract_call_tx->contractID.which_contract ==
+                       Hedera_ContractID_evm_address_tag) {
                 // 0xXXXX format for EVM address
+                if (contract_call_tx->contractID.contract.evm_address.size != EVM_ADDRESS_SIZE) {
+                    PRINTF("Invalid EVM address size: %d\n", 
+                           contract_call_tx->contractID.contract.evm_address.size);
+                    return false;
+                }
                 evm_address_t evm_address;
                 // Copy the 20-byte EVM address from protobuf bytes array
                 memcpy(evm_address.bytes,
                        contract_call_tx->contractID.contract.evm_address.bytes,
-                       sizeof(evm_address.bytes));
+                       EVM_ADDRESS_SIZE);
                 char evm_addr_str[EVM_ADDRESS_STR_SIZE];
                 if (!evm_addr_to_str(&evm_address, evm_addr_str)) {
                     PRINTF("Failed to stringify EVM address\n");
                     return false;
                 }
                 hedera_safe_printf(st_ctx.senders, "%s", evm_addr_str);
+            } else {
+                PRINTF("Unsupported contract ID type: %d\n", 
+                       contract_call_tx->contractID.which_contract);
+                return false;
             }
-            // Print gas
+            // Validate and print gas
+            if (contract_call_tx->gas <= 0) {
+                PRINTF("Invalid gas value: %lld\n", contract_call_tx->gas);
+                return false;
+            }
             hedera_safe_printf(st_ctx.auto_renew_period, "%llu",
                                contract_call_tx->gas);
-            // Print amount in tinybar
+            
+            // Validate and print amount in tinybar
+            if (contract_call_tx->amount < 0) {
+                PRINTF("Invalid amount value: %lld\n", contract_call_tx->amount);
+                return false;
+            }
             hedera_safe_printf(st_ctx.expiration_time, "%llu hbar",
                                contract_call_tx->amount);
             break;
