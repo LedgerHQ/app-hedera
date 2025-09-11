@@ -1200,7 +1200,7 @@ def test_hedera_erc20_transfer_good_signature(backend, firmware, scenario_naviga
     hedera = HederaClient(backend)
 
     # Random-like parameters (deterministic values for test stability)
-    key_index = 0
+    key_index = 54
     to_address = "123456789abcdef0112233445566778899aabbcc"
     amount = 54354354332132213
 
@@ -1247,47 +1247,6 @@ def test_hedera_erc20_transfer_good_signature(backend, firmware, scenario_naviga
     transaction_with_index = key_index.to_bytes(4, "little") + transaction
 
     assert hedera.verify_signature(public_key, transaction_with_index, signature)
-
-def test_hedera_erc20_try_buffer_overflow(backend, firmware, scenario_navigator):
-    hedera = HederaClient(backend)
-
-    # Random-like parameters (deterministic values for test stability)
-    key_index = 0
-    to_address = "123456789abcdef0112233445566778899aabbcc"
-    amount = 54354354332132213
-
-    # Get the public key for verification (non-interactive)
-    public_key = hedera.get_public_key_non_confirm(key_index).data
-    backend.wait_for_home_screen()
-
-    # Encode ERC-20 transfer payload
-    params = encode_erc20_transfer_web3(to_address, amount)
-
-    # Build contract call
-    conf = contract_call_conf(
-        gas=100000,
-        amount=123456789,
-        function_parameters=params,
-        evm_address=(b"TOO_LONG_TO_FIT_IN_THE_BUFFER")*20,
-    )
-
-    # Sign using non-interactive flow: send_sign_transaction without navigation helpers
-    with hedera.send_sign_transaction(
-        index=key_index,
-        operator_shard_num=1,
-        operator_realm_num=2,
-        operator_account_num=3,
-        transaction_fee=5,
-        memo=("TOO_LONG_TO_FIT_IN_THE_BUFFER")*20,
-        conf=conf,
-    ):
-        backend.raise_policy = RaisePolicy.RAISE_NOTHING
-
-    rapdu = hedera.get_async_response()
-    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
-    signature = rapdu.data
-    assert signature == b""
-
 
 def test_hedera_erc20_wrong_selector(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)

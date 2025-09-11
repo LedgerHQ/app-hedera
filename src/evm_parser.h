@@ -7,18 +7,24 @@
 // EVM ABI constants
 #define EVM_SELECTOR_SIZE 4
 #define EVM_WORD_SIZE 32
+#define EVM_ADDRESS_SIZE 20
+#define EVM_ADDRESS_PADDING_SIZE 12  // 32 - 20 bytes
 
 // ERC-20 function selectors
 #define EVM_ERC20_TRANSFER_SELECTOR 0xa9059cbbUL  // transfer(address,uint256)
 
+// Buffer size constants
+#define EVM_ADDRESS_STR_SIZE (2 + 40 + 1)  // "0x" + 40 hex chars + null terminator
+#define EVM_WORD_STR_SIZE    (2 + 64 + 1)  // "0x" + 64 hex chars + null terminator
+
 typedef struct evm_address_s {
     // 20-byte EVM address (big-endian)
-    uint8_t bytes[20];
+    uint8_t bytes[EVM_ADDRESS_SIZE];
 } evm_address_t;
 
 typedef struct uint256_s {
     // Raw big-endian 32-byte value
-    uint8_t bytes[32];
+    uint8_t bytes[EVM_WORD_SIZE];
 } uint256_raw_t;
 
 typedef struct transfer_calldata_s {
@@ -34,8 +40,7 @@ bool parse_transfer_function(const uint8_t *calldata,
                              transfer_calldata_t *out);
 
 // Recommended buffer sizes for hex strings (including 0x prefix and null-terminator)
-#define EVM_ADDRESS_STR_SIZE (2 + 40 + 1)
-#define EVM_WORD_STR_SIZE    (2 + 64 + 1)
+// These are now defined above with the other constants
 
 // Convert a 20-byte EVM address to a 0x-prefixed lowercase hex string.
 // Returns true on success.
