@@ -80,7 +80,7 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
     }
     
     // Validate and print gas
-    if (contract_call_tx->gas <= 0) {
+    if (contract_call_tx->gas < 0) {
         PRINTF("Invalid gas value: %lld\n", contract_call_tx->gas);
         return false;
     }
@@ -124,18 +124,6 @@ bool validate_and_reformat_contract_call(
             PRINTF("Unsupported function selector: %x\n", function_selector);
             return false;
     }
-
-    PRINTF("==========================================\n");
-    PRINTF("Formatted fields\n");
-    PRINTF("Key Index: %s\n", st_ctx.key_index_str);
-    PRINTF("From: %s\n", st_ctx.operator);
-    PRINTF("To: %s\n", st_ctx.recipients);
-    PRINTF("Contract: %s\n", st_ctx.senders);
-    PRINTF("Gas limit: %s\n", st_ctx.auto_renew_period);
-    PRINTF("Raw token amount: %s\n", st_ctx.amount);
-    PRINTF("HBAR sent: %s\n", st_ctx.expiration_time);
-    PRINTF("Fee: %s\n", st_ctx.fee);
-    PRINTF("==========================================\n");
     return true;
 }
 

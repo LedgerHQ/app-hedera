@@ -90,6 +90,24 @@ UX_STEP_NOCB(collect_rewards_step, bnnn_paging,
 UX_STEP_NOCB(account_memo_step, bnnn_paging,
              {.title = "Account memo", .text = (char*)st_ctx.account_memo});
 
+UX_STEP_NOCB(senders_erc20_step, bnnn_paging,
+    {.title = "From", .text = (char*)st_ctx.operator});
+
+UX_STEP_NOCB(recipients_erc20_step, bnnn_paging,
+    {.title = "To", .text = (char*)st_ctx.recipients});
+    
+UX_STEP_NOCB(contract_erc20_step, bnnn_paging,
+    {.title = "Contract", .text = (char*)st_ctx.senders});
+
+UX_STEP_NOCB(gas_limit_erc20_step, bnnn_paging,
+    {.title = "Gas limit", .text = (char*)st_ctx.auto_renew_period});
+
+UX_STEP_NOCB(amount_erc20_step, bnnn_paging,
+    {.title = "Raw token amount", .text = (char*)st_ctx.amount});
+
+UX_STEP_NOCB(contract_amount_erc20_step, bnnn_paging,
+    {.title = "HBAR sent", .text = (char*)st_ctx.expiration_time});
+
 UX_STEP_NOCB(fee_step, bnnn_paging,
              {.title = "Max fees", .text = (char*)st_ctx.fee});
 
@@ -143,6 +161,11 @@ UX_DEF(ux_stake_flow, &summary_token_trans_step, &key_index_step,
 UX_DEF(ux_unstake_flow, &summary_token_trans_step, &key_index_step,
        &operator_step, &amount_step, &collect_rewards_step,
        &fee_step, &confirm_step, &reject_step);
+
+// Contract Call UX Flow
+UX_DEF(ux_contract_call_flow, &summary_token_trans_step, &key_index_step, &senders_erc20_step, 
+       &recipients_erc20_step, &amount_erc20_step, &contract_erc20_step, &contract_amount_erc20_step,  
+       &gas_limit_erc20_step, &fee_step, &memo_step, &confirm_step, &reject_step);
 
 #elif defined(HAVE_NBGL)
 
@@ -271,6 +294,16 @@ static void create_transaction_flow(void) {
             ADD_INFO(st_ctx.senders, st_ctx.senders_title);
             ADD_INFO(st_ctx.amount, st_ctx.amount_title);
             break;
+        case ContractCall:
+            ADD_INFO(st_ctx.operator, "From");
+            ADD_INFO(st_ctx.recipients, "To");
+            ADD_INFO(st_ctx.amount, "Raw token amount");
+            ADD_INFO(st_ctx.senders, "Contract");
+            ADD_INFO(st_ctx.expiration_time, "HBAR sent");
+            ADD_INFO(st_ctx.auto_renew_period, "Gas limit"); 
+            ADD_INFO(st_ctx.fee, "Max fees");
+            ADD_INFO(st_ctx.memo, "Memo");
+            break;
         default:
             // Unreachable
             ;
@@ -332,7 +365,9 @@ void ui_sign_transaction(void) {
         case TokenBurn:
             ux_flow_init(0, ux_burn_mint_flow, NULL);
             break;
-
+        case ContractCall:
+            ux_flow_init(0, ux_contract_call_flow, NULL);
+            break;
         default:
             break;
     }
