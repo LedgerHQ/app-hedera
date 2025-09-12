@@ -46,6 +46,16 @@ tests/unit/proto_varlen/
 - `parse_field_tag()`
 
 ### 2. `fuzzer_hedera_format.c`
+### 3. `fuzzer_evm_payload.c`
+Purpose: Coverage-guided fuzzing of the ERC-20 calldata parser and string formatting without nanopb or Ledger OS. The harness feeds arbitrary calldata, attempts to parse `transfer(address,uint256)`, and formats the parsed address and amount as strings.
+
+Key Paths Covered:
+- EVM calldata parsing: selector, address extraction, uint256 handling
+- Formatting helpers: address to string, uint256 to decimal and hex
+
+Build Targets:
+- `fuzz_evm_payload`
+
 **Purpose**: Tests Hedera-specific data formatting functions.
 
 **Attack Vectors Tested**:

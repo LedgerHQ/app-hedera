@@ -1,0 +1,20 @@
+Hedera App Fuzzing Report
+=========================
+Date: Fri Sep 12 08:39:56 AM CEST 2025
+Fuzz time per target: 60s
+
+Artifacts found:
+  evm_payload: 0 artifacts
+  proto_varlen_parser: 4 artifacts
+    Files:
+      total 24
+      drwxrwxr-x 2 atomwoz atomwoz 4096 Sep 12 08:24 .
+      drwxrwxr-x 4 atomwoz atomwoz 4096 Sep 12 08:27 ..
+      -rw-rw-r-- 1 atomwoz atomwoz   19 Sep 12 08:24 crash-27cb99d1430185962675c2916c64157264c5100b
+      -rw-rw-r-- 1 atomwoz atomwoz   16 Sep 12 08:18 crash-7f91e01603f200be840e4e0115c60e32a2d7e878
+      -rw-rw-r-- 1 atomwoz atomwoz   17 Sep 12 08:24 crash-9444d45ab01bbef679bf9b787877047fd866970c
+      -rw-rw-r-- 1 atomwoz atomwoz   19 Sep 12 08:21 crash-f2fbfd5087293673a10358203105cd5063ac4601
+
+Corpus statistics:
+  evm_payload: 23 test cases
+  proto_varlen_parser: 362 test cases
