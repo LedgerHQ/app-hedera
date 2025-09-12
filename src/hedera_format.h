@@ -1,8 +1,13 @@
 #pragma once
 #include "app_globals.h"
+#ifndef NO_BOLOS_SDK
 #include "app_io.h"
+#else
+#include "os.h"
+#endif
 #include "sign_transaction.h"
 #include "tokens/token_address.h"
+#include "printf.h"
 
 void reformat_key(void);
 

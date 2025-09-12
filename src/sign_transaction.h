@@ -6,6 +6,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "tokens/cal/token_lookup.h"
+#include "tokens/token_address.h"
+#include "transaction_body.pb.h"
+#include "staking.h"
+
+#ifndef NO_BOLOS_SDK
 #include "crypto_create.pb.h"
 #include "crypto_update.pb.h"
 #include "handlers.h"
@@ -13,13 +19,10 @@
 #include "app_globals.h"
 #include "hedera_format.h"
 #include "app_io.h"
-#include "transaction_body.pb.h"
 #include "ui_common.h"
 #include "utils.h"
-#include "tokens/cal/token_lookup.h"
-#include "tokens/token_address.h"
-#include "staking.h"
 #include "sign_contract_call.h"
+#endif
 
 enum TransactionStep {
     Summary = 1,
