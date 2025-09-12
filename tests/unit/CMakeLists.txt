@@ -27,6 +27,7 @@ enable_testing()
 include(CTest)
 
 include_directories(../../src)
+include_directories(../../src/ui)
 
 # Disabled due to BOLOS SDK dependencies
 # add_library(hedera_format SHARED ../../src/hedera_format.c)
@@ -41,6 +42,11 @@ include_directories(../../src)
 add_library(proto_varlen_parser SHARED ../../src/proto_varlen_parser.c)
 target_compile_definitions(proto_varlen_parser PRIVATE NO_BOLOS_SDK=1)
 
+# EVM parser library for unit tests
+add_library(evm_parser_lib SHARED ../../src/evm_parser.c)
+target_compile_definitions(evm_parser_lib PRIVATE NO_BOLOS_SDK=1)
+
+
 # Parser tests for proto_varlen_parser (basic functionality, no security concerns)
 add_executable(test_proto_varlen_parser proto_varlen/test_proto_varlen_parser.c)
 target_link_libraries(test_proto_varlen_parser ${CMOCKA_LIBRARIES} proto_varlen_parser)
@@ -48,6 +54,14 @@ target_include_directories(test_proto_varlen_parser PUBLIC ${CMOCKA_INCLUDE_DIRS
 target_compile_options(test_proto_varlen_parser PUBLIC ${CMOCKA_CFLAGS_OTHER})
 target_link_directories(test_proto_varlen_parser PUBLIC ${CMOCKA_LIBRARY_DIRS})
 add_test(test_proto_varlen_parser ${CMAKE_CURRENT_BINARY_DIR}/test_proto_varlen_parser)
+
+# EVM calldata parser tests
+add_executable(test_evm_parser test_evm_parser.c)
+target_link_libraries(test_evm_parser ${CMOCKA_LIBRARIES} evm_parser_lib)
+target_include_directories(test_evm_parser PUBLIC ${CMOCKA_INCLUDE_DIRS})
+target_compile_options(test_evm_parser PUBLIC ${CMOCKA_CFLAGS_OTHER})
+target_link_directories(test_evm_parser PUBLIC ${CMOCKA_LIBRARY_DIRS})
+add_test(test_evm_parser ${CMAKE_CURRENT_BINARY_DIR}/test_evm_parser)
 
 # Security tests for proto_varlen_parser (buffer overflows, infinite loops)
 add_executable(test_proto_varlen_security proto_varlen/test_proto_varlen_security.c)
