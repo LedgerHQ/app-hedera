@@ -2,11 +2,7 @@
 
 #include <string.h>
 
-#ifndef NO_BOLOS_SDK
-#include "app_io.h"
-#else
-#include "os.h"
-#endif
+// Platform headers not needed directly here; pulled through other includes
 
 #include "evm_parser.h"
 #include "ui/app_globals.h"
@@ -87,13 +83,13 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
     hedera_safe_printf(st_ctx.auto_renew_period, "%llu",
                        (unsigned long long)contract_call_tx->gas);
     
-    // Validate and print amount in tinybar
+    // Validate and print amount in HBAR (tinybar -> HBAR with decimals)
     if (contract_call_tx->amount < 0) {
         PRINTF("Invalid amount value: %lld\n", (long long)contract_call_tx->amount);
         return false;
     }
-    hedera_safe_printf(st_ctx.expiration_time, "%llu hbar",
-                       (unsigned long long)contract_call_tx->amount);
+    hedera_safe_printf(st_ctx.expiration_time, "%s hbar",
+                       hedera_format_tinybar_str((uint64_t)contract_call_tx->amount));
     
     return true;
 }
