@@ -77,5 +77,9 @@ void reformat_max_automatic_token_associations(void);
 
 void reformat_collect_rewards_in_stake_flow(void);
 
+// Public helper to format tinybar as HBAR decimal string (e.g., 1.23456789)
+// Returned pointer is to an internal static buffer; copy immediately if needed.
+const char *hedera_format_tinybar_str(uint64_t tinybar);
+
 #define hedera_safe_printf(element, ...) \
     hedera_snprintf(element, sizeof(element) - 1, __VA_ARGS__)
