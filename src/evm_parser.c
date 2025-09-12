@@ -4,10 +4,10 @@
 
 #include "ui/app_globals.h"
 
-// Validate that calldata contains selector + two 32-byte words
-static bool evm_min_len_ok(size_t len) {
+// Validate that calldata length matches selector + two 32-byte words exactly
+static bool evm_exact_len_ok(size_t len) {
     // 4 bytes selector + 2 * 32 bytes params
-    return len >= (EVM_SELECTOR_SIZE + 2 * EVM_WORD_SIZE);
+    return len == (EVM_SELECTOR_SIZE + 2 * EVM_WORD_SIZE);
 }
 
 // Copy the last 20 bytes of a 32-byte ABI-encoded address word
@@ -25,7 +25,7 @@ bool parse_transfer_function(const uint8_t *calldata,
                              size_t calldata_len,
                              transfer_calldata_t *out) {
     if (calldata == NULL || out == NULL) return false;
-    if (!evm_min_len_ok(calldata_len)) return false;
+    if (!evm_exact_len_ok(calldata_len)) return false;
 
     // Selector check
     uint32_t selector = ((uint32_t)calldata[0] << 24) | ((uint32_t)calldata[1] << 16) |

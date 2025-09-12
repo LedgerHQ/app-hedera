@@ -31,10 +31,14 @@ else()
 endif()
 
 include_directories(
+  ..
   ../src/
+  ../src/ui/
+  ../proto/
   ../include/
   ../vendor/nanopb/
   mock/
+  ${CMAKE_CURRENT_LIST_DIR}/mock
 )
 
 # Mock implementations for BOLOS SDK dependencies
@@ -48,8 +52,13 @@ add_library(proto_varlen_parser SHARED ../src/proto_varlen_parser.c)
 target_compile_definitions(proto_varlen_parser PRIVATE NO_BOLOS_SDK=1)
 target_link_libraries(proto_varlen_parser mock_bolos)
 
-# Fuzzer executables - start with proto_varlen_parser
+# Fuzzer executables
 add_executable(fuzz_proto_varlen_parser fuzzer_proto_varlen_parser.c)
+target_link_libraries(fuzz_proto_varlen_parser proto_varlen_parser)
 
-# Link fuzzer targets
-target_link_libraries(fuzz_proto_varlen_parser proto_varlen_parser) 
+# EVM calldata / formatting fuzzers (no nanopb, no Ledger OS)
+add_executable(fuzz_evm_payload
+    fuzzer_evm_payload.c
+    ../src/evm_parser.c
+)
+target_compile_definitions(fuzz_evm_payload PRIVATE NO_BOLOS_SDK=1)

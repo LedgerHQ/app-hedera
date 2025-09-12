@@ -5,9 +5,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-// Define NO_BOLOS_SDK to disable actual SDK includes
-#define NO_BOLOS_SDK 1
-
 // Mock types for BOLOS SDK
 typedef uint32_t cx_err_t;
 typedef uint32_t cx_curve_t;
