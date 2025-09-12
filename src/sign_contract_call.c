@@ -9,21 +9,11 @@
 #endif
 
 #include "evm_parser.h"
+#include "ui/app_globals.h"
 #include "hedera_format.h"
 #include "printf.h"
 #include "sign_transaction.h"
 #include "tokens/token_address.h"
-
-// // lightweight helpers to print 64-bit values without %lld support
-// static void print_int64_field(const char* label, int64_t value) {
-//     uint32_t hi = (uint32_t)((uint64_t)value >> 32);
-//     uint32_t lo = (uint32_t)((uint64_t)value & 0xFFFFFFFFu);
-//     if (hi == 0) {
-//         PRINTF("%s%u\n", label, (unsigned)lo);
-//     } else {
-//         PRINTF("%s0x%08x%08x\n", label, (unsigned)hi, (unsigned)lo);
-//     }
-// }
 
 // Handle ERC-20 transfer function call
 static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contract_call_tx) {
@@ -70,8 +60,8 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
                Hedera_ContractID_evm_address_tag) {
         // 0xXXXX format for EVM address
         if (contract_call_tx->contractID.contract.evm_address.size != EVM_ADDRESS_SIZE) {
-            PRINTF("Invalid EVM address size: %d\n", 
-                   contract_call_tx->contractID.contract.evm_address.size);
+            PRINTF("Invalid EVM address size: %u\n",
+                   (unsigned)contract_call_tx->contractID.contract.evm_address.size);
             return false;
         }
         evm_address_t evm_address;
@@ -79,33 +69,31 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
         memcpy(evm_address.bytes,
                contract_call_tx->contractID.contract.evm_address.bytes,
                EVM_ADDRESS_SIZE);
-        char evm_addr_str[EVM_ADDRESS_STR_SIZE];
-        if (!evm_addr_to_str(&evm_address, evm_addr_str)) {
+        if (!evm_addr_to_str(&evm_address, st_ctx.senders)) {
             PRINTF("Failed to stringify EVM address\n");
             return false;
         }
-        hedera_safe_printf(st_ctx.senders, "%s", evm_addr_str);
     } else {
-        PRINTF("Unsupported contract ID type: %d\n", 
-               contract_call_tx->contractID.which_contract);
+        PRINTF("Unsupported contract ID type: %u\n",
+               (unsigned)contract_call_tx->contractID.which_contract);
         return false;
     }
     
     // Validate and print gas
     if (contract_call_tx->gas < 0) {
-        PRINTF("Invalid gas value: %lld\n", contract_call_tx->gas);
+        PRINTF("Invalid gas value: %lld\n", (long long)contract_call_tx->gas);
         return false;
     }
     hedera_safe_printf(st_ctx.auto_renew_period, "%llu",
-                       contract_call_tx->gas);
+                       (unsigned long long)contract_call_tx->gas);
     
     // Validate and print amount in tinybar
     if (contract_call_tx->amount < 0) {
-        PRINTF("Invalid amount value: %lld\n", contract_call_tx->amount);
+        PRINTF("Invalid amount value: %lld\n", (long long)contract_call_tx->amount);
         return false;
     }
     hedera_safe_printf(st_ctx.expiration_time, "%llu hbar",
-                       contract_call_tx->amount);
+                       (unsigned long long)contract_call_tx->amount);
     
     return true;
 }
@@ -121,6 +109,12 @@ bool validate_and_reformat_contract_call(
         PRINTF("Function parameters too short for selector\n");
         return false;
     }
+    // Guard against oversized calldata
+    if (contract_call_tx->functionParameters.size > MAX_CONTRACT_CALL_TX_SIZE) {
+        PRINTF("Function parameters too large: %u\n",
+               (unsigned)contract_call_tx->functionParameters.size);
+        return false;
+    }
     
     uint32_t function_selector =
         U4BE(contract_call_tx->functionParameters.bytes, 0);
@@ -130,8 +124,8 @@ bool validate_and_reformat_contract_call(
             // ERC-20 transfer must be exactly 4 + 32 + 32 bytes
             if (contract_call_tx->functionParameters.size !=
                 (EVM_SELECTOR_SIZE + 2 * EVM_WORD_SIZE)) {
-                PRINTF("Invalid ERC-20 transfer params length: %d\n",
-                       (int)contract_call_tx->functionParameters.size);
+                PRINTF("Invalid ERC-20 transfer params length: %u\n",
+                       (unsigned)contract_call_tx->functionParameters.size);
                 return false;
             }
             if (!handle_erc20_transfer_call(contract_call_tx)) {
