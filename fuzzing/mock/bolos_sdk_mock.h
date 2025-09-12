@@ -62,7 +62,6 @@ typedef void (*nbgl_choiceCallback_t)(bool confirm);
 
 // Mock function declarations
 void PRINTF(const char* format, ...);
-void explicit_bzero(void *s, size_t n);
 void* pic(void* ptr);
 
 // Cryptographic functions
@@ -96,6 +95,7 @@ void nbgl_useCaseReview(nbgl_operationType_t operationType,
 
 // Error handling
 void THROW(unsigned int exception);
+extern volatile unsigned int g_last_throw;
 
 // Memory management
 void* os_malloc(size_t size);

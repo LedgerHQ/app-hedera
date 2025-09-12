@@ -1,6 +1,6 @@
 Hedera App Fuzzing Report
 =========================
-Date: Fri Sep 12 08:39:56 AM CEST 2025
+Date: Fri Sep 12 11:45:29 AM CEST 2025
 Fuzz time per target: 60s
 
 Artifacts found:
@@ -17,4 +17,4 @@ Artifacts found:
 
 Corpus statistics:
   evm_payload: 23 test cases
-  proto_varlen_parser: 362 test cases
+  proto_varlen_parser: 495 test cases

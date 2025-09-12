@@ -5,16 +5,18 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "app_globals.h"
 
+#ifndef NO_BOLOS_SDK
 #include "handlers.h"
 #include "hedera.h"
-#include "app_globals.h"
 #include "hedera_format.h"
-#ifndef NO_BOLOS_SDK
 #include "app_io.h"
-#endif
-#include "proto/contract_call.pb.h"
 #include "utils.h"
+#endif
+
+#include "sign_transaction.h"
+#include "proto/contract_call.pb.h"
 #include "evm_parser.h"
 
 

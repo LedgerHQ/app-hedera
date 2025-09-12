@@ -172,6 +172,34 @@ static void test_extract_nested_string_field_malformed_data(void **state) {
     assert_false(result);
 }
 
+static void test_extract_malformed_unknown_wire_then_string(void **state) {
+    (void) state;
+    char output[64] = {0};
+    // Build: unknown wire-type tag followed by a valid string field
+    uint8_t buf[32];
+    uint8_t *p = buf;
+    // Unknown wire type 7 for field 3
+    *p++ = (uint8_t)((3 << 3) | 7);
+    *p++ = 0x01; // pretend one byte payload that parser should skip or fail gracefully
+    // Now a valid string on field 14: "OK"
+    *p++ = (uint8_t)((14 << 3) | 2);
+    *p++ = 0x02; // len 2
+    *p++ = 'O'; *p++ = 'K';
+    bool ok = extract_nested_string_field(buf, (size_t)(p - buf), 14, output, sizeof(output));
+    // Unknown wire types are considered malformed; parser should reject
+    assert_false(ok);
+    assert_string_equal(output, "");
+}
+
+static void test_extract_with_overlong_length(void **state) {
+    (void) state;
+    // Length exceeding buffer must fail gracefully
+    uint8_t buf[] = { (uint8_t)((14 << 3) | 2), 0xFE, 0xFF, 0xFF, 0x7F };
+    char output[8];
+    bool ok = extract_nested_string_field(buf, sizeof(buf), 14, output, sizeof(output));
+    assert_false(ok);
+}
+
 static void test_extract_nested_string_field_empty_input(void **state) {
     (void) state;
     char output[256];
@@ -252,6 +280,8 @@ int main(void) {
         cmocka_unit_test(test_extract_nested_string_field_null_output),
         cmocka_unit_test(test_extract_nested_string_field_deeply_nested),
         cmocka_unit_test(test_extract_nested_string_field_large_input),
+        cmocka_unit_test(test_extract_malformed_unknown_wire_then_string),
+        cmocka_unit_test(test_extract_with_overlong_length),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

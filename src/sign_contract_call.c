@@ -2,7 +2,12 @@
 
 #include <string.h>
 
+#ifndef NO_BOLOS_SDK
 #include "app_io.h"
+#else
+#include "os.h"
+#endif
+
 #include "evm_parser.h"
 #include "hedera_format.h"
 #include "printf.h"
