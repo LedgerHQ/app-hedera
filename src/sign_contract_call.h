@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include "app_globals.h"
 
+// NO_BOLOS_SDK: when defined, tests/fuzzers exclude BOLOS-only headers
 #ifndef NO_BOLOS_SDK
 #include "handlers.h"
 #include "hedera.h"

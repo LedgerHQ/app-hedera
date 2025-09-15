@@ -1,5 +1,6 @@
 #pragma once
 #include "app_globals.h"
+// NO_BOLOS_SDK: host builds (tests/fuzzers) use mocks instead of BOLOS includes
 #ifndef NO_BOLOS_SDK
 #include "app_io.h"
 #else

@@ -68,6 +68,8 @@
       * The `80%` factor encourages reasonable estimation, while allowing for
       * some overage to ensure successful execution.
       */
+     // Gas is defined as int64 in upstream proto (we could have negative gas); the app rejects negative values
+     // Reference: https://github.com/hashgraph/hedera-protobufs/blob/8c27786cec93abab974309074feaef9b48a695b7/services/contract_call.proto#L70
      int64 gas = 2;
  
      /**
