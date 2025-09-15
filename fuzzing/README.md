@@ -16,7 +16,7 @@ The fuzzing infrastructure implements a **multi-layer approach** similar to prod
 ```
 fuzzing/
 ├── CMakeLists.txt              # Build configuration
-├── mock/                       # BOLOS SDK mocks for testing
+├── mock/                       # BOLOS SDK mocks for testing (used with NO_BOLOS_SDK)
 │   ├── bolos_sdk_mock.c/h     # Mock SDK functions
 │   └── os_task.c/h            # Mock OS functions
 ├── fuzzer_*.c                  # Individual fuzzer implementations
@@ -129,6 +129,10 @@ The fuzzing framework includes comprehensive mocks for the BOLOS SDK to enable t
    - Message structure verification
 
 ## Usage
+### About NO_BOLOS_SDK
+
+Fuzzing targets are built with `NO_BOLOS_SDK=1` to run on a host without Ledger OS. The mocks in `fuzzing/mock/` provide minimal shims (e.g., `THROW`, `PRINTF`, endian helpers) so that production code can be exercised unchanged. See `src/ui/debug.h` for the conditional includes governed by `NO_BOLOS_SDK`.
+
 
 ### Quick Start
 ```bash
