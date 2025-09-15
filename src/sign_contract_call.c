@@ -75,7 +75,7 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
         return false;
     }
     
-    // Validate and print gas
+    // Validate and print gas - Gas is int64 in upstream proto; app rejects negatives
     if (contract_call_tx->gas < 0) {
         PRINTF("Invalid gas value: %lld\n", (long long)contract_call_tx->gas);
         return false;

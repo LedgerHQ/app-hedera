@@ -33,6 +33,7 @@ include_directories(../../proto)
 include_directories(../../vendor/nanopb)
 include_directories(./mock)
 include_directories(.)
+# Use host-mode mocks instead of BOLOS SDK when running unit tests
 add_definitions(-DNO_BOLOS_SDK=1)
 
 # Disabled due to BOLOS SDK dependencies
@@ -46,10 +47,12 @@ add_definitions(-DNO_BOLOS_SDK=1)
 
 # Proto varlen parser tests (standalone, minimal dependencies)
 add_library(proto_varlen_parser SHARED ../../src/proto_varlen_parser.c)
+# Build parser with host-mode mocks
 target_compile_definitions(proto_varlen_parser PRIVATE NO_BOLOS_SDK=1)
 
 # EVM parser library for unit tests
 add_library(evm_parser_lib SHARED ../../src/evm_parser.c)
+# Build EVM parser with host-mode mocks
 target_compile_definitions(evm_parser_lib PRIVATE NO_BOLOS_SDK=1)
 
 
@@ -87,6 +90,7 @@ add_executable(test_sign_contract_call
     ../../vendor/nanopb/pb_common.c
     ../../vendor/nanopb/pb_decode.c
 )
+# Test runs with host-mode mocks
 target_compile_definitions(test_sign_contract_call PRIVATE NO_BOLOS_SDK=1)
 target_link_libraries(test_sign_contract_call ${CMOCKA_LIBRARIES})
 target_include_directories(test_sign_contract_call PUBLIC ${CMOCKA_INCLUDE_DIRS})
@@ -147,6 +151,7 @@ add_executable(test_pb_decode_erc20
     mock/putchar.c
     mock/staking_mock.c
 )
+# End-to-end decode test with nanopb and host-mode mocks
 target_compile_definitions(test_pb_decode_erc20 PRIVATE PB_SYSTEM_HEADER="nanopb_system.h" NO_BOLOS_SDK=1)
 target_link_libraries(test_pb_decode_erc20 ${CMOCKA_LIBRARIES})
 target_include_directories(test_pb_decode_erc20 PUBLIC ${CMOCKA_INCLUDE_DIRS})

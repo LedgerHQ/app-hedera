@@ -11,6 +11,7 @@
 #include "transaction_body.pb.h"
 #include "staking.h"
 
+// NO_BOLOS_SDK: exclude device-only headers when building tests/fuzzers
 #ifndef NO_BOLOS_SDK
 #include "crypto_create.pb.h"
 #include "crypto_update.pb.h"

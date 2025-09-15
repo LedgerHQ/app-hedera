@@ -52,6 +52,7 @@ add_library(mock_bolos SHARED
 
 # Libraries for core Hedera functionality - only what compiles successfully
 add_library(proto_varlen_parser SHARED ../src/proto_varlen_parser.c)
+# Build with host-mode mocks instead of BOLOS SDK
 target_compile_definitions(proto_varlen_parser PRIVATE NO_BOLOS_SDK=1)
 target_link_libraries(proto_varlen_parser mock_bolos)
 
