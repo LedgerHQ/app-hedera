@@ -22,7 +22,7 @@ static void test_parse_transfer_valid(void **state) {
     assert_true(parse_transfer_function(calldata, sizeof(calldata), &out));
 
     char addr[EVM_ADDRESS_STR_SIZE];
-    assert_true(evm_addr_to_str(&out.to, addr));
+    assert_true(evm_addr_to_str(&out.to, addr, sizeof(addr)));
     assert_string_equal(addr, "0x1111111111111111111111111111111111111111");
 
     char amount[MAX_UINT256_LENGTH + 1];
@@ -80,7 +80,7 @@ static void test_parse_transfer_nonzero_padding_and_max_amount(void **state) {
     assert_true(parse_transfer_function(calldata, sizeof(calldata), &out));
 
     char addr[EVM_ADDRESS_STR_SIZE];
-    assert_true(evm_addr_to_str(&out.to, addr));
+    assert_true(evm_addr_to_str(&out.to, addr, sizeof(addr)));
     assert_string_equal(addr, "0x2222222222222222222222222222222222222222");
 
     char dec[MAX_UINT256_LENGTH + 1];

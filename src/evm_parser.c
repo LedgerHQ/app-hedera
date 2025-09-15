@@ -51,8 +51,9 @@ static void hex_from_bytes(const uint8_t *in, size_t in_len, char *out) {
     }
 }
 
-bool evm_addr_to_str(const evm_address_t *addr, char *out) {
+bool evm_addr_to_str(const evm_address_t *addr, char *out, size_t out_len) {
     if (addr == NULL || out == NULL) return false;
+    if (out_len < EVM_ADDRESS_STR_SIZE) return false;
     out[0] = '0';
     out[1] = 'x';
     hex_from_bytes(addr->bytes, EVM_ADDRESS_SIZE, out + 2);

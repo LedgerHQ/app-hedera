@@ -43,8 +43,8 @@ bool parse_transfer_function(const uint8_t *calldata,
 // These are now defined above with the other constants
 
 // Convert a 20-byte EVM address to a 0x-prefixed lowercase hex string.
-// Returns true on success.
-bool evm_addr_to_str(const evm_address_t *addr, char *out);
+// Caller MUST provide out_len >= EVM_ADDRESS_STR_SIZE. Returns true on success.
+bool evm_addr_to_str(const evm_address_t *addr, char *out, size_t out_len);
 
 // Convert a 32-byte ABI word to a decimal string. eg. "1000000000000000000"
 // Returns true on success.
