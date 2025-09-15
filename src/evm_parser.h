@@ -54,8 +54,25 @@ bool evm_word_to_amount(const uint8_t *word32, char *out);
 // Returns true on success.
 bool evm_word_to_str(const uint8_t *word32, char *out);
 
-// Convert a uint256 value to its decimal string representation.
-// Leading zeros are removed. Returns true on success.
+/**
+ * @brief Converts a uint256 value to its decimal string representation.
+ *
+ * This function takes a uint256 value represented as a byte array, converts it
+ * to a decimal string, and stores the result in the provided `out` buffer.
+ * Leading zeros in the resulting decimal string are removed.
+ *
+ * @param value A pointer to the byte array representing the uint256 value.
+ * @param value_len The length of the byte array `value` (must be <= 32).
+ * @param out A pointer to the buffer where the decimal string representation
+ *            will be stored.
+ * @param out_len The length of the output buffer `out` (must be >= 2 for "0").
+ * @return true on success, false on failure (invalid input or insufficient buffer).
+ * 
+ * @note Adapted from Ethereum app common_utils.h
+ * @see https://github.com/LedgerHQ/ethereum-plugin-sdk/blob/dda423015f2edfdabae9a0eb105fe0a41fe04d97/src/common_utils.h#L110
+ * @note Maximum decimal length for uint256 is 78 digits (2^256-1)
+ * @note The function performs endianness conversion internally for division operations
+ */
 bool uint256_to_decimal(const uint8_t *value, size_t value_len, char *out, size_t out_len);
 
 

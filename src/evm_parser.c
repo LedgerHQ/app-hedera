@@ -79,6 +79,8 @@ bool evm_word_to_amount(const uint8_t *word32, char out[MAX_UINT256_LENGTH+1]) {
 }
 
 // Helper function to check if buffer is all zeros
+// Snippet from Ethereum app 
+// https://github.com/LedgerHQ/ethereum-plugin-sdk/blob/dda423015f2edfdabae9a0eb105fe0a41fe04d97/src/common_utils.c#L334
 static bool allzeroes(const void *buf, size_t n) {
     const uint8_t *p = (const uint8_t *)buf;
     for (size_t i = 0; i < n; i++) {
@@ -87,7 +89,8 @@ static bool allzeroes(const void *buf, size_t n) {
     return true;
 }
 
-// Snippet from app-ethereum/ethereum-plugin-sdk/src/common_utils.c
+// Snippet from Ethereum app 
+// https://github.com/LedgerHQ/ethereum-plugin-sdk/blob/dda423015f2edfdabae9a0eb105fe0a41fe04d97/src/common_utils.c#L85
 bool uint256_to_decimal(const uint8_t *value, size_t value_len, char *out, size_t out_len) {
     if (value_len > EVM_WORD_SIZE) {
         // value len is bigger than EVM_WORD_SIZE ?!
