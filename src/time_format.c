@@ -42,4 +42,3 @@ void format_time_duration(char *buffer, const size_t buffer_size,
     // Copy a result to the output buffer
     hedera_snprintf(buffer, buffer_size - 1, "%s", temp);
 }
-
