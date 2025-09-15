@@ -9,7 +9,7 @@
 #define PUBKEY_LENGTH      HASH_LENGTH
 #define RAW_PUBKEY_SIZE 65
 #define MAX_TX_SIZE 512
-#define MAX_CONTRACT_CALL_TX_SIZE 1024
+#define MAX_CONTRACT_CALL_TX_SIZE MAX_TX_SIZE // It is due to proto max_size = 512
 #define FULL_ADDRESS_LENGTH 54
 #define MAX_UINT256_LENGTH 78
 #define ACCOUNT_ID_SIZE 19 * 3 + 2 + 1
