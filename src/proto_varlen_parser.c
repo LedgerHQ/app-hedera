@@ -80,8 +80,8 @@ static bool extract_string_from_string_value(const uint8_t *sv_data,
             }
 
             // Bounds check without pointer overflow
-            size_t remaining = (size_t)(sv_end - sv_data);
-            if (string_length > (uint64_t)remaining) {
+            uint64_t remaining = (uint64_t)(sv_end - sv_data);
+            if (string_length > remaining) {
                 return false;
             }
 
@@ -142,8 +142,8 @@ static bool parse_crypto_update_body(const uint8_t *crypto_data,
             }
 
             // Bounds check without pointer overflow
-            size_t remaining = (size_t)(crypto_end - crypto_data);
-            if (string_value_length > (uint64_t)remaining) {
+            uint64_t remaining = (uint64_t)(crypto_end - crypto_data);
+            if (string_value_length > remaining) {
                 return false;
             }
 
@@ -199,8 +199,8 @@ bool extract_nested_string_field(const uint8_t *buffer, size_t buffer_size,
             }
 
             // Bounds check without pointer overflow
-            size_t remaining = (size_t)(end - data);
-            if (crypto_update_length > (uint64_t)remaining) {
+            uint64_t remaining = (uint64_t)(end - data);
+            if (crypto_update_length > remaining) {
                 return false;
             }
 
@@ -249,8 +249,8 @@ static bool skip_field(const uint8_t **data, const uint8_t *end,
                 return false;
             }
             // Bounds check without pointer overflow
-            size_t remaining = (size_t)(end - *data);
-            if (length > (uint64_t)remaining) {
+            uint64_t remaining = (uint64_t)(end - *data);
+            if (length > remaining) {
                 return false;
             }
             *data += (size_t)length;
