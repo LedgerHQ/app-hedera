@@ -19,7 +19,7 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
             contract_call_tx->functionParameters.bytes,
             contract_call_tx->functionParameters.size,
             &transfer_data)) {
-        if (!evm_addr_to_str(&transfer_data.to, st_ctx.recipients)) {
+        if (!evm_addr_to_str(&transfer_data.to, st_ctx.recipients, sizeof(st_ctx.recipients))) {
             PRINTF("Failed to stringify EVM address\n");
             return false;
         }
@@ -65,7 +65,7 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
         memcpy(evm_address.bytes,
                contract_call_tx->contractID.contract.evm_address.bytes,
                EVM_ADDRESS_SIZE);
-        if (!evm_addr_to_str(&evm_address, st_ctx.senders)) {
+        if (!evm_addr_to_str(&evm_address, st_ctx.senders, sizeof(st_ctx.senders))) {
             PRINTF("Failed to stringify EVM address\n");
             return false;
         }

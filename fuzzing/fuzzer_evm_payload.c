@@ -18,7 +18,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     (void)parse_transfer_function(data, size, &out);
 
     char addr_buf[EVM_ADDRESS_STR_SIZE];
-    (void)evm_addr_to_str(&out.to, addr_buf);
+    (void)evm_addr_to_str(&out.to, addr_buf, sizeof(addr_buf));
 
     char amount_buf[MAX_UINT256_LENGTH + 1];
     (void)evm_word_to_amount(out.amount.bytes, amount_buf);
