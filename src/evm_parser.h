@@ -73,6 +73,37 @@ bool evm_word_to_str(const uint8_t *word32, char *out);
  * @note Maximum decimal length for uint256 is 78 digits (2^256-1)
  * @note The function performs endianness conversion internally for division operations
  */
-bool uint256_to_decimal(const uint8_t *value, size_t value_len, char *out, size_t out_len);
+bool uint256_to_decimal(const uint8_t *value,
+                        size_t value_len,
+                        char *out,
+                        size_t out_len);
+
+// Format a decimal string representing a uint256 by applying token decimals.
+// Example: raw="123456", decimals=4 -> "12.3456"; raw="123", decimals=5 -> "0.00123"
+// Trims trailing zeros and a trailing decimal point. Returns true on success.
+bool evm_amount_apply_decimals(const char *raw,
+                               uint32_t decimals,
+                               char *out,
+                               size_t out_len);
+
+// ETH-style helpers (ported)
+// Imported and adapted from Ledger Ethereum app (Apache-2.0)
+// Source: ethereum-plugin-sdk/src/common_utils.c
+// Repo: https://github.com/LedgerHQ/ethereum-plugin-sdk
+bool adjust_decimals(const char *src,
+                    size_t srcLength,
+                    char *target,
+                    size_t targetLength,
+                    uint8_t decimals);
+
+// Imported and adapted from Ledger Ethereum app (Apache-2.0)
+// Source: ethereum-plugin-sdk/src/common_utils.c
+// Repo: https://github.com/LedgerHQ/ethereum-plugin-sdk
+bool evm_amount_to_string(const uint8_t *amount,
+                    uint8_t amount_size,
+                    uint8_t decimals,
+                    const char *ticker,
+                    char *out_buffer,
+                    size_t out_buffer_size);
 
 

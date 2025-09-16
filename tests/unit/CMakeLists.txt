@@ -78,6 +78,7 @@ add_executable(test_sign_contract_call
     mock/putchar.c
     mock/staking_mock.c
     mock/throw_mock.c
+    mock/token_lookup_mock.c
     ../../src/sign_contract_call.c
     ../../src/evm_parser.c
     ../../src/printf.c
@@ -142,6 +143,7 @@ add_executable(test_pb_decode_erc20
     ../../src/time_format.c
     ../../src/printf.c
     ../../src/ui/app_globals.h
+    mock/token_lookup_mock.c
     ../../proto/contract_call.pb.c
     ../../proto/basic_types.pb.c
     ../../proto/wrappers.pb.c

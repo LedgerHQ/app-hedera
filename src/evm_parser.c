@@ -134,3 +134,117 @@ bool uint256_to_decimal(const uint8_t *value, size_t value_len, char *out, size_
     out[out_len - pos] = 0;
     return true;
 }
+
+// Imported and adapted from Ledger Ethereum app (Apache-2.0)
+// Source: ethereum-plugin-sdk/src/common_utils.c (adjustDecimals)
+// Repo: https://github.com/LedgerHQ/ethereum-plugin-sdk
+bool adjust_decimals(const char *src,
+                    size_t srcLength,
+                    char *target,
+                    size_t targetLength,
+                    uint8_t decimals) {
+    uint32_t startOffset;
+    uint32_t lastZeroOffset = 0;
+    uint32_t offset = 0;
+    if ((srcLength == 1) && (*src == '0')) {
+        if (targetLength < 2) {
+            return false;
+        }
+        target[0] = '0';
+        target[1] = '\0';
+        return true;
+    }
+    if (srcLength <= decimals) {
+        uint32_t delta = (uint32_t)decimals - (uint32_t)srcLength;
+        if (targetLength < srcLength + 1 + 2 + delta) {
+            return false;
+        }
+        target[offset++] = '0';
+        target[offset++] = '.';
+        for (uint32_t i = 0; i < delta; i++) {
+            target[offset++] = '0';
+        }
+        startOffset = offset;
+        for (uint32_t i = 0; i < srcLength; i++) {
+            target[offset++] = src[i];
+        }
+        target[offset] = '\0';
+    } else {
+        uint32_t sourceOffset = 0;
+        uint32_t delta = (uint32_t)srcLength - (uint32_t)decimals;
+        if (targetLength < srcLength + 1 + 1) {
+            return false;
+        }
+        while (offset < delta) {
+            target[offset++] = src[sourceOffset++];
+        }
+        if (decimals != 0) {
+            target[offset++] = '.';
+        }
+        startOffset = offset;
+        while (sourceOffset < srcLength) {
+            target[offset++] = src[sourceOffset++];
+        }
+        target[offset] = '\0';
+    }
+    for (uint32_t i = startOffset; i < offset; i++) {
+        if (target[i] == '0') {
+            if (lastZeroOffset == 0) {
+                lastZeroOffset = i;
+            }
+        } else {
+            lastZeroOffset = 0;
+        }
+    }
+    if (lastZeroOffset != 0) {
+        target[lastZeroOffset] = '\0';
+        if (target[lastZeroOffset - 1] == '.') {
+            target[lastZeroOffset - 1] = '\0';
+        }
+    }
+    return true;
+}
+
+// Imported and adapted from Ledger Ethereum app (Apache-2.0)
+// Source: ethereum-plugin-sdk/src/common_utils.c (amountToString)
+// Repo: https://github.com/LedgerHQ/ethereum-plugin-sdk
+// Adapted: Unlike the Ethereum app where ticker precedes the amount ("TICKER 1.23"),
+// this implementation places the ticker AFTER the amount ("1.23 TICKER").
+bool evm_amount_to_string(const uint8_t *amount,
+                    uint8_t amount_size,
+                    uint8_t decimals,
+                    const char *ticker,
+                    char *out_buffer,
+                    size_t out_buffer_size) {
+    char tmp_buffer[100] = {0};
+
+    if (!uint256_to_decimal(amount, amount_size, tmp_buffer, sizeof(tmp_buffer))) {
+        return false;
+    }
+
+    size_t amount_len = strnlen(tmp_buffer, sizeof(tmp_buffer));
+    size_t ticker_len = ticker ? strnlen(ticker, 16) : 0;
+
+    // First, write the amount (with decimals applied) into the output buffer
+    if (!adjust_decimals(tmp_buffer,
+                        amount_len,
+                        out_buffer,
+                        out_buffer_size,
+                        decimals)) {
+        return false;
+    }
+
+    // Then append ticker after the amount, separated by a single space
+    if (ticker_len > 0) {
+        size_t written = strnlen(out_buffer, out_buffer_size);
+        if (written + 1 + ticker_len + 1 > out_buffer_size) {
+            return false;
+        }
+        out_buffer[written] = ' ';
+        memmove(out_buffer + written + 1, ticker, ticker_len);
+        out_buffer[written + 1 + ticker_len] = '\0';
+    }
+    // Ensure final NUL-termination regardless
+    out_buffer[out_buffer_size - 1] = '\0';
+    return true;
+}

@@ -1254,6 +1254,75 @@ def test_hedera_erc20_transfer_good_signature(backend, firmware, scenario_naviga
 
     assert hedera.verify_signature(public_key, transaction_with_index, signature)
 
+
+def test_hedera_erc20_known_by_evm_address(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    # Use test token from CAL: BD (has only EVM address in CAL)
+    key_index = 0
+    to_address = "123456789abcdef0112233445566778899aabbcc"
+    amount = 1233219 # 123.3219 BD
+
+    params = encode_erc20_transfer_web3(to_address, amount)
+
+    # EVM contract address from CAL entry (20 bytes)
+    evm_addr = bytes.fromhex("00"*17 + "44" + "9e" + "e6")
+
+    conf = contract_call_conf(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        evm_address=evm_addr,
+    )
+
+    with hedera.send_sign_transaction(
+        index=key_index,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="ERC20 known evm",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == STATUS_OK
+
+
+def test_hedera_erc20_known_by_hedera_id(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    # Use test token from CAL: TSC (has Hedera ID only)
+    key_index = 1
+    to_address = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
+    amount = 10**18 + 1
+
+    params = encode_erc20_transfer_web3(to_address, amount)
+
+    conf = contract_call_conf(
+        gas=21000,
+        amount=0,
+        function_parameters=params,
+        contract_shard_num=0,
+        contract_realm_num=0,
+        contract_num=6800160,
+    )
+
+    with hedera.send_sign_transaction(
+        index=key_index,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="ERC20 known hts",
+        conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == STATUS_OK
+
 def test_hedera_erc20_wrong_selector(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
 

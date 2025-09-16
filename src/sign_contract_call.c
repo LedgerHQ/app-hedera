@@ -10,6 +10,7 @@
 #include "printf.h"
 #include "sign_transaction.h"
 #include "tokens/token_address.h"
+#include "tokens/cal/token_lookup.h"
 
 // Handle ERC-20 transfer function call
 static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contract_call_tx) {
@@ -35,7 +36,7 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
         return false;
     }
 
-    // Print contract ID
+    // Print contract ID and try to resolve token metadata (ticker/decimals)
     if (contract_call_tx->contractID.which_contract ==
         Hedera_ContractID_contractNum_tag) {
         // Reject negative contract identifiers
@@ -52,6 +53,10 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
         };
         // 0.0.XXXX format for contract ID
         address_to_string(&contract_id, st_ctx.senders);
+
+        // Lookup by Hedera token ID if this contractNum is an HTS token
+        st_ctx.token_known = token_info_get_by_address(
+            contract_id, st_ctx.token_ticker, st_ctx.token_name, &st_ctx.token_decimals);
     } else if (contract_call_tx->contractID.which_contract ==
                Hedera_ContractID_evm_address_tag) {
         // 0xXXXX format for EVM address
@@ -69,6 +74,10 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
             PRINTF("Failed to stringify EVM address\n");
             return false;
         }
+
+        // Lookup by EVM address
+        st_ctx.token_known = token_info_get_by_evm_address(
+            &evm_address, st_ctx.token_ticker, st_ctx.token_name, &st_ctx.token_decimals);
     } else {
         PRINTF("Unsupported contract ID type: %u\n",
                (unsigned)contract_call_tx->contractID.which_contract);
@@ -90,6 +99,21 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
     }
     hedera_safe_printf(st_ctx.expiration_time, "%s hbar",
                        hedera_format_tinybar_str((uint64_t)contract_call_tx->amount));
+
+    // Format ERC20 amount using decimals if known
+    if (st_ctx.token_known) {
+        char formatted[MAX_UINT256_LENGTH + 2] = {0};
+        if (!evm_amount_to_string(transfer_data.amount.bytes,
+                            EVM_WORD_SIZE,
+                            (uint8_t)st_ctx.token_decimals,
+                            st_ctx.token_ticker,
+                            formatted,
+                            sizeof(formatted))) {
+            PRINTF("Failed to format ERC20 amount with evm_amount_to_string\n");
+            return false;
+        }
+        hedera_safe_printf(st_ctx.amount, "%s", formatted);
+    }
     
     return true;
 }
