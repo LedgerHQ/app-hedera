@@ -146,7 +146,7 @@ const token_info_t token_info_table[] = {
     {{0, 0, 2085473}, "ZER0", "ZER0", 8, ERC20_ZERO_ADDRESS},
     //ERC20 tokens:
     //TEST TOKENS DO NOT MERGE!!!!!
-    {{0, 0, 6800160}, "TSC", "Tesla Sport Carbon", 18, ERC20_ZERO_ADDRESS},
+    {{0, 0, 6800160}, "TSC", "Tesla Super Contract", 18, ERC20_ZERO_ADDRESS},
     {HEDERA_ID_ZERO, "BD", "Blocky rules", 4, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,104,158,38}}
 };
 
