@@ -118,21 +118,6 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
     hedera_safe_printf(st_ctx.expiration_time, "%s hbar",
                        hedera_format_tinybar_str((uint64_t)contract_call_tx->amount));
 
-    // Format ERC20 amount using decimals if known
-    if (st_ctx.token_known) {
-        char formatted[MAX_UINT256_LENGTH + 2] = {0};
-        if (!evm_amount_to_string(transfer_data.amount.bytes,
-                            EVM_WORD_SIZE,
-                            (uint8_t)st_ctx.token_decimals,
-                            st_ctx.token_ticker,
-                            formatted,
-                            sizeof(formatted))) {
-            PRINTF("Failed to format ERC20 amount with evm_amount_to_string\n");
-            return false;
-        }
-        hedera_safe_printf(st_ctx.amount, "%s", formatted);
-    }
-    
     return true;
 }
 

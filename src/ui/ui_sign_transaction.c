@@ -109,9 +109,6 @@ UX_STEP_NOCB(amount_erc20_step, bnnn_paging,
 UX_STEP_NOCB(amount_known_erc20_step, bnnn_paging,
     {.title = "Token amount", .text = (char*)st_ctx.amount});
 
-UX_STEP_NOCB(token_known_ticker_step, bnnn_paging,
-    {.title = "Token ticker", .text = (char*)st_ctx.token_ticker});
-
 UX_STEP_NOCB(token_known_name_step, bnnn_paging,
     {.title = "Token name", .text = (char*)st_ctx.token_name});
 
