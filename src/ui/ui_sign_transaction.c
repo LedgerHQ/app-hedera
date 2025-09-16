@@ -105,6 +105,16 @@ UX_STEP_NOCB(gas_limit_erc20_step, bnnn_paging,
 UX_STEP_NOCB(amount_erc20_step, bnnn_paging,
     {.title = "Raw token amount", .text = (char*)st_ctx.amount});
 
+// Known token specific UI elements
+UX_STEP_NOCB(amount_known_erc20_step, bnnn_paging,
+    {.title = "Token amount", .text = (char*)st_ctx.amount});
+
+UX_STEP_NOCB(token_known_ticker_step, bnnn_paging,
+    {.title = "Token ticker", .text = (char*)st_ctx.token_ticker});
+
+UX_STEP_NOCB(token_known_name_step, bnnn_paging,
+    {.title = "Token name", .text = (char*)st_ctx.token_name});
+
 UX_STEP_NOCB(contract_amount_erc20_step, bnnn_paging,
     {.title = "HBAR sent", .text = (char*)st_ctx.expiration_time});
 
@@ -166,6 +176,12 @@ UX_DEF(ux_unstake_flow, &summary_token_trans_step, &key_index_step,
 UX_DEF(ux_contract_call_flow, &summary_token_trans_step, &key_index_step, &senders_erc20_step, 
        &recipients_erc20_step, &amount_erc20_step, &contract_erc20_step, &contract_amount_erc20_step,  
        &gas_limit_erc20_step, &fee_step, &memo_step, &confirm_step, &reject_step);
+
+// Contract Call UX Flow (Known token): shows formatted amount and token metadata
+UX_DEF(ux_contract_call_known_token_flow, &summary_token_trans_step, &key_index_step, &senders_erc20_step,
+       &recipients_erc20_step, &amount_known_erc20_step, &token_known_name_step,
+       &contract_erc20_step, &contract_amount_erc20_step, &gas_limit_erc20_step, &fee_step, &memo_step,
+       &confirm_step, &reject_step);
 
 #elif defined(HAVE_NBGL)
 
@@ -297,7 +313,10 @@ static void create_transaction_flow(void) {
         case ContractCall:
             ADD_INFO(st_ctx.operator, "From");
             ADD_INFO(st_ctx.recipients, "To");
-            ADD_INFO(st_ctx.amount, "Raw token amount");
+            if (st_ctx.token_known) {
+                ADD_INFO(st_ctx.token_name, "Token name");
+            }
+            ADD_INFO(st_ctx.amount, st_ctx.amount_title);
             ADD_INFO(st_ctx.senders, "Contract");
             ADD_INFO(st_ctx.expiration_time, "HBAR sent");
             ADD_INFO(st_ctx.auto_renew_period, "Gas limit"); 
@@ -366,7 +385,11 @@ void ui_sign_transaction(void) {
             ux_flow_init(0, ux_burn_mint_flow, NULL);
             break;
         case ContractCall:
-            ux_flow_init(0, ux_contract_call_flow, NULL);
+            if (st_ctx.token_known) {
+                ux_flow_init(0, ux_contract_call_known_token_flow, NULL);
+            } else {
+                ux_flow_init(0, ux_contract_call_flow, NULL);
+            }
             break;
         default:
             break;

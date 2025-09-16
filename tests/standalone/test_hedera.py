@@ -1266,7 +1266,7 @@ def test_hedera_erc20_known_by_evm_address(backend, firmware, scenario_navigator
     params = encode_erc20_transfer_web3(to_address, amount)
 
     # EVM contract address from CAL entry (20 bytes)
-    evm_addr = bytes.fromhex("00"*17 + "44" + "9e" + "e6")
+    evm_addr = bytes.fromhex("00"*17 + "68" + "9e" + "26")
 
     conf = contract_call_conf(
         gas=100000,

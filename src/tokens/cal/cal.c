@@ -147,7 +147,7 @@ const token_info_t token_info_table[] = {
     //ERC20 tokens:
     //TEST TOKENS DO NOT MERGE!!!!!
     {{0, 0, 6800160}, "TSC", "Tesla Sport Carbon", 18, ERC20_ZERO_ADDRESS},
-    {HEDERA_ID_ZERO, "BD", "Blocky rules", 4, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68,158,230}}
+    {HEDERA_ID_ZERO, "BD", "Blocky rules", 4, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,104,158,38}}
 };
 
 const size_t token_info_table_size = sizeof(token_info_table) / sizeof(token_info_table[0]);

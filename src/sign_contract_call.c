@@ -84,6 +84,24 @@ static bool handle_erc20_transfer_call(Hedera_ContractCallTransactionBody* contr
         return false;
     }
     
+    // If token is known, format amount with decimals and ticker and set UI label
+    if (st_ctx.token_known) {
+        char formatted[MAX_UINT256_LENGTH + 2] = {0};
+        if (!evm_amount_to_string(transfer_data.amount.bytes,
+                                  EVM_WORD_SIZE,
+                                  (uint8_t)st_ctx.token_decimals,
+                                  st_ctx.token_ticker,
+                                  formatted,
+                                  sizeof(formatted))) {
+            PRINTF("Failed to format ERC20 amount with evm_amount_to_string\n");
+            return false;
+        }
+        hedera_safe_printf(st_ctx.amount, "%s", formatted);
+        hedera_safe_printf(st_ctx.amount_title, "%s", "Token amount");
+    } else {
+        hedera_safe_printf(st_ctx.amount_title, "%s", "Raw token amount");
+    }
+
     // Validate and print gas - Gas is int64 in upstream proto; app rejects negatives
     if (contract_call_tx->gas < 0) {
         PRINTF("Invalid gas value: %lld\n", (long long)contract_call_tx->gas);
