@@ -1,8 +1,20 @@
 [app]
 build_directory = "./"
 sdk = "C"
-devices = ["nanos", "nanox", "nanos+", "stax", "flex"]
+#Nanos was deprecated - removed support
+devices = ["nanox", "nanos+", "stax", "flex"]
+
 
 [tests]
 unit_directory = "./unit-tests/"
-pytest_directory = "./tests/"
+
+[pytest.standalone]
+directory = "./tests/standalone/"
+
+[pytest.swap]
+directory = "./tests/swap/"
+[pytest.swap.dependencies]
+testing_with_latest = [
+    {url = "https://github.com/LedgerHQ/app-exchange", ref = "develop", use_case = "dbg_use_test_keys"},
+    {url = "https://github.com/LedgerHQ/app-ethereum", ref = "develop", use_case = "use_test_keys"},
+]
