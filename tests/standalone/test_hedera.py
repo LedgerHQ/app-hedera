@@ -1207,7 +1207,7 @@ def test_hedera_transfer_verify_refused(backend, firmware, scenario_navigator):
 # ERC-20 tokens:
 # ================================
 
-def test_hedera_erc20_transfer_good_signature_contract_evm_address(backend, firmware, navigator, test_name):
+def test_hedera_erc20_transfer_good_signature_contract_evm_address(backend, firmware, navigator, scenario_navigator, test_name):
     hedera = HederaClient(backend)
 
     # Random-like parameters (deterministic values for test stability)
@@ -1240,9 +1240,7 @@ def test_hedera_erc20_transfer_good_signature_contract_evm_address(backend, firm
         memo="ContractCall",
         conf=conf,
     ):
-        if not firmware.is_nano:
-            nav_ins = [NavInsID.USE_CASE_CHOICE_CONFIRM, NavInsID.USE_CASE_REVIEW_NEXT, NavInsID.USE_CASE_REVIEW_NEXT,  NavInsID.USE_CASE_REVIEW_NEXT,  NavInsID.USE_CASE_REVIEW_NEXT, NavInsID.USE_CASE_REVIEW_CONFIRM]
-            navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, nav_ins)
+        navigate_erc20_confirm(firmware, navigator, scenario_navigator, ROOT_SCREENSHOT_PATH, test_name)
 
     signature = hedera.get_async_response().data
 
@@ -1396,7 +1394,6 @@ def test_hedera_erc20_transfer_good_signature_contract_id(backend, firmware, nav
         memo="ContractCall",
         conf=conf,
     ):
-        backend.raise_policy = RaisePolicy.RAISE_NOTHING
         navigate_erc20_confirm(firmware, navigator, scenario_navigator, ROOT_SCREENSHOT_PATH, test_name)
 
     rapdu = hedera.get_async_response()
