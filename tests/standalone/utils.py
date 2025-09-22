@@ -28,7 +28,7 @@ def navigate_erc20_confirm(firmware, navigator, scenario_navigator, screenshots_
         navigator.navigate_and_compare(
             screenshots_path,
             f"{test_name}_warning",
-            [NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK],
+            [NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK],
             screen_change_after_last_instruction=False,
         )
         scenario_navigator.review_approve(custom_screen_text="Confirm")
@@ -49,7 +49,7 @@ def navigate_erc20_reject(firmware, navigator, scenario_navigator, screenshots_p
         navigator.navigate_and_compare(
             screenshots_path,
             f"{test_name}_warning",
-            [NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK],
+            [NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK],
             screen_change_after_last_instruction=False,
         )
         scenario_navigator.review_reject(custom_screen_text="Reject")
@@ -69,7 +69,7 @@ def navigate_erc20_reject_at_warning(firmware, navigator, scenario_navigator, sc
         navigator.navigate_and_compare(
             screenshots_path,
             f"{test_name}_warning",
-            [NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK],
+            [NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK, NavInsID.RIGHT_CLICK],
             screen_change_after_last_instruction=False,
         )
         scenario_navigator.review_reject(custom_screen_text="Reject")
