@@ -8,20 +8,18 @@
 #include "nbgl_page.h"
 #include "nbgl_use_case.h"
 #include "ui_glyphs_helper.h"
+#include "nbgl_custom_warning_screen.h"
 #endif
-
 
 // Unified ERC20 address warning text across devices
-#define ERC20_WARNING_TEXT_BASE \
+#define ERC20_WARNING_TEXT_BASE                                      \
     "The transaction will show the recipient EVM address instead.\n" \
-    "Carefully check they match.\n" \
-    "Learn more: ledger.com/why-we-cant-show-Hedera-ID.html"
+    "Carefully check they match.\n"                                  \
+    "Learn more: "
 
-#ifdef HAVE_NBGL
-    #define ERC20_ADDRESS_WARNING_CONTENT (ERC20_WARNING_TEXT_BASE "\n\n")
-#else
-    #define ERC20_ADDRESS_WARNING_CONTENT (ERC20_WARNING_TEXT_BASE)
-#endif
+#define ERC20_ADDRESS_WARNING_URL "ledger.com/e/blockydevs"
+
+#define ERC20_ADDRESS_WARNING_CONTENT (ERC20_WARNING_TEXT_BASE ERC20_ADDRESS_WARNING_URL)
 
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
 
@@ -133,11 +131,12 @@ UX_STEP_NOCB(fee_step, bnnn_paging,
 UX_STEP_NOCB(memo_step, bnnn_paging,
              {.title = "Memo", .text = (char*)st_ctx.memo});
 
-//ERC20 warning step
-UX_STEP_NOCB(warning_step_1, pnn, {&C_icon_warning, "Recipient Account ID", "cannot be displayed" });
-UX_STEP_NOCB(warning_step_2, bnnn_paging, {.title = "Warning", .text = ERC20_ADDRESS_WARNING_CONTENT });
+// ERC20 warning step
+UX_STEP_NOCB(warning_step_1, pnn,
+             {&C_icon_warning, "Recipient Account ID", "cannot be displayed"});
+UX_STEP_NOCB(warning_step_2, bnnn_paging,
+             {.title = "Warning", .text = ERC20_ADDRESS_WARNING_CONTENT});
 #define WARNING_STEP &warning_step_1, &warning_step_2
-
 
 UX_STEP_VALID(confirm_step, pb, io_seproxyhal_tx_approve(NULL),
               {&C_icon_validate_14, "Confirm"});
@@ -190,18 +189,19 @@ UX_DEF(ux_unstake_flow, &summary_token_trans_step, &key_index_step,
        &confirm_step, &reject_step);
 
 // Contract Call UX Flow
-UX_DEF(ux_contract_call_flow, WARNING_STEP, &summary_token_trans_step, &key_index_step,
-       &senders_erc20_step, &recipients_erc20_step, &amount_erc20_step,
-       &contract_erc20_step, &contract_amount_erc20_step, &gas_limit_erc20_step,
-       &fee_step, &memo_step, &confirm_step, &reject_step);
+UX_DEF(ux_contract_call_flow, WARNING_STEP, &summary_token_trans_step,
+       &key_index_step, &senders_erc20_step, &recipients_erc20_step,
+       &amount_erc20_step, &contract_erc20_step, &contract_amount_erc20_step,
+       &gas_limit_erc20_step, &fee_step, &memo_step, &confirm_step,
+       &reject_step);
 
 // Contract Call UX Flow (Known token): shows formatted amount and token
 // metadata
-UX_DEF(ux_contract_call_known_token_flow, WARNING_STEP, &summary_token_trans_step,
-       &key_index_step, &senders_erc20_step, &recipients_erc20_step,
-       &amount_known_erc20_step, &token_known_name_step, &contract_erc20_step,
-       &contract_amount_erc20_step, &gas_limit_erc20_step, &fee_step,
-       &memo_step, &confirm_step, &reject_step);
+UX_DEF(ux_contract_call_known_token_flow, WARNING_STEP,
+       &summary_token_trans_step, &key_index_step, &senders_erc20_step,
+       &recipients_erc20_step, &amount_known_erc20_step, &token_known_name_step,
+       &contract_erc20_step, &contract_amount_erc20_step, &gas_limit_erc20_step,
+       &fee_step, &memo_step, &confirm_step, &reject_step);
 
 #elif defined(HAVE_NBGL)
 
@@ -434,22 +434,25 @@ void ui_sign_transaction(void) {
 
 #elif defined(HAVE_NBGL)
 
-    if (st_ctx.type == ContractCall) {
-        nbgl_useCaseChoice(
-            &ICON_APP_WARNING, "Recipient Account ID cannot be displayed",
-            ERC20_ADDRESS_WARNING_CONTENT,
-            "Continue", "Cancel", review_choice_contract_call);
-    }
-    else
-    {
-        create_transaction_flow();
+    create_transaction_flow();
 
-        // Start review
+    if (st_ctx.type == ContractCall) {
+        // Use compact helper: warning page → QR via top-right button → standard review
+        hedera_warning_then_review(&content,
+                                   &C_icon_hedera_64x64,
+                                   review_start_title,
+                                   review_final_title,
+                                   "Recipient Account ID cannot be displayed",
+                                   ERC20_ADDRESS_WARNING_CONTENT,
+                                   "Hedera ERC20 support article",
+                                   ERC20_ADDRESS_WARNING_URL,
+                                   "Scan to view more info",
+                                   review_choice);
+    } else {
         nbgl_useCaseReview(TYPE_TRANSACTION, &content, &C_icon_hedera_64x64,
                            review_start_title, NULL, review_final_title,
                            review_choice);
     }
 
-  
 #endif
 }
