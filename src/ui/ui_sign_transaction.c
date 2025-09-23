@@ -362,21 +362,6 @@ static void create_transaction_flow(void) {
 }
 #endif
 
-#ifdef HAVE_NBGL
-static void review_choice_contract_call(bool confirm) {
-    if (confirm) {
-        // User accepted the warning
-        create_transaction_flow();
-        nbgl_useCaseReview(TYPE_TRANSACTION, &content, &C_icon_hedera_64x64,
-                           review_start_title, NULL, review_final_title,
-                           review_choice);
-    } else {
-        io_exchange_with_code(EXCEPTION_USER_REJECTED, 0);
-        nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_REJECTED, ui_idle);
-    }
-}
-#endif
-
 // Common for all devices
 
 void ui_sign_transaction(void) {
