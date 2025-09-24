@@ -1267,12 +1267,12 @@ def test_hedera_erc20_known_by_evm_address(backend, firmware, navigator, scenari
     # Use test token from CAL: BD (has only EVM address in CAL)
     key_index = 0
     to_address = "123456789abcdef0112233445566778899aabbcc"
-    amount = 1233219 # 123.3219 BD
+    amount = 1233219 * 10**14 # 123.3219 BD
 
     params = encode_erc20_transfer_web3(to_address, amount)
 
     # EVM contract address from CAL entry (20 bytes)
-    evm_addr = bytes.fromhex("00"*17 + "68" + "9e" + "26")
+    evm_addr = bytes.fromhex("915fE7c00730C08708581E30e27d9c0605bE40BD")
 
     conf = contract_call_conf(
         gas=100000,
@@ -1302,7 +1302,7 @@ def test_hedera_erc20_known_by_hedera_id(backend, firmware, navigator, scenario_
     # Use test token from CAL: TSC (has Hedera ID only)
     key_index = 1
     to_address = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
-    amount = 10**18 + 1
+    amount = 10**8 + 1
 
     params = encode_erc20_transfer_web3(to_address, amount)
 
@@ -1312,7 +1312,7 @@ def test_hedera_erc20_known_by_hedera_id(backend, firmware, navigator, scenario_
         function_parameters=params,
         contract_shard_num=0,
         contract_realm_num=0,
-        contract_num=6800160,
+        contract_num=2085473,
     )
 
     with hedera.send_sign_transaction(
@@ -1321,7 +1321,7 @@ def test_hedera_erc20_known_by_hedera_id(backend, firmware, navigator, scenario_
         operator_realm_num=2,
         operator_account_num=3,
         transaction_fee=5,
-        memo="ERC20 known hts",
+        memo="ERC20 known tokenID",
         conf=conf,
     ):
         navigate_erc20_confirm(firmware, navigator, scenario_navigator, ROOT_SCREENSHOT_PATH, test_name)

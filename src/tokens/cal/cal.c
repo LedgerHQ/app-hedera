@@ -146,8 +146,8 @@ const token_info_t token_info_table[] = {
     {{0, 0, 2085473}, "ZER0", "ZER0", 8, ERC20_ZERO_ADDRESS},
     //ERC20 tokens:
     //TEST TOKENS DO NOT MERGE!!!!!
-    {{0, 0, 6800160}, "TSC", "Tesla Super Contract", 18, ERC20_ZERO_ADDRESS},
-    {HEDERA_ID_ZERO, "BD", "Blocky rules", 4, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,104,158,38}}
+    {{0,0,9956674}, "BD tokenID", "BlockyDevs Token [token ID]", 18, {ERC20_ZERO_ADDRESS}},
+    {HEDERA_ID_ZERO, "BD EVM addr", "BlockyDevs Token [EVM address]", 18, {0x91,0x5f,0xe7,0xc0,0x07,0x30,0xc0,0x87,0x08,0x58,0x1e,0x30,0xe2,0x7d,0x9c,0x06,0x05,0xbe,0x40,0xbd}},
 };
 
 const size_t token_info_table_size = sizeof(token_info_table) / sizeof(token_info_table[0]);

@@ -339,7 +339,7 @@ static void create_transaction_flow(void) {
                 ADD_INFO(st_ctx.token_name, "Token name");
             }
             ADD_INFO(st_ctx.amount, st_ctx.amount_title);
-            ADD_INFO(st_ctx.senders, "Contract");
+            ADD_INFO(st_ctx.senders, "Contract ID");
             ADD_INFO(st_ctx.expiration_time, "HBAR sent");
             ADD_INFO(st_ctx.auto_renew_period, "Gas limit"); 
             ADD_INFO(st_ctx.fee, "Max fees");
