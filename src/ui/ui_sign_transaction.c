@@ -7,19 +7,17 @@
 #ifdef HAVE_NBGL
 #include "nbgl_page.h"
 #include "nbgl_use_case.h"
-#include "ui_glyphs_helper.h"
 #include "nbgl_custom_warning_screen.h"
 #endif
 
 // Unified ERC20 address warning text across devices
 #define ERC20_WARNING_TEXT_BASE                                      \
     "The transaction will show the recipient EVM address instead.\n" \
-    "Carefully check they match.\n"                                  \
-    "Learn more: "
+    "Carefully check they match.\n"                                  
 
 #define ERC20_ADDRESS_WARNING_URL "ledger.com/e/blockydevs"
 
-#define ERC20_ADDRESS_WARNING_CONTENT (ERC20_WARNING_TEXT_BASE ERC20_ADDRESS_WARNING_URL)
+#define ERC20_ADDRESS_WARNING_CONTENT (ERC20_WARNING_TEXT_BASE "Learn more: " ERC20_ADDRESS_WARNING_URL)
 
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
 
@@ -132,11 +130,16 @@ UX_STEP_NOCB(memo_step, bnnn_paging,
              {.title = "Memo", .text = (char*)st_ctx.memo});
 
 // ERC20 warning step
-UX_STEP_NOCB(warning_step_1, pnn,
-             {&C_icon_warning, "Recipient Account ID", "cannot be displayed"});
+UX_STEP_NOCB(warning_step_1, pbb,
+             {&C_icon_important_circle, "Recipient ID","cannot be displayed"});
+
 UX_STEP_NOCB(warning_step_2, bnnn_paging,
-             {.title = "Warning", .text = ERC20_ADDRESS_WARNING_CONTENT});
-#define WARNING_STEP &warning_step_1, &warning_step_2
+             {.title = "Important info", .text = ERC20_WARNING_TEXT_BASE});
+
+UX_STEP_NOCB(warning_step_3, bn_paging,
+             {.title = "Learn more", .text = ERC20_ADDRESS_WARNING_URL});
+
+#define WARNING_STEP &warning_step_1, &warning_step_2, &warning_step_3
 
 UX_STEP_VALID(confirm_step, pb, io_seproxyhal_tx_approve(NULL),
               {&C_icon_validate_14, "Confirm"});

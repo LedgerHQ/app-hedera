@@ -3,7 +3,6 @@
 
 #include "nbgl_page.h"
 #include "nbgl_use_case.h"
-#include "ui_glyphs_helper.h"
 #include "nbgl_use_case.h"
 
 // Hedera: show a custom warning page with a QR icon, then continue to standard review
