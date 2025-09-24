@@ -22,7 +22,8 @@ from .utils import (ROOT_SCREENSHOT_PATH,
                     navigation_helper_reject,
                     navigate_erc20_confirm,
                     navigate_erc20_reject,
-                    navigate_erc20_reject_at_warning)
+                    navigate_erc20_reject_at_warning, 
+                    navigate_erc20_show_qr_code)
 
 
 def test_hedera_get_public_key_ok(backend, firmware, navigator, test_name):
@@ -1902,3 +1903,35 @@ def test_hedera_erc20_reject_warning(backend, firmware, navigator, scenario_navi
         navigate_erc20_reject_at_warning(firmware, navigator, scenario_navigator, ROOT_SCREENSHOT_PATH, test_name)
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
+
+
+def test_hedera_erc20_show_qr_code(backend, firmware, navigator, scenario_navigator, test_name):
+    if firmware.is_nano:
+        pytest.skip("QR codes are not implemented for nano")
+        return
+
+    hedera = HederaClient(backend)
+    to_address = "123456789abcdef0112233445566778899aabbcc"
+    token_amount = 1000
+    params = encode_erc20_transfer_web3(to_address, token_amount)
+    conf = contract_call_conf(
+        gas=100000,
+        amount=0,
+        function_parameters=params,
+        contract_shard_num=1,
+        contract_realm_num=2,
+        contract_num=3,
+    )
+    with hedera.send_sign_transaction(
+        index=0,
+        operator_shard_num=1,
+        operator_realm_num=2,
+        operator_account_num=3,
+        transaction_fee=5,
+        memo="Show QR code",
+        conf=conf,
+    ):
+        navigate_erc20_show_qr_code(firmware, navigator, scenario_navigator, ROOT_SCREENSHOT_PATH, test_name)
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == STATUS_OK
