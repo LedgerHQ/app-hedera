@@ -105,7 +105,7 @@ UX_STEP_NOCB(recipients_erc20_step, bnnn_paging,
              {.title = "To", .text = (char*)st_ctx.recipients});
 
 UX_STEP_NOCB(contract_erc20_step, bnnn_paging,
-             {.title = "Contract", .text = (char*)st_ctx.senders});
+             {.title = "Contract ID", .text = (char*)st_ctx.senders});
 
 UX_STEP_NOCB(gas_limit_erc20_step, bnnn_paging,
              {.title = "Gas limit", .text = (char*)st_ctx.auto_renew_period});
