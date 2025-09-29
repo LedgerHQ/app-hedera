@@ -79,26 +79,26 @@ static char *hedera_format_tinybar(uint64_t tinybar) {
     return hedera_format_amount(tinybar, 8);
 }
 
-static void format_account_id(char senders[ACCOUNT_ID_SIZE], const Hedera_AccountID *account_id) {
+static void format_account_id(char senders[ACCOUNT_ID_SIZE],
+                              const Hedera_AccountID *account_id) {
     if (account_id == NULL) {
         return;
     }
-    
+
+    const char *formatter;
 #ifndef DISABLE_LEDGER_STAKING_NODE
     if (is_ledger_account(account_id)) {
-        hedera_snprintf(senders, ACCOUNT_ID_SIZE - 1, "Ledger by %llu.%llu.%llu",
-                       account_id->shardNum,
-                       account_id->realmNum,
-                       account_id->account.accountNum);
+        formatter = "Ledger by %llu.%llu.%llu";
     } else {
-#endif
-        hedera_snprintf(senders, ACCOUNT_ID_SIZE - 1, "%llu.%llu.%llu",
-                       account_id->shardNum,
-                       account_id->realmNum,
-                       account_id->account.accountNum);
-#ifndef DISABLE_LEDGER_STAKING_NODE
+        formatter = "%llu.%llu.%llu";
     }
+#else
+    formatter = "%llu.%llu.%llu";
 #endif
+
+    hedera_snprintf(senders, ACCOUNT_ID_SIZE - 1, formatter,
+                    account_id->shardNum, account_id->realmNum,
+                    account_id->account.accountNum);
 }
 
 static void validate_decimals(uint32_t decimals) {
@@ -117,7 +117,8 @@ static void validate_memo(const char memo[100]) {
 
 void reformat_key(void) {
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_NANOS)
-    hedera_safe_printf(st_ctx.summary_line_2, "with Key #%u?", st_ctx.key_index);
+    hedera_safe_printf(st_ctx.summary_line_2, "with Key #%u?",
+                       st_ctx.key_index);
 #elif defined(TARGET_STAX) || defined(TARGET_FLEX)
     hedera_safe_printf(st_ctx.summary_line_2, "#%u", st_ctx.key_index);
 #endif
@@ -136,12 +137,10 @@ void reformat_summary(const char *summary) {
 }
 
 void reformat_summary_send_token(void) {
-    hedera_safe_printf(st_ctx.summary_line_1, "send tokens");   
+    hedera_safe_printf(st_ctx.summary_line_1, "send tokens");
 }
 
 // TITLES
-
-
 
 static void set_senders_title(const char *title) {
     // st_ctx.senders_title --> st_ctx.title (NANOS)
@@ -200,9 +199,9 @@ void reformat_stake_target(void) {
     } else if (st_ctx.type == Update) {
         if (st_ctx.transaction.data.cryptoUpdateAccount.which_staked_id ==
             Hedera_CryptoUpdateTransactionBody_staked_account_id_tag) {
-            format_account_id(st_ctx.senders, 
-                             &st_ctx.transaction.data.cryptoUpdateAccount
-                                 .staked_id.staked_account_id);
+            format_account_id(st_ctx.senders,
+                              &st_ctx.transaction.data.cryptoUpdateAccount
+                                   .staked_id.staked_account_id);
 
         } else if (st_ctx.transaction.data.cryptoUpdateAccount
                        .which_staked_id ==
@@ -293,7 +292,7 @@ void address_to_string(const token_addr_t *addr,
     if (addr == NULL || buf == NULL) {
         return;
     }
-    
+
     hedera_snprintf(buf, MAX_HEDERA_ADDRESS_LENGTH, "%llu.%llu.%llu",
                     addr->addr_shard, addr->addr_realm, addr->addr_account);
 }
@@ -320,9 +319,9 @@ void reformat_stake_in_stake_flow(void) {
     set_recipients_title("Stake to");
     if (st_ctx.transaction.data.cryptoUpdateAccount.which_staked_id ==
         Hedera_CryptoUpdateTransactionBody_staked_account_id_tag) {
-        format_account_id(st_ctx.recipients, 
-                         &st_ctx.transaction.data.cryptoUpdateAccount
-                             .staked_id.staked_account_id);
+        format_account_id(st_ctx.recipients,
+                          &st_ctx.transaction.data.cryptoUpdateAccount.staked_id
+                               .staked_account_id);
     } else if (st_ctx.transaction.data.cryptoUpdateAccount.which_staked_id ==
                Hedera_CryptoUpdateTransactionBody_staked_node_id_tag) {
         // TODO Node name
@@ -525,8 +524,9 @@ void reformat_auto_renew_period(void) {
         st_ctx.transaction.data.cryptoUpdateAccount.has_autoRenewPeriod) {
         uint64_t seconds =
             st_ctx.transaction.data.cryptoUpdateAccount.autoRenewPeriod.seconds;
-            
-        format_time_duration(st_ctx.auto_renew_period, sizeof(st_ctx.auto_renew_period), seconds);
+
+        format_time_duration(st_ctx.auto_renew_period,
+                             sizeof(st_ctx.auto_renew_period), seconds);
     } else {
         hedera_safe_printf(st_ctx.auto_renew_period, "-");
     }
@@ -550,18 +550,20 @@ void reformat_receiver_sig_required(void) {
         hedera_safe_printf(st_ctx.receiver_sig_required, "-");
         return;
     }
-    
+
     // Check if receiver sig required field is not set
-    if (st_ctx.transaction.data.cryptoUpdateAccount.which_receiverSigRequiredField !=
+    if (st_ctx.transaction.data.cryptoUpdateAccount
+            .which_receiverSigRequiredField !=
         Hedera_CryptoUpdateTransactionBody_receiverSigRequiredWrapper_tag) {
         hedera_safe_printf(st_ctx.receiver_sig_required, "-");
         return;
     }
-    
+
     // Field is set, get the value and format accordingly
-    bool required = st_ctx.transaction.data.cryptoUpdateAccount
-                        .receiverSigRequiredField.receiverSigRequiredWrapper.value;
-    
+    bool required =
+        st_ctx.transaction.data.cryptoUpdateAccount.receiverSigRequiredField
+            .receiverSigRequiredWrapper.value;
+
     hedera_safe_printf(st_ctx.receiver_sig_required, required ? "Yes" : "No");
 }
 
