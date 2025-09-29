@@ -85,15 +85,11 @@ static void format_account_id(char senders[ACCOUNT_ID_SIZE],
         return;
     }
 
-    const char *formatter;
+    const char *formatter = "%llu.%llu.%llu";
 #ifndef DISABLE_LEDGER_STAKING_NODE
     if (is_ledger_account(account_id)) {
         formatter = "Ledger by %llu.%llu.%llu";
-    } else {
-        formatter = "%llu.%llu.%llu";
     }
-#else
-    formatter = "%llu.%llu.%llu";
 #endif
 
     hedera_snprintf(senders, ACCOUNT_ID_SIZE - 1, formatter,
