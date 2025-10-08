@@ -13,9 +13,9 @@
 // Unified ERC20 address warning text across devices
 #define ERC20_WARNING_TEXT_BASE                                      \
     "The transaction will show the recipient EVM address instead.\n" \
-    "Carefully check they match.\n"                                  
+    "Carefully check they match.\n"
 
-#define ERC20_ADDRESS_WARNING_URL "ledger.com/e/blockydevs"
+#define ERC20_ADDRESS_WARNING_URL "ledger.com/e14"
 
 #define ERC20_ADDRESS_WARNING_CONTENT (ERC20_WARNING_TEXT_BASE "Learn more: " ERC20_ADDRESS_WARNING_URL)
 
