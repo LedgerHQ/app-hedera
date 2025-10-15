@@ -2,6 +2,7 @@
 #include "crypto_update.pb.h"
 #include <stddef.h>
 
+#ifndef DISABLE_LEDGER_STAKING_NODE
 bool is_ledger_account(const Hedera_AccountID *account_id) {
     if (account_id == NULL) {
         return false;
@@ -11,6 +12,7 @@ bool is_ledger_account(const Hedera_AccountID *account_id) {
             account_id->realmNum == LEDGER_ACCOUNT_REALM &&
             account_id->account.accountNum == LEDGER_ACCOUNT_NUM);
 }
+#endif
 
 update_type_t identify_special_update(const Hedera_CryptoUpdateTransactionBody *update_body) {
     if (update_body == NULL) {

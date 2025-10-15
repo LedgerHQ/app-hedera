@@ -83,6 +83,11 @@ ENABLE_SWAP = 1
 DISABLE_STANDARD_APP_FILES = 1
 
 ########################################
+#     Hedera custom Feature flags     #
+########################################
+DISABLE_LEDGER_STAKING_NODE = 1
+
+########################################
 #          App specific configuration  #
 ########################################
 ifeq ($(TARGET_NAME),TARGET_NANOS)
@@ -96,6 +101,9 @@ DEFINES   += PRINTF_FTOA_BUFFER_SIZE=0
 # U2F
 DEFINES   += HAVE_U2F HAVE_IO_U2F
 DEFINES   += U2F_PROXY_MAGIC=\"BOIL\"
+
+# Ledger Staking Node
+DEFINES   += DISABLE_LEDGER_STAKING_NODE=$(DISABLE_LEDGER_STAKING_NODE)
 
 # Allow usage of function from lib_standard_app/crypto_helpers.c
 APP_SOURCE_FILES += ${BOLOS_SDK}/lib_standard_app/crypto_helpers.c
