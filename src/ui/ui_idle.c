@@ -28,7 +28,7 @@ UX_STEP_VALID(ux_idle_flow_3_step, pb, os_sched_exit(-1),
 UX_DEF(ux_idle_flow, &ux_idle_flow_1_step, &ux_idle_flow_2_step,
        &ux_idle_flow_3_step);
 
-#elif defined(TARGET_STAX) || defined(TARGET_FLEX)
+#elif defined(SCREEN_SIZE_WALLET)
 
 #define SETTING_INFO_NB 2
 static const char* const info_types[SETTING_INFO_NB] = {"Version", "Developer"};
@@ -44,7 +44,7 @@ static const nbgl_contentInfoList_t infoList = {
 static void quit_app_callback(void) { os_sched_exit(-1); }
 
 static void ui_idle_nbgl(void) {
-    nbgl_useCaseHomeAndSettings(APPNAME, &C_icon_hedera_64x64, NULL,
+    nbgl_useCaseHomeAndSettings(APPNAME, &ICON_APP_HOME, NULL,
                                 INIT_HOME_PAGE, NULL, &infoList, NULL,
                                 quit_app_callback);
 }
@@ -60,7 +60,7 @@ void ui_idle(void) {
     }
     ux_flow_init(0, ux_idle_flow, NULL);
 
-#elif defined(TARGET_STAX) || defined(TARGET_FLEX)
+#elif defined(SCREEN_SIZE_WALLET)
 
     ui_idle_nbgl();
 
