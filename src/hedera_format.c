@@ -97,7 +97,7 @@ static void validate_memo(const char memo[100]) {
 void reformat_key(void) {
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_NANOS)
     hedera_safe_printf(st_ctx.summary_line_2, "with Key #%u?", st_ctx.key_index);
-#elif defined(TARGET_STAX) || defined(TARGET_FLEX)
+#elif defined(SCREEN_SIZE_WALLET)
     hedera_safe_printf(st_ctx.summary_line_2, "#%u", st_ctx.key_index);
 #endif
 

@@ -38,7 +38,7 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
     if (buffer == NULL || len < sizeof(uint32_t)) {
         THROW(EXCEPTION_INTERNAL);
     }
-    
+
     // Read Key Index (Little Endian format)
     gpk_ctx.key_index = U4LE(buffer, 0);
 
@@ -49,7 +49,7 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
         hedera_snprintf(gpk_ctx.ui_approve_l2, DISPLAY_SIZE,
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_NANOS)
                         "Key #%u?",
-#elif defined(TARGET_STAX) || defined(TARGET_FLEX)
+#elif defined(SCREEN_SIZE_WALLET)
                         "#%u",
 #endif
                         gpk_ctx.key_index);
@@ -71,7 +71,7 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
             ui_idle();
         }
     }
-    
+
 
     *flags |= IO_ASYNCH_REPLY;
 }
