@@ -342,7 +342,7 @@ void ui_sign_transaction(void) {
     create_transaction_flow();
 
     // Start review
-    nbgl_useCaseReview(TYPE_TRANSACTION, &content, &C_icon_hedera_64x64,
+    nbgl_useCaseReview(TYPE_TRANSACTION, &content, &ICON_APP_HOME,
                        review_start_title, NULL, review_final_title,
                        review_choice);
 #endif

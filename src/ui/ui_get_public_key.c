@@ -151,7 +151,7 @@ static void ui_get_public_key_nbgl(void) {
     char key_index_str[25];
     snprintf(key_index_str, sizeof(key_index_str), "#%u", gpk_ctx.key_index);
     nbgl_useCaseAddressReview((const char *)gpk_ctx.full_key, NULL,
-                              &C_icon_hedera_64x64, "Export Public Key?", key_index_str,
+                              &ICON_APP_HOME, "Export Public Key?", key_index_str,
                               callback_match);
 }
 

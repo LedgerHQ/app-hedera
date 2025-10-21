@@ -13,7 +13,7 @@ jobs:
     name: Analyse
     strategy:
       matrix:
-        sdk: [ "$FLEX_SDK", "$NANOX_SDK", "$NANOSP_SDK", "$STAX_SDK" ]
+        sdk: [ "$FLEX_SDK", "$NANOX_SDK", "$NANOSP_SDK", "$STAX_SDK", "$APEX_P_SDK"  ]
         #'cpp' covers C and C++
         language: [ 'cpp' ]
     runs-on: ubuntu-latest
