@@ -6,6 +6,12 @@
 #include "os.h"
 #include "ux.h"
 
+#if defined(TARGET_STAX) || defined(TARGET_FLEX)
+#define ICON_APP_HOME C_icon_hedera_64x64
+#elif defined(TARGET_APEX_P)
+#define ICON_APP_HOME C_icon_hedera_48x48
+#endif
+
 void ui_idle(void);
 
 void ui_sign_transaction(void);

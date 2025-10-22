@@ -1,6 +1,6 @@
 #*******************************************************************************
 #   Ledger App Hedera
-#   (c) 2024 Hedera Hashgraph
+#   (c) 2025 Hedera Hashgraph
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ APPNAME = Hedera
 # Application version
 APPVERSION_M = 1
 APPVERSION_N = 8
-APPVERSION_P = 1
+APPVERSION_P = 3
 APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 # Application source files
@@ -43,6 +43,7 @@ ICON_NANOX = icons/nanox_app_hedera.gif
 ICON_NANOSP = icons/nanox_app_hedera.gif
 ICON_STAX = icons/stax_app_hedera.gif
 ICON_FLEX = icons/flex_app_hedera.gif
+ICON_APEX_P = icons/apex_app_hedera.png
 
 # Application allowed derivation curves.
 CURVE_APP_LOAD_PARAMS = ed25519 secp256k1
