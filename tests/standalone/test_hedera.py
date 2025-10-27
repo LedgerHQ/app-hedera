@@ -1194,3 +1194,17 @@ def test_hedera_transfer_verify_refused(backend, firmware, scenario_navigator):
     rapdu = hedera.get_async_response()
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
+def test_hedera_send_transaction_wrong_length(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+
+    with hedera.send_sign_transaction_wrong_length(1):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+    with hedera.send_sign_transaction_wrong_length(4):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
