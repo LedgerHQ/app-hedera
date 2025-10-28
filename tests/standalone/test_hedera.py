@@ -1359,6 +1359,10 @@ def test_hedera_erc20_wrong_selector(backend, firmware, scenario_navigator):
         memo="ContractCall",
         conf=conf,
     ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
 
 def test_hedera_send_transaction_wrong_length(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
