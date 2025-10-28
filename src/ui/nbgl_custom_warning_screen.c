@@ -122,7 +122,7 @@ void hedera_warning_then_review(const nbgl_contentTagValueList_t *content,
 
     info.title       = g_ctx.warningTitle;
     info.description = g_ctx.warningDescription;
-    info.icon        = &C_Important_Circle_64px;
+    info.icon        = &IMPORTANT_CIRCLE_ICON;
     nbgl_layoutAddContentCenter(layoutCtx, &info);
 
     nbgl_layoutAddChoiceButtons(layoutCtx, &buttonsInfo);
