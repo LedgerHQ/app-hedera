@@ -163,3 +163,15 @@ class HederaClient:
         with self._client.exchange_async(CLA, INS.INS_SIGN_TRANSACTION, P1_CONFIRM, 0, payload):
             sleep(0.5)
             yield
+
+    @contextmanager
+    def send_sign_transaction_wrong_length(self,
+                              len: int) -> bytes:
+
+        # Prepare the payload with index
+        payload = bytes(len)
+
+        # Send to device for signing
+        with self._client.exchange_async(CLA, INS.INS_SIGN_TRANSACTION, P1_CONFIRM, 0, payload):
+            sleep(0.5)
+            yield

@@ -78,6 +78,7 @@ add_executable(test_sign_contract_call
     mock/putchar.c
     mock/staking_mock.c
     mock/throw_mock.c
+    mock/token_lookup_mock.c
     ../../src/sign_contract_call.c
     ../../src/evm_parser.c
     ../../src/printf.c
@@ -124,6 +125,7 @@ add_executable(test_contract_call_nanopb
     ../../proto/basic_types.pb.c
     ../../proto/timestamp.pb.c
     ../../proto/wrappers.pb.c
+    ../../src/ui/app_globals.h
 )
 target_link_libraries(test_contract_call_nanopb ${CMOCKA_LIBRARIES})
 target_include_directories(test_contract_call_nanopb PUBLIC ${CMOCKA_INCLUDE_DIRS} ../../proto ../../vendor/nanopb . ../../)
@@ -140,6 +142,8 @@ add_executable(test_pb_decode_erc20
     ../../src/hedera_format.c
     ../../src/time_format.c
     ../../src/printf.c
+    ../../src/ui/app_globals.h
+    mock/token_lookup_mock.c
     ../../proto/contract_call.pb.c
     ../../proto/basic_types.pb.c
     ../../proto/wrappers.pb.c

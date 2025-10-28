@@ -11,7 +11,7 @@
 #endif
 
 /* Struct definitions */
-typedef PB_BYTES_ARRAY_T(1024) Hedera_ContractCallTransactionBody_functionParameters_t;
+typedef PB_BYTES_ARRAY_T(512) Hedera_ContractCallTransactionBody_functionParameters_t;
 /* *
  Call a function of a given smart contract, providing function parameter
  inputs as needed.
@@ -30,17 +30,8 @@ typedef struct _Hedera_ContractCallTransactionBody {
  The ID of a smart contract to call. */
     bool has_contractID;
     Hedera_ContractID contractID; 
-    /* *
- A maximum limit to the amount of gas to use for this call.
- <p>
- The network SHALL charge the greater of the following, but
- SHALL NOT charge more than the value of this field.
- <ol>
-   <li>The actual gas consumed by the smart contract call.</li>
-   <li>`80%` of this value.</li>
- </ol>
- The `80%` factor encourages reasonable estimation, while allowing for
- some overage to ensure successful execution. */
+    /* Gas is defined as int64 in upstream proto (we could have negative gas); the app rejects negative values
+ Reference: https://github.com/hashgraph/hedera-protobufs/blob/8c27786cec93abab974309074feaef9b48a695b7/services/contract_call.proto#L70 */
     int64_t gas; 
     /* *
  An amount of tinybar sent via this contract call.
@@ -81,7 +72,7 @@ extern const pb_msgdesc_t Hedera_ContractCallTransactionBody_msg;
 #define Hedera_ContractCallTransactionBody_fields &Hedera_ContractCallTransactionBody_msg
 
 /* Maximum encoded size of messages (where known) */
-#define Hedera_ContractCallTransactionBody_size  1095
+#define Hedera_ContractCallTransactionBody_size  583
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -15,7 +15,7 @@ import nanopb_pb2 as nanopb__pb2
 from proto import basic_types_pb2 as proto_dot_basic__types__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19proto/contract_call.proto\x12\x06Hedera\x1a\x0cnanopb.proto\x1a\x17proto/basic_types.proto\"\x86\x01\n\x1b\x43ontractCallTransactionBody\x12&\n\ncontractID\x18\x01 \x01(\x0b\x32\x12.Hedera.ContractID\x12\x0b\n\x03gas\x18\x02 \x01(\x03\x12\x0e\n\x06\x61mount\x18\x03 \x01(\x03\x12\"\n\x12\x66unctionParameters\x18\x04 \x01(\x0c\x42\x06\x92?\x03\x08\x80\x08\x42&\n\"com.hederahashgraph.api.proto.javaP\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19proto/contract_call.proto\x12\x06Hedera\x1a\x0cnanopb.proto\x1a\x17proto/basic_types.proto\"\x86\x01\n\x1b\x43ontractCallTransactionBody\x12&\n\ncontractID\x18\x01 \x01(\x0b\x32\x12.Hedera.ContractID\x12\x0b\n\x03gas\x18\x02 \x01(\x03\x12\x0e\n\x06\x61mount\x18\x03 \x01(\x03\x12\"\n\x12\x66unctionParameters\x18\x04 \x01(\x0c\x42\x06\x92?\x03\x08\x80\x04\x42&\n\"com.hederahashgraph.api.proto.javaP\x01\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'proto.contract_call_pb2', globals())
@@ -24,7 +24,7 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'\n\"com.hederahashgraph.api.proto.javaP\001'
   _CONTRACTCALLTRANSACTIONBODY.fields_by_name['functionParameters']._options = None
-  _CONTRACTCALLTRANSACTIONBODY.fields_by_name['functionParameters']._serialized_options = b'\222?\003\010\200\010'
+  _CONTRACTCALLTRANSACTIONBODY.fields_by_name['functionParameters']._serialized_options = b'\222?\003\010\200\004'
   _CONTRACTCALLTRANSACTIONBODY._serialized_start=77
   _CONTRACTCALLTRANSACTIONBODY._serialized_end=211
 # @@protoc_insertion_point(module_scope)

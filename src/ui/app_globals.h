@@ -5,17 +5,18 @@
 #define BIP32_PATH 5
 #define DISPLAY_SIZE 18 // characters @ 11pt sys font
 
-#define HASH_LENGTH        32
-#define PUBKEY_LENGTH      HASH_LENGTH
+#define HASH_LENGTH 32
+#define PUBKEY_LENGTH HASH_LENGTH
 #define RAW_PUBKEY_SIZE 65
 #define MAX_TX_SIZE 512
-#define MAX_CONTRACT_CALL_TX_SIZE 1024
+#define MAX_CONTRACT_CALL_TX_SIZE MAX_TX_SIZE // It is due to proto max_size = 512
 #define FULL_ADDRESS_LENGTH 54
 #define MAX_UINT256_LENGTH 78
 #define ACCOUNT_ID_SIZE 19 * 3 + 2 + 1
 #define KEY_SIZE 64
 #define MAX_MEMO_SIZE 200
 #define SIGNATURE_SIZE 32
+#define INDEX_SIZE 4
 
 #define HBAR 100000000 // tinybar
 #define HBAR_BUF_SIZE 26

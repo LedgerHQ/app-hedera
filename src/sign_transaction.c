@@ -1,15 +1,11 @@
-#include "handle_swap_sign_transaction.h"
 #include "sign_transaction.h"
+
+#include <swap_entrypoints.h>
+#include <swap_utils.h>
+
+#include "handle_swap_sign_transaction.h"
 #include "proto_varlen_parser.h"
-
 #include "tokens/cal/token_lookup.h"
-#include <swap_entrypoints.h>
-#include <swap_utils.h>
-
-
-#include <swap_entrypoints.h>
-#include <swap_utils.h>
-
 
 sign_tx_context_t st_ctx;
 
@@ -17,14 +13,14 @@ static void parse_and_lookup_token(token_addr_t* token_addr) {
     if (token_addr == NULL) {
         return;
     }
-    
+
     // Parse token address to string
     address_to_string(token_addr, st_ctx.token_address_str);
 
     // Get info about token
-    st_ctx.token_known = token_info_get_by_address(
-        *token_addr, st_ctx.token_ticker, st_ctx.token_name,
-        &st_ctx.token_decimals);
+    st_ctx.token_known =
+        token_info_get_by_address(*token_addr, st_ctx.token_ticker,
+                                  st_ctx.token_name, &st_ctx.token_decimals);
 }
 
 // Validates whether or not a transfer is legal:
@@ -87,20 +83,23 @@ static bool is_token_transfer(void) {
 }
 
 static void validate_crypto_update(void) {
+    // Validate account is not 0.0.0
+    if (st_ctx.transaction.data.cryptoUpdateAccount.accountIDToUpdate
+            .which_account == 3) {
+        int64_t account_num = st_ctx.transaction.data.cryptoUpdateAccount
+                                  .accountIDToUpdate.account.accountNum;
+        int64_t realm_num = st_ctx.transaction.data.cryptoUpdateAccount
+                                .accountIDToUpdate.realmNum;
+        int64_t shard_num = st_ctx.transaction.data.cryptoUpdateAccount
+                                .accountIDToUpdate.shardNum;
 
-    //Validate account is not 0.0.0
-    if (st_ctx.transaction.data.cryptoUpdateAccount.accountIDToUpdate.which_account == 3) {
-
-        int64_t account_num = st_ctx.transaction.data.cryptoUpdateAccount.accountIDToUpdate.account.accountNum;
-        int64_t realm_num = st_ctx.transaction.data.cryptoUpdateAccount.accountIDToUpdate.realmNum;
-        int64_t shard_num = st_ctx.transaction.data.cryptoUpdateAccount.accountIDToUpdate.shardNum;
-        
         if (account_num == 0 && realm_num == 0 && shard_num == 0) {
             THROW(EXCEPTION_MALFORMED_APDU);
         }
     }
-    
-    // Currently we don't support updating the key, because it requires double signing
+
+    // Currently we don't support updating the key, because it requires double
+    // signing
     if (st_ctx.transaction.data.cryptoUpdateAccount.has_key) {
         THROW(EXCEPTION_MALFORMED_APDU);
     }
@@ -158,7 +157,8 @@ void handle_transaction_body() {
             validate_crypto_update(); // THROWs
 
             st_ctx.type = Update;
-            st_ctx.update_type = identify_special_update(&st_ctx.transaction.data.cryptoUpdateAccount);
+            st_ctx.update_type = identify_special_update(
+                &st_ctx.transaction.data.cryptoUpdateAccount);
             switch (st_ctx.update_type) {
                 case STAKE_UPDATE:
                     reformat_summary("stake Hbar");
@@ -183,7 +183,7 @@ void handle_transaction_body() {
                     break;
             }
             break;
-            
+
         case Hedera_TransactionBody_tokenAssociate_tag:
             st_ctx.type = Associate;
             reformat_summary("associate token");
@@ -292,7 +292,7 @@ void handle_transaction_body() {
         case Hedera_TransactionBody_contractCall_tag:
             st_ctx.type = ContractCall;
             reformat_operator();
-            reformat_summary("send ERC20 token");
+            reformat_summary("send ERC20 token?");
             handle_contract_call_body();
             break;
 
@@ -314,15 +314,18 @@ void handle_transaction_body() {
     if (G_called_from_swap) {
         if (G_swap_response_ready) {
             // Safety against trying to make the app sign multiple TX
-            // This code should never be triggered as the app is supposed to exit after
-            // sending the signed transaction
+            // This code should never be triggered as the app is supposed to
+            // exit after sending the signed transaction
             PRINTF("Safety against double signing triggered\n");
             os_sched_exit(-1);
         } else {
-            // We will quit the app after this transaction, whether it succeeds or fails
-            PRINTF("Swap response is ready, the app will quit after the next send\n");
-            // This boolean will make the io_send_sw family instant reply + return to
-            // exchange
+            // We will quit the app after this transaction, whether it succeeds
+            // or fails
+            PRINTF(
+                "Swap response is ready, the app will quit after the next "
+                "send\n");
+            // This boolean will make the io_send_sw family instant reply +
+            // return to exchange
             G_swap_response_ready = true;
         }
         if (swap_check_validity()) {
@@ -371,23 +374,36 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
 
     // Raw Tx
     uint8_t raw_transaction[MAX_TX_SIZE];
-    int raw_transaction_length = len - 4;
 
-    // Oops Oof Owie
-    if (raw_transaction_length > MAX_TX_SIZE ||
-        raw_transaction_length > (int)buffer - 4 || buffer == NULL) {
+    // Checking input parameters
+    if ((buffer == NULL) || (len <= INDEX_SIZE)) {
+        PRINTF("%s: wrong buffer pointer or input length\n", __func__);
+        THROW(EXCEPTION_MALFORMED_APDU);
+    }
+
+    uint16_t raw_transaction_length = len - INDEX_SIZE;
+    // Checking transaction length
+    // Unnecessary check today as MAX_TX_SIZE is set to 512 bytes,
+    // but APDU length field occupies only 1 byte.
+    // TODO: to set correct MAX_TX_SIZE and maybe to transform uint16_t len to
+    // uint8_t
+    if (raw_transaction_length > MAX_TX_SIZE) {
+        PRINTF("%s: too big transaction length\n", __func__);
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
     // Key Index (Little Endian format)
     st_ctx.key_index = U4LE(buffer, 0);
 
-    // copy raw transaction
-    memmove(raw_transaction, (buffer + 4), raw_transaction_length);
+    // copy raw transaction.
+    // using simply memcpy() as the overlap between the
+    // local and global buffers is impossible.
+    memcpy(raw_transaction, (buffer + INDEX_SIZE), raw_transaction_length);
 
     // Sign Transaction
     if (!hedera_sign(st_ctx.key_index, raw_transaction, raw_transaction_length,
                      G_io_apdu_buffer, &st_ctx.signature_length)) {
+        PRINTF("%s: signature failure\n", __func__);
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
@@ -399,13 +415,18 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
     if (!pb_decode(&stream, Hedera_TransactionBody_fields,
                    &st_ctx.transaction)) {
         // Oh no couldn't ...
+        PRINTF("%s: decoding failure\n", __func__);
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
-    // Extract account memo from cryptoUpdateAccount using second-stage protobuf decoding
-    // This handles the nested StringValue structure that nanopb doesn't decode automatically
-    if(st_ctx.transaction.which_data == Hedera_TransactionBody_cryptoUpdateAccount_tag) {
-        if(!extract_nested_string_field(raw_transaction, raw_transaction_length, 14, st_ctx.account_memo, sizeof(st_ctx.account_memo))) {
+    // Extract account memo from cryptoUpdateAccount using second-stage protobuf
+    // decoding This handles the nested StringValue structure that nanopb
+    // doesn't decode automatically
+    if (st_ctx.transaction.which_data ==
+        Hedera_TransactionBody_cryptoUpdateAccount_tag) {
+        if (!extract_nested_string_field(
+                raw_transaction, raw_transaction_length, 14,
+                st_ctx.account_memo, sizeof(st_ctx.account_memo))) {
             strcpy(st_ctx.account_memo, "-");
         }
     }

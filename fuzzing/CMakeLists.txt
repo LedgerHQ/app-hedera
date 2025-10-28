@@ -76,6 +76,7 @@ add_executable(fuzz_proto_full
     ../src/printf.c
     ../tests/unit/mock/putchar.c
     ../tests/unit/mock/staking_mock.c
+    ../tests/unit/mock/token_lookup_mock.c
 )
 target_compile_definitions(fuzz_proto_full PRIVATE NO_BOLOS_SDK=1)
 target_compile_definitions(fuzz_proto_full PRIVATE PB_SYSTEM_HEADER="nanopb_system.h")

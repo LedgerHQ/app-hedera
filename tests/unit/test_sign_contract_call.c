@@ -38,10 +38,12 @@ static void test_contract_call_valid_evm_address(void **state) {
     tx.amount = 456;
 
     assert_true(validate_and_reformat_contract_call(&tx));
-    // Check UI side-effects: senders (contract), recipients (to), amount (raw), gas
+    // Check UI side-effects: senders (contract), recipients (to)
     assert_string_equal(st_ctx.senders, "0x4444444444444444444444444444444444444444");
     assert_string_equal(st_ctx.recipients, "0x3333333333333333333333333333333333333333");
-    assert_string_not_equal(st_ctx.amount, "");
+    // Known token: decimals=4, amount=1 -> "0.0001 TOK"
+    assert_string_equal(st_ctx.amount, "0.0001 TOK");
+    assert_string_equal(st_ctx.amount_title, "Token amount");
 }
 
 static void test_contract_call_invalid_params_length(void **state) {

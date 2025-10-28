@@ -128,7 +128,7 @@ extern const pb_msgdesc_t Hedera_TransactionBody_msg;
 /* Maximum encoded size of messages (where known) */
 #if defined(Hedera_CryptoUpdateTransactionBody_size)
 #define Hedera_TransactionBody_size              (282 + sizeof(union Hedera_TransactionBody_data_size_union))
-union Hedera_TransactionBody_data_size_union {char f15[(6 + Hedera_CryptoUpdateTransactionBody_size)]; char f0[1098];};
+union Hedera_TransactionBody_data_size_union {char f15[(6 + Hedera_CryptoUpdateTransactionBody_size)]; char f0[586];};
 #endif
 
 #ifdef __cplusplus
