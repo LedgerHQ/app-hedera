@@ -1267,7 +1267,7 @@ def test_hedera_erc20_known_by_evm_address(backend, firmware, navigator, scenari
     # Use test token from CAL: amUSDC (Bonzo aToken USDC)
     key_index = 0
     to_address = "123456789abcdef0112233445566778899aabbcc"
-    amount = 1233219 * 10**18 # 123.3219 amUSDC (18 decimals)
+    amount = 1233219 * 10**6 # 123.3219 amUSDC (6 decimals)
 
     params = encode_erc20_transfer_web3(to_address, amount)
 
@@ -1299,10 +1299,10 @@ def test_hedera_erc20_known_by_evm_address(backend, firmware, navigator, scenari
 def test_hedera_erc20_known_by_hedera_id(backend, firmware, navigator, scenario_navigator, test_name):
     hedera = HederaClient(backend)
 
-    # Use test token from CAL: amUSDC (Bonzo aToken USDC)
+    # Use test token from CAL: WETH
     key_index = 1
     to_address = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
-    amount = 10**18 + 1 # 1.000000000000000001 amUSDC (18 decimals)
+    amount = 10**18 + 1 # 1.000000000000000001 WETH (18 decimals)
 
     params = encode_erc20_transfer_web3(to_address, amount)
 
@@ -1312,7 +1312,7 @@ def test_hedera_erc20_known_by_hedera_id(backend, firmware, navigator, scenario_
         function_parameters=params,
         contract_shard_num=0,
         contract_realm_num=0,
-        contract_num=7308496,
+        contract_num=9470869,
     )
 
     with hedera.send_sign_transaction(
