@@ -19,7 +19,6 @@ test_tools/
 # Fuzzing artifacts and build outputs
 fuzzing/build/
 fuzzing/artifacts/
-fuzzing/corpus/proto_varlen_parser/
 tests/unit/test_proto_varlen_parser
 tests/unit/test_proto_varlen_edge_cases
 tests/unit/test_proto_varlen_security
