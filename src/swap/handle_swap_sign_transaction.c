@@ -1,14 +1,15 @@
 #ifdef HAVE_SWAP
 
 #include "handle_swap_sign_transaction.h"
-#include "os.h"
-#include "string.h"
-#include "swap.h"
-#include "sign_transaction.h"
-#include "swap_utils.h"
 
 #include <inttypes.h>
 #include <sign_transaction.h>
+
+#include "os.h"
+#include "sign_transaction.h"
+#include "string.h"
+#include "swap.h"
+#include "swap_token_utils.h"
 
 typedef struct swap_validated_s {
     bool initialized;

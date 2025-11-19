@@ -1,8 +1,8 @@
 #pragma once
 
 #include "stdint.h"
-#include "stddef.h"
 #include "stdbool.h"
+#include "stddef.h"
 
 #define HEDERA_SIGN "HBAR"
 #define HEDERA_DECIMALS 8

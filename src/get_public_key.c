@@ -21,7 +21,7 @@ static bool get_pk() {
     memcpy(gpk_ctx.raw_pubkey, key_buffer, 32);
 
     // Populate Key Hex String
-    bin2hex(gpk_ctx.full_key, G_io_apdu_buffer, KEY_SIZE);
+    bin2hex(gpk_ctx.full_key, G_io_apdu_buffer, 32);
     gpk_ctx.full_key[KEY_SIZE] = '\0';
 
     return true;
