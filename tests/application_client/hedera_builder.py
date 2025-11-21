@@ -249,6 +249,60 @@ def crypto_transfer_hbar_conf(
 
 
 def crypto_transfer_verify(
+        sender_shardNum: int,
+        sender_realmNum: int,
+        sender_accountNum: int,
+        receiver_shardNum: int,
+        receiver_realmNum: int,
+        receiver_accountNum: int,
+        amount: int = 0,
+        reverse_order: bool = False,
+) -> Dict:
+
+    # Build sender AccountID and AccountAmount (amount 0)
+    hedera_account_id_sender = basic_types_pb2.AccountID(
+        shardNum=sender_shardNum,
+        realmNum=sender_realmNum,
+        accountNum=sender_accountNum,
+    )
+
+    hedera_account_amount_sender = basic_types_pb2.AccountAmount(
+        accountID=hedera_account_id_sender,
+        amount=-amount,
+    )
+
+    # Build receiver AccountID and AccountAmount (amount provided)
+    hedera_account_id_receiver = basic_types_pb2.AccountID(
+        shardNum=receiver_shardNum,
+        realmNum=receiver_realmNum,
+        accountNum=receiver_accountNum,
+    )
+
+    hedera_account_amount_receiver = basic_types_pb2.AccountAmount(
+        accountID=hedera_account_id_receiver,
+        amount=amount,
+    )
+
+    if reverse_order:
+        account_amounts = [hedera_account_amount_receiver, hedera_account_amount_sender]
+    else:
+        account_amounts = [hedera_account_amount_sender, hedera_account_amount_receiver]
+
+    hedera_transfer_list = basic_types_pb2.TransferList(
+        accountAmounts=account_amounts,
+    )
+
+    crypto_transfer = crypto_transfer_pb2.CryptoTransferTransactionBody(
+        transfers=hedera_transfer_list,
+        tokenTransfers=[],
+    )
+
+    return {"cryptoTransfer": crypto_transfer}
+
+
+
+
+def crypto_transfer_simple_verify(
     sender_shardNum: int, sender_realmNum: int, sender_accountNum: int
 ) -> Dict:
 
