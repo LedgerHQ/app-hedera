@@ -22,8 +22,8 @@ static swap_validated_t G_swap_validated;
 
 static uint8_t *G_swap_sign_return_value_address;
 
-// Returns the positive amount entry from the given accountAmounts table to avoid using hardcoded order as it might differ.
-// If none is found, returns NULL.
+// Returns the positive amount entry from the given accountAmounts table to avoid using a hardcoded index as it might differ.
+// If none is found, return NULL.
 static const Hedera_AccountAmount *find_outbound_account_amount(const Hedera_AccountAmount *accountAmounts,
                                                                size_t accountAmounts_count) {
     if (accountAmounts == NULL) {
@@ -83,12 +83,8 @@ bool copy_transaction_parameters(create_transaction_parameters_t *params) {
 
 bool validate_swap_amount(uint64_t amount) {
 
-    PRINTF("validate_swap_amount %ld %d\n", amount, amount);
-
     if (amount != G_swap_validated.amount) {
         PRINTF("Amount not equal\n");
-        PRINTF("Amount requested in this transaction = %d\n", amount);
-        PRINTF("Amount validated in swap = %d\n", G_swap_validated.amount);
         return false;
     }
     char validated_amount_str[MAX_PRINTABLE_AMOUNT_SIZE];
@@ -119,7 +115,7 @@ bool swap_check_validity() {
     const Hedera_TransferList *transfer_list = &st_ctx.transaction.data.cryptoTransfer.transfers;
     const Hedera_AccountAmount *swap_amount = find_outbound_account_amount(transfer_list->accountAmounts, transfer_list->accountAmounts_count);
     if (swap_amount == NULL) {
-        PRINTF("No outbound (negative) transfer found in Transaction.\n");
+        PRINTF("No transfer found in Transaction.\n");
         return false;
     }
 
