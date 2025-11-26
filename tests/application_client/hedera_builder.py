@@ -222,7 +222,7 @@ def crypto_transfer_hbar_conf(
 
     hedera_account_amount_sender = basic_types_pb2.AccountAmount(
         accountID=hedera_account_id_sender,
-        amount=0,
+        amount=-amount,
     )
 
     hedera_account_id_recipient = basic_types_pb2.AccountID(
@@ -246,6 +246,56 @@ def crypto_transfer_hbar_conf(
     )
 
     return {"cryptoTransfer": crypto_transfer}
+
+
+def crypto_transfer_invalid_amounts(
+        sender_shardNum: int,
+        sender_realmNum: int,
+        sender_accountNum: int,
+        receiver_shardNum: int,
+        receiver_realmNum: int,
+        receiver_accountNum: int,
+        amount: int = 0,
+) -> Dict:
+
+    # Build sender AccountID and AccountAmount (amount 0)
+    hedera_account_id_sender = basic_types_pb2.AccountID(
+        shardNum=sender_shardNum,
+        realmNum=sender_realmNum,
+        accountNum=sender_accountNum,
+    )
+
+    hedera_account_amount_sender = basic_types_pb2.AccountAmount(
+        accountID=hedera_account_id_sender,
+        # Send positive amount on purpose to create transaction with invalid amounts
+        amount=amount,
+    )
+
+    # Build receiver AccountID and AccountAmount (amount provided)
+    hedera_account_id_receiver = basic_types_pb2.AccountID(
+        shardNum=receiver_shardNum,
+        realmNum=receiver_realmNum,
+        accountNum=receiver_accountNum,
+    )
+
+    hedera_account_amount_receiver = basic_types_pb2.AccountAmount(
+        accountID=hedera_account_id_receiver,
+        amount=amount,
+    )
+
+    account_amounts = [hedera_account_amount_sender, hedera_account_amount_receiver]
+
+    hedera_transfer_list = basic_types_pb2.TransferList(
+        accountAmounts=account_amounts,
+    )
+
+    crypto_transfer = crypto_transfer_pb2.CryptoTransferTransactionBody(
+        transfers=hedera_transfer_list,
+        tokenTransfers=[],
+    )
+
+    return {"cryptoTransfer": crypto_transfer}
+
 
 
 def crypto_transfer_verify(

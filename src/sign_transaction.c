@@ -23,6 +23,21 @@ static void parse_and_lookup_token(token_addr_t* token_addr) {
                                   st_ctx.token_name, &st_ctx.token_decimals);
 }
 
+static bool is_hbar_amounts_valid(void) {
+    int64_t total_amount = 0;
+    // Iterate over st_ctx.transaction.data.cryptoTransfer.transfers amounts and
+    // check if sum of the amount values is zero
+    for (int i = 0;
+         i <
+         st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts_count;
+         i++) {
+        total_amount +=
+            st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts[i]
+                .amount;
+    }
+    return total_amount == 0;
+}
+
 // Validates whether or not a transfer is legal:
 // Either a transfer between two accounts
 // Or a token transfer between two accounts
@@ -37,6 +52,11 @@ static void validate_transfer(void) {
             2 &&
         st_ctx.transaction.data.cryptoTransfer.tokenTransfers_count != 0) {
         // Can't also transfer tokens while sending hbar
+        THROW(EXCEPTION_MALFORMED_APDU);
+    }
+
+    if (!is_hbar_amounts_valid()) {
+        // Hbar amounts list must sum to zero
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
