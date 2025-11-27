@@ -116,6 +116,7 @@ void app_main() {
 
                     default:
                         sw = 0x6800 | (e & 0x7FF);
+                        MEMCLEAR(G_io_apdu_buffer);
                         break;
                 }
 

@@ -140,7 +140,9 @@ void handle_transaction_body() {
     reformat_key_index();
 
     // All flows except Verify
-    if (!is_verify_account()) reformat_operator();
+    if (!is_verify_account()) {
+        reformat_operator();
+    }
 
     // Handle parsed protobuf message of transaction body
     switch (st_ctx.transaction.which_data) {
@@ -400,13 +402,6 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
     // local and global buffers is impossible.
     memcpy(raw_transaction, (buffer + INDEX_SIZE), raw_transaction_length);
 
-    // Sign Transaction
-    if (!hedera_sign(st_ctx.key_index, raw_transaction, raw_transaction_length,
-                     G_io_apdu_buffer, &st_ctx.signature_length)) {
-        PRINTF("%s: signature failure\n", __func__);
-        THROW(EXCEPTION_MALFORMED_APDU);
-    }
-
     // Make in memory buffer into stream
     pb_istream_t stream =
         pb_istream_from_buffer(raw_transaction, raw_transaction_length);
@@ -416,6 +411,8 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
                    &st_ctx.transaction)) {
         // Oh no couldn't ...
         PRINTF("%s: decoding failure\n", __func__);
+        MEMCLEAR(G_io_apdu_buffer);
+        MEMCLEAR(raw_transaction);
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
@@ -430,6 +427,17 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
             strcpy(st_ctx.account_memo, "-");
         }
     }
+
+    // Sign Transaction
+    if (!hedera_sign(st_ctx.key_index, raw_transaction, raw_transaction_length,
+                     G_io_apdu_buffer, &st_ctx.signature_length)) {
+        PRINTF("%s: signature failure\n", __func__);
+        MEMCLEAR(G_io_apdu_buffer);
+        MEMCLEAR(raw_transaction);
+        THROW(EXCEPTION_MALFORMED_APDU);
+                     }
+
+    MEMCLEAR(raw_transaction);
 
     handle_transaction_body();
 

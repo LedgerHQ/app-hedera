@@ -2,7 +2,7 @@
 
 #include "handle_get_printable_amount.h"
 #include "hedera_format.h"
-#include "swap_utils.h"
+#include "swap_token_utils.h"
 #include <utils.h>
 
 int print_amount(uint64_t amount, char *out, size_t out_length) {
