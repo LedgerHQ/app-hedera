@@ -1,9 +1,8 @@
-#include "swap_utils.h"
-
 #include <limits.h>
 #include <string.h>
 
 #include "../utils.h"
+#include "swap_token_utils.h"
 
 bool swap_str_to_u64(const uint8_t* src, size_t length, uint64_t* result) {
     if (length > sizeof(uint64_t)) {
