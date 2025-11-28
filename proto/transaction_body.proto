@@ -31,6 +31,7 @@ import "proto/token_associate.proto";
 import "proto/token_burn.proto";
 import "proto/token_dissociate.proto";
 import "proto/token_mint.proto";
+import "proto/contract_call.proto";
 
 /**
  * A single transaction. All transaction types are possible here.
@@ -79,6 +80,11 @@ message TransactionBody {
    * Limited to supported transactions here
    */
   oneof data {
+    /**
+     * Call a contract
+     */
+    ContractCallTransactionBody contractCall = 7;
+
     /**
      * Create a new cryptocurrency account
      */

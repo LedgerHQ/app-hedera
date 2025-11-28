@@ -5,6 +5,7 @@
 #include "handlers.h"
 #include "os.h"
 #include "ui_common.h"
+#include "sign_contract_call.h"
 
 #include "ux.h"
 #ifdef HAVE_SWAP
@@ -98,6 +99,7 @@ void app_main() {
                                                 G_io_apdu_buffer[OFFSET_LC],
                                                 &flags, &tx);
                         break;
+                        
 
                     default:
                         THROW(EXCEPTION_UNKNOWN_INS);

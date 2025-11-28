@@ -135,8 +135,7 @@ static bool parse_crypto_update_body(const uint8_t *crypto_data,
             }
 
             uint64_t string_value_length = 0;
-            if (!decode_varint(&crypto_data, crypto_end,
-                               &string_value_length)) {
+            if (!decode_varint(&crypto_data, crypto_end, &string_value_length)) {
                 return false;
             }
 
@@ -246,7 +245,7 @@ static bool skip_field(const uint8_t **data, const uint8_t *end,
             if (length > (uint64_t)(end - *data)) {
                 return false;
             }
-            *data += length;
+            *data += (size_t)length;
             break;
         }
         case WIRE_TYPE_32BIT:

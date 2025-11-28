@@ -311,6 +311,13 @@ void handle_transaction_body() {
             }
             break;
 
+        case Hedera_TransactionBody_contractCall_tag:
+            st_ctx.type = ContractCall;
+            reformat_operator();
+            reformat_summary("send ERC20 token?");
+            handle_contract_call_body();
+            break;
+
         default:
             // Unsupported
             THROW(EXCEPTION_MALFORMED_APDU);

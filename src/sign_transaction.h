@@ -6,6 +6,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "tokens/cal/token_lookup.h"
+#include "tokens/token_address.h"
+#include "transaction_body.pb.h"
+#include "staking.h"
+
+// NO_BOLOS_SDK: exclude device-only headers when building tests/fuzzers
+#ifndef NO_BOLOS_SDK
 #include "crypto_create.pb.h"
 #include "crypto_update.pb.h"
 #include "handlers.h"
@@ -13,12 +20,10 @@
 #include "app_globals.h"
 #include "hedera_format.h"
 #include "app_io.h"
-#include "transaction_body.pb.h"
 #include "ui_common.h"
 #include "utils.h"
-#include "tokens/cal/token_lookup.h"
-#include "tokens/token_address.h"
-#include "staking.h"
+#include "sign_contract_call.h"
+#endif
 
 enum TransactionStep {
     Summary = 1,
@@ -43,6 +48,7 @@ enum TransactionType {
     TokenTransfer = 6,
     TokenMint = 7,
     TokenBurn = 8,
+    ContractCall = 9,
 };
 
 /*
@@ -94,7 +100,7 @@ typedef struct sign_tx_context_s {
     uint8_t transfer_from_index;
 
     // Transaction Summary
-    char summary_line_1[DISPLAY_SIZE + 1];
+    char summary_line_1[FULL_ADDRESS_LENGTH + 1];
     char summary_line_2[DISPLAY_SIZE + 1];
 
     //Key Index in str
@@ -145,13 +151,13 @@ typedef struct sign_tx_context_s {
     char operator[ACCOUNT_ID_SIZE];
 
     // Transaction Senders
-    char senders[ACCOUNT_ID_SIZE];
+    char senders[ACCOUNT_ID_SIZE]; // Used in ERC20 transactions as Contract ID
 
     // Transaction Recipients
     char recipients[ACCOUNT_ID_SIZE];
 
-    // Transaction Amount
-    char amount[DISPLAY_SIZE * 2 + 1];
+    // Transaction Amount, (in ERC20 raw uint256 decimal string). Needs NUL terminator and safe one byte margin.
+    char amount[MAX_UINT256_LENGTH + 2];
 
     // Transaction Fee
     char fee[DISPLAY_SIZE * 2 + 1];
@@ -171,9 +177,9 @@ typedef struct sign_tx_context_s {
     // Subtype of crypto update (generic, stake, unstake) - NOT FOR UI - used for choosing the correct UI flow
     update_type_t update_type;
     // Auto Renew Period (X days Y hours Z seconds)
-    char auto_renew_period[DISPLAY_SIZE*5];
+    char auto_renew_period[DISPLAY_SIZE*5]; // Used in ERC20 transactions as Gas Limit
     // Expiration Time
-    char expiration_time[DISPLAY_SIZE*2];
+    char expiration_time[DISPLAY_SIZE*2]; // Used in ERC20 transactions as Contract Amount
     // Receiver Signature Required? (yes / no)
     char receiver_sig_required[6];
     // Max Auto Token Association 

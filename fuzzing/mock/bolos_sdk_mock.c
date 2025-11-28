@@ -115,11 +115,8 @@ void nbgl_useCaseReview(nbgl_operationType_t operationType,
     }
 }
 
-// Mock error handling
-void THROW(unsigned int exception) {
-    // In fuzzing, we want to catch exceptions gracefully
-    printf("Exception thrown: 0x%x\n", exception);
-}
+// Unified last-throw symbol (same as unit tests)
+volatile unsigned int g_last_throw = 0;
 
 // Mock memory management
 void* os_malloc(size_t size) {

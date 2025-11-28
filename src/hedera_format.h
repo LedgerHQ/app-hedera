@@ -1,8 +1,14 @@
 #pragma once
 #include "app_globals.h"
+// NO_BOLOS_SDK: host builds (tests/fuzzers) use mocks instead of BOLOS includes
+#ifndef NO_BOLOS_SDK
 #include "app_io.h"
+#else
+#include "os.h"
+#endif
 #include "sign_transaction.h"
 #include "tokens/token_address.h"
+#include "printf.h"
 
 void reformat_key(void);
 
@@ -71,3 +77,10 @@ void reformat_receiver_sig_required(void);
 void reformat_max_automatic_token_associations(void);
 
 void reformat_collect_rewards_in_stake_flow(void);
+
+// Public helper to format tinybar as HBAR decimal string (e.g., 1.23456789)
+// Returned pointer is to an internal static buffer; copy immediately if needed.
+const char *hedera_format_tinybar_str(uint64_t tinybar);
+
+#define hedera_safe_printf(element, ...) \
+    hedera_snprintf(element, sizeof(element) - 1, __VA_ARGS__)
