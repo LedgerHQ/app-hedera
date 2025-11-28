@@ -30,7 +30,7 @@ APPNAME = Hedera
 # Application version
 APPVERSION_M = 1
 APPVERSION_N = 8
-APPVERSION_P = 4
+APPVERSION_P = 5
 APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 # Application source files
