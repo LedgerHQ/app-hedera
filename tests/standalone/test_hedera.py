@@ -5,11 +5,12 @@ from ragger.firmware.touch.use_cases import UseCaseReview
 import pytest
 
 from tests.application_client.hedera import HederaClient, ErrorType, STATUS_OK
-from tests.application_client.hedera_builder import crypto_create_account_conf
+from tests.application_client.hedera_builder import crypto_create_account_conf, crypto_transfer_verify, \
+    crypto_transfer_invalid_amounts
 from tests.application_client.hedera_builder import crypto_update_account_conf
 from tests.application_client.hedera_builder import crypto_transfer_token_conf
 from tests.application_client.hedera_builder import crypto_transfer_hbar_conf
-from tests.application_client.hedera_builder import crypto_transfer_verify
+from tests.application_client.hedera_builder import crypto_transfer_simple_verify
 from tests.application_client.hedera_builder import token_associate_conf
 from tests.application_client.hedera_builder import token_dissociate_conf
 from tests.application_client.hedera_builder import token_burn_conf
@@ -1164,9 +1165,71 @@ def test_hedera_token_mint_refused(backend, firmware, scenario_navigator):
     assert rapdu.status == ErrorType.EXCEPTION_USER_REJECTED
 
 
-def test_hedera_transfer_verify_ok(backend, firmware, scenario_navigator):
+def test_hedera_transfer_verify_invalid_amounts_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_invalid_amounts(
+        sender_shardNum=57, sender_realmNum=58, sender_accountNum=59,
+        receiver_shardNum=100, receiver_realmNum=101, receiver_accountNum=102,
+        amount=2137
+    )
+
+    with hedera.send_sign_transaction(
+            index=0,
+            operator_shard_num=1,
+            operator_realm_num=2,
+            operator_account_num=3,
+            transaction_fee=1,
+            memo="this_is_the_memo",
+            conf=conf,
+    ):
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+    rapdu = hedera.get_async_response()
+    assert rapdu.status == ErrorType.EXCEPTION_MALFORMED_APDU
+
+
+def test_hedera_transfer_verify_order_receiver_first_ok(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
     conf = crypto_transfer_verify(
+        sender_shardNum=57, sender_realmNum=58, sender_accountNum=59,
+        receiver_shardNum=100, receiver_realmNum=101, receiver_accountNum=102,
+        amount=2137, reverse_order=True
+    )
+
+    with hedera.send_sign_transaction(
+            index=0,
+            operator_shard_num=1,
+            operator_realm_num=2,
+            operator_account_num=3,
+            transaction_fee=1,
+            memo="this_is_the_memo",
+            conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_transfer_verify_order_sender_first_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_verify(
+        sender_shardNum=57, sender_realmNum=58, sender_accountNum=59,
+        receiver_shardNum=100, receiver_realmNum=101, receiver_accountNum=102,
+        amount=2137, reverse_order=False
+    )
+
+    with hedera.send_sign_transaction(
+            index=0,
+            operator_shard_num=1,
+            operator_realm_num=2,
+            operator_account_num=3,
+            transaction_fee=1,
+            memo="this_is_the_memo",
+            conf=conf,
+    ):
+        navigation_helper_confirm(firmware, scenario_navigator)
+
+
+def test_hedera_transfer_verify_ok(backend, firmware, scenario_navigator):
+    hedera = HederaClient(backend)
+    conf = crypto_transfer_simple_verify(
         sender_shardNum=57, sender_realmNum=58, sender_accountNum=59
     )
 
@@ -1184,7 +1247,7 @@ def test_hedera_transfer_verify_ok(backend, firmware, scenario_navigator):
 
 def test_hedera_transfer_verify_refused(backend, firmware, scenario_navigator):
     hedera = HederaClient(backend)
-    conf = crypto_transfer_verify(
+    conf = crypto_transfer_simple_verify(
         sender_shardNum=57, sender_realmNum=58, sender_accountNum=59
     )
 
