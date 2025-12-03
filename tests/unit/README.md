@@ -8,8 +8,11 @@ This directory contains comprehensive unit tests for the Hedera Ledger app, focu
 - **`test_proto_varlen_parser`** (11 tests) - Basic functionality tests
 - **`test_proto_varlen_security`** (10 tests) - Buffer overflow and infinite loop protection
 - **`test_proto_varlen_edge_cases`** (15 tests) - Edge cases, empty data, single bytes, pointer manipulation
+- **`test_proto_varlen_long_field`** (16 tests) - Long varlen fields, buffer overflow protection, boundary conditions
+- **`test_nanopb_long_field`** (15 tests) - Nanopb decoding with long varlen fields, malformed data handling
+- **`test_contract_call_nanopb`** (9 tests) - Contract call nanopb decoding with long function parameters, 1KB limit enforcement
 
-**Total: 36 tests** covering all critical paths and security scenarios.
+**Total: 76 tests** covering all critical paths and security scenarios.
 
 ## Prerequisites
 
@@ -74,6 +77,15 @@ CTEST_OUTPUT_ON_FAILURE=1 make test
 
 # Edge case tests (empty data, single bytes)
 ./build/test_proto_varlen_edge_cases
+
+# Long varlen field tests (too long varlen fields, buffer overflow protection)
+./build/test_proto_varlen_long_field
+
+# Nanopb long varlen field tests (nanopb decoding with long varlen fields)
+./build/test_nanopb_long_field
+
+# Contract call nanopb tests (contract call nanopb decoding with long function parameters)
+./build/test_contract_call_nanopb
 ```
 
 ## Running Tests with Verbose Output

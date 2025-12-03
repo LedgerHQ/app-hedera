@@ -58,6 +58,14 @@ podman run -v $PWD:/app --platform linux/amd64 -it \
 ### Tests
 
 
+### NO_BOLOS_SDK builds
+
+`NO_BOLOS_SDK` is a compile-time switch used in unit tests and fuzzing builds to replace Ledger BOLOS SDK dependencies with lightweight mocks. This allows running code paths (protobuf decoding, formatters, ERC-20 parsing, etc.) on a standard host without a device or Speculos.
+
+- Where used: `src/ui/debug.h`, fuzzing mocks under `fuzzing/mock/`, unit test mocks under `tests/unit/mock/`
+- What it does: stubs OS/UI/crypto calls, replaces `THROW` with a test-friendly symbol, and keeps function signatures consistent for portability.
+- How to enable: define `NO_BOLOS_SDK=1` in your build (CMake targets in `fuzzing/` do this automatically).
+
 ### Ledger VS Code extension with macOS / Windows / Linux
 
 To test your app on macOS or Windows, it is recommended to use [Ledger's VS Code extension](https://github.com/LedgerHQ/app-boilerplate#with-vscode) to quickly setup a working test environment.  This extension can also 
@@ -119,8 +127,8 @@ Or you can run your Ragger functional tests if you have implemented them :
 bash$ python -m virtualenv venv --system-site-package
 bash$ source ./venv/bin/activate
 # Install tests dependencies
-(venv) bash$ pip install -r tests/requirements.txt
+(venv) bash$ pip install -r tests/standalone/requirements.txt
 # Run ragger functional tests
-(venv) bash$ python -m pytest tests/ --tb=short -v --device nanos --display
+(venv) bash$ python -m pytest tests/standalone --tb=short -v --device nanos --display
 ```
 

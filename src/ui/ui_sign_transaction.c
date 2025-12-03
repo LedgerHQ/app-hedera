@@ -7,9 +7,17 @@
 #ifdef HAVE_NBGL
 #include "nbgl_page.h"
 #include "nbgl_use_case.h"
+#include "nbgl_custom_warning_screen.h"
 #endif
 
+// Unified ERC20 address warning text across devices
+#define ERC20_WARNING_TEXT_BASE                                      \
+    "The transaction will show the recipient EVM address instead.\n" \
+    "Carefully check they match.\n"
 
+#define ERC20_ADDRESS_WARNING_URL "ledger.com/e14"
+
+#define ERC20_ADDRESS_WARNING_CONTENT (ERC20_WARNING_TEXT_BASE "Learn more: " ERC20_ADDRESS_WARNING_URL)
 
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
 
@@ -90,11 +98,48 @@ UX_STEP_NOCB(collect_rewards_step, bnnn_paging,
 UX_STEP_NOCB(account_memo_step, bnnn_paging,
              {.title = "Account memo", .text = (char*)st_ctx.account_memo});
 
+UX_STEP_NOCB(senders_erc20_step, bnnn_paging,
+    {.title = "From", .text = (char*)st_ctx.operator});
+
+UX_STEP_NOCB(recipients_erc20_step, bnnn_paging,
+             {.title = "To", .text = (char*)st_ctx.recipients});
+
+UX_STEP_NOCB(contract_erc20_step, bnnn_paging,
+             {.title = "Contract ID", .text = (char*)st_ctx.senders});
+
+UX_STEP_NOCB(gas_limit_erc20_step, bnnn_paging,
+             {.title = "Gas limit", .text = (char*)st_ctx.auto_renew_period});
+
+UX_STEP_NOCB(amount_erc20_step, bnnn_paging,
+             {.title = "Raw token amount", .text = (char*)st_ctx.amount});
+
+// Known token specific UI elements
+UX_STEP_NOCB(amount_known_erc20_step, bnnn_paging,
+             {.title = "Token amount", .text = (char*)st_ctx.amount});
+
+UX_STEP_NOCB(token_known_name_step, bnnn_paging,
+             {.title = "Token name", .text = (char*)st_ctx.token_name});
+
+UX_STEP_NOCB(contract_amount_erc20_step, bnnn_paging,
+             {.title = "HBAR sent", .text = (char*)st_ctx.expiration_time});
+
 UX_STEP_NOCB(fee_step, bnnn_paging,
              {.title = "Max fees", .text = (char*)st_ctx.fee});
 
 UX_STEP_NOCB(memo_step, bnnn_paging,
              {.title = "Memo", .text = (char*)st_ctx.memo});
+
+// ERC20 warning step
+UX_STEP_NOCB(warning_step_1, pbb,
+             {&C_icon_important_circle, "Recipient ID","cannot be displayed"});
+
+UX_STEP_NOCB(warning_step_2, bnnn_paging,
+             {.title = "Important info", .text = ERC20_WARNING_TEXT_BASE});
+
+UX_STEP_NOCB(warning_step_3, bn_paging,
+             {.title = "Learn more", .text = ERC20_ADDRESS_WARNING_URL});
+
+#define WARNING_STEP &warning_step_1, &warning_step_2, &warning_step_3
 
 UX_STEP_VALID(confirm_step, pb, io_seproxyhal_tx_approve(NULL),
               {&C_icon_validate_14, "Confirm"});
@@ -103,13 +148,14 @@ UX_STEP_VALID(reject_step, pb, io_seproxyhal_tx_reject(NULL),
               {&C_icon_crossmark, "Reject"});
 
 // Transfer UX Flow
-UX_DEF(ux_transfer_flow, &summary_token_trans_step, &key_index_step, &operator_step, &senders_step,
-       &recipients_step, &amount_step, &fee_step, &memo_step, &confirm_step, &reject_step);
+UX_DEF(ux_transfer_flow, &summary_token_trans_step, &key_index_step,
+       &operator_step, &senders_step, &recipients_step, &amount_step, &fee_step,
+       &memo_step, &confirm_step, &reject_step);
 
 // Transfer Token UX Flow
-UX_DEF(ux_transfer_flow_token, &summary_token_trans_step, &key_index_step, &operator_step, &senders_step,
-       &recipients_step, &amount_step, &token_addr_step,  &fee_step, &memo_step,
-       &confirm_step, &reject_step);
+UX_DEF(ux_transfer_flow_token, &summary_token_trans_step, &key_index_step,
+       &operator_step, &senders_step, &recipients_step, &amount_step,
+       &token_addr_step, &fee_step, &memo_step, &confirm_step, &reject_step);
 
 // Verify UX Flow
 UX_DEF(ux_verify_flow, &summary_step, &senders_step, &confirm_step,
@@ -120,12 +166,13 @@ UX_DEF(ux_burn_mint_flow, &summary_step, &operator_step, &senders_step,
        &amount_step, &fee_step, &memo_step, &confirm_step, &reject_step);
 
 // Associate UX Flow
-UX_DEF(ux_associate_flow, &summary_token_trans_step, &key_index_step, &token_name_addr_step,
-       &fee_step, &confirm_step, &reject_step);
+UX_DEF(ux_associate_flow, &summary_token_trans_step, &key_index_step,
+       &token_name_addr_step, &fee_step, &confirm_step, &reject_step);
 
 // Associate Known Token UX Flow
-UX_DEF(ux_associate_known_token_flow, &summary_token_trans_step, &key_index_step, &token_name_step, &token_addr_step,
-       &fee_step, &confirm_step, &reject_step);
+UX_DEF(ux_associate_known_token_flow, &summary_token_trans_step,
+       &key_index_step, &token_name_step, &token_addr_step, &fee_step,
+       &confirm_step, &reject_step);
 
 // Update UX Flow
 UX_DEF(ux_update_flow, &summary_step, &operator_step, &senders_step,
@@ -141,32 +188,47 @@ UX_DEF(ux_stake_flow, &summary_token_trans_step, &key_index_step,
 
 // Unstake UX Flow
 UX_DEF(ux_unstake_flow, &summary_token_trans_step, &key_index_step,
-       &operator_step, &amount_step, &collect_rewards_step,
-       &fee_step, &confirm_step, &reject_step);
+       &operator_step, &amount_step, &collect_rewards_step, &fee_step,
+       &confirm_step, &reject_step);
+
+// Contract Call UX Flow
+UX_DEF(ux_contract_call_flow, WARNING_STEP, &summary_token_trans_step,
+       &key_index_step, &senders_erc20_step, &recipients_erc20_step,
+       &amount_erc20_step, &contract_erc20_step, &contract_amount_erc20_step,
+       &gas_limit_erc20_step, &fee_step, &memo_step, &confirm_step,
+       &reject_step);
+
+// Contract Call UX Flow (Known token): shows formatted amount and token
+// metadata
+UX_DEF(ux_contract_call_known_token_flow, WARNING_STEP,
+       &summary_token_trans_step, &key_index_step, &senders_erc20_step,
+       &recipients_erc20_step, &amount_known_erc20_step, &token_known_name_step,
+       &contract_erc20_step, &contract_amount_erc20_step, &gas_limit_erc20_step,
+       &fee_step, &memo_step, &confirm_step, &reject_step);
 
 #elif defined(HAVE_NBGL)
 
 // Macro to add field to infos array if it's set and not "-"
-#define ADD_INFO_IF_SET(field_value, field_title) \
-    do { \
+#define ADD_INFO_IF_SET(field_value, field_title)                       \
+    do {                                                                \
         if (strlen(field_value) > 0 && strcmp(field_value, "-") != 0) { \
-            if (index < sizeof(infos)/sizeof(infos[0])) { \
-                infos[index].item = field_title; \
-                infos[index].value = field_value; \
-                ++index; \
-            } \
-        } \
-    } while(0)
+            if (index < sizeof(infos) / sizeof(infos[0])) {             \
+                infos[index].item = field_title;                        \
+                infos[index].value = field_value;                       \
+                ++index;                                                \
+            }                                                           \
+        }                                                               \
+    } while (0)
 
 // Macro to unconditionally add field to infos array
-#define ADD_INFO(field_value, field_title) \
-    do { \
-        if (index < sizeof(infos)/sizeof(infos[0])) { \
-            infos[index].item = field_title; \
-            infos[index].value = field_value; \
-            ++index; \
-        } \
-    } while(0)
+#define ADD_INFO(field_value, field_title)              \
+    do {                                                \
+        if (index < sizeof(infos) / sizeof(infos[0])) { \
+            infos[index].item = field_title;            \
+            infos[index].value = field_value;           \
+            ++index;                                    \
+        }                                               \
+    } while (0)
 
 static void review_choice(bool confirm) {
     // Answer, display a status page and go back to main
@@ -182,7 +244,7 @@ static void review_choice(bool confirm) {
 // Max is 15 infos for transfer transaction
 // If a new flow is added or flows are modified to include more steps, don't
 // forget to update the infos array size!
-static nbgl_contentTagValue_t infos[15]; 
+static nbgl_contentTagValue_t infos[15];
 static nbgl_contentTagValueList_t content;
 static char review_start_title[64];
 static char review_final_title[64];
@@ -207,8 +269,7 @@ static void create_transaction_flow(void) {
             if (st_ctx.token_known) {
                 ADD_INFO(st_ctx.token_ticker, "Token");
                 ADD_INFO(st_ctx.token_address_str, "Token ID");
-            }
-            else {
+            } else {
                 ADD_INFO(st_ctx.token_address_str, "Token");
             }
             ADD_INFO(st_ctx.fee, "Max fees");
@@ -240,10 +301,13 @@ static void create_transaction_flow(void) {
                     ADD_INFO_IF_SET(st_ctx.senders, st_ctx.senders_title);
                     ADD_INFO_IF_SET(st_ctx.recipients, st_ctx.recipients_title);
                     ADD_INFO_IF_SET(st_ctx.amount, st_ctx.amount_title);
-                    ADD_INFO_IF_SET(st_ctx.auto_renew_period, "Auto renew period");
+                    ADD_INFO_IF_SET(st_ctx.auto_renew_period,
+                                    "Auto renew period");
                     ADD_INFO_IF_SET(st_ctx.expiration_time, "Account expires");
-                    ADD_INFO_IF_SET(st_ctx.receiver_sig_required, "Receiver signature required?");
-                    ADD_INFO_IF_SET(st_ctx.max_auto_token_assoc, "Max auto token association");
+                    ADD_INFO_IF_SET(st_ctx.receiver_sig_required,
+                                    "Receiver signature required?");
+                    ADD_INFO_IF_SET(st_ctx.max_auto_token_assoc,
+                                    "Max auto token association");
                     ADD_INFO_IF_SET(st_ctx.account_memo, "Account memo");
                     if (strlen(st_ctx.memo) > 0) {
                         ADD_INFO(st_ctx.memo, "Memo");
@@ -270,6 +334,19 @@ static void create_transaction_flow(void) {
         case TokenBurn:
             ADD_INFO(st_ctx.senders, st_ctx.senders_title);
             ADD_INFO(st_ctx.amount, st_ctx.amount_title);
+            break;
+        case ContractCall:
+            ADD_INFO(st_ctx.operator, "From");
+            ADD_INFO(st_ctx.recipients, "To");
+            if (st_ctx.token_known) {
+                ADD_INFO(st_ctx.token_name, "Token name");
+            }
+            ADD_INFO(st_ctx.amount, st_ctx.amount_title);
+            ADD_INFO(st_ctx.senders, "Contract ID");
+            ADD_INFO(st_ctx.expiration_time, "HBAR sent");
+            ADD_INFO(st_ctx.auto_renew_period, "Gas limit"); 
+            ADD_INFO(st_ctx.fee, "Max fees");
+            ADD_INFO(st_ctx.memo, "Memo");
             break;
         default:
             // Unreachable
@@ -332,7 +409,13 @@ void ui_sign_transaction(void) {
         case TokenBurn:
             ux_flow_init(0, ux_burn_mint_flow, NULL);
             break;
-
+        case ContractCall:
+            if (st_ctx.token_known) {
+                ux_flow_init(0, ux_contract_call_known_token_flow, NULL);
+            } else {
+                ux_flow_init(0, ux_contract_call_flow, NULL);
+            }
+            break;
         default:
             break;
     }
@@ -341,9 +424,23 @@ void ui_sign_transaction(void) {
 
     create_transaction_flow();
 
-    // Start review
-    nbgl_useCaseReview(TYPE_TRANSACTION, &content, &ICON_APP_HOME,
-                       review_start_title, NULL, review_final_title,
-                       review_choice);
+    if (st_ctx.type == ContractCall) {
+        // Use compact helper: warning page → QR via top-right button → standard review
+        hedera_warning_then_review(&content,
+                                   &C_icon_hedera_64x64,
+                                   review_start_title,
+                                   review_final_title,
+                                   "Recipient Account ID cannot be displayed",
+                                   ERC20_ADDRESS_WARNING_CONTENT,
+                                   "Hedera ERC20 support article",
+                                   ERC20_ADDRESS_WARNING_URL,
+                                   "Scan to view more info",
+                                   review_choice);
+    } else {
+        nbgl_useCaseReview(TYPE_TRANSACTION, &content, &C_icon_hedera_64x64,
+                           review_start_title, NULL, review_final_title,
+                           review_choice);
+    }
+
 #endif
 }

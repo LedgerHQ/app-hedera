@@ -60,6 +60,7 @@ setup_directories() {
     
     # Create corpus directories for each fuzzer
     mkdir -p "$CORPUS_DIR/proto_varlen_parser"
+    mkdir -p "$CORPUS_DIR/evm_payload"
     
     print_status "Directories created"
 }
@@ -88,6 +89,19 @@ generate_corpus() {
     printf "\\xFF\\xFF\\xFF\\xFF\\x0F\\x0A\\x05Hello" > "$CORPUS_DIR/proto_varlen_parser/large_field.bin"
     printf "\\x00\\x01" > "$CORPUS_DIR/proto_varlen_parser/invalid_field.bin"
     printf "\\x0F\\x01" > "$CORPUS_DIR/proto_varlen_parser/unknown_wire.bin"
+    
+    # EVM payload seeds
+    # ERC20 transfer selector only
+    printf "\xA9\x05\x9C\xBB" > "$CORPUS_DIR/evm_payload/selector.bin"
+    # Full calldata: selector + 32-byte address word + 32-byte amount word
+    (
+      printf "\xA9\x05\x9C\xBB"
+      # address word: 12 zero pad + 20 0x11 bytes
+      printf '\x00%.0s' {1..12}
+      printf '\x11%.0s' {1..20}
+      # amount word: all zeros
+      printf '\x00%.0s' {1..32}
+    ) > "$CORPUS_DIR/evm_payload/minimal_calldata.bin"
     
     print_status "Seed corpus generated"
 }
@@ -142,7 +156,7 @@ run_fuzzer() {
 run_all_fuzzers() {
     print_status "Starting fuzzing campaign..."
     
-    local fuzzers=("proto_varlen_parser")
+    local fuzzers=("proto_varlen_parser" "evm_payload")
     
     for fuzzer in "${fuzzers[@]}"; do
         run_fuzzer "$fuzzer" "$FUZZ_TIME"

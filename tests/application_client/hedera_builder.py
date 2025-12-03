@@ -1,5 +1,7 @@
 from typing import Dict
+import json
 
+from web3 import Web3
 from proto import transaction_body_pb2
 from proto import basic_types_pb2
 from proto import crypto_create_pb2
@@ -9,6 +11,7 @@ from proto import token_dissociate_pb2
 from proto import crypto_transfer_pb2
 from proto import token_burn_pb2
 from proto import token_mint_pb2
+from proto import contract_call_pb2
 from proto import wrappers_pb2
 from proto import timestamp_pb2
 from proto import duration_pb2
@@ -222,7 +225,7 @@ def crypto_transfer_hbar_conf(
 
     hedera_account_amount_sender = basic_types_pb2.AccountAmount(
         accountID=hedera_account_id_sender,
-        amount=0,
+        amount=-amount,
     )
 
     hedera_account_id_recipient = basic_types_pb2.AccountID(
@@ -248,7 +251,111 @@ def crypto_transfer_hbar_conf(
     return {"cryptoTransfer": crypto_transfer}
 
 
+def crypto_transfer_invalid_amounts(
+        sender_shardNum: int,
+        sender_realmNum: int,
+        sender_accountNum: int,
+        receiver_shardNum: int,
+        receiver_realmNum: int,
+        receiver_accountNum: int,
+        amount: int = 0,
+) -> Dict:
+
+    # Build sender AccountID and AccountAmount (amount 0)
+    hedera_account_id_sender = basic_types_pb2.AccountID(
+        shardNum=sender_shardNum,
+        realmNum=sender_realmNum,
+        accountNum=sender_accountNum,
+    )
+
+    hedera_account_amount_sender = basic_types_pb2.AccountAmount(
+        accountID=hedera_account_id_sender,
+        # Send positive amount on purpose to create transaction with invalid amounts
+        amount=amount,
+    )
+
+    # Build receiver AccountID and AccountAmount (amount provided)
+    hedera_account_id_receiver = basic_types_pb2.AccountID(
+        shardNum=receiver_shardNum,
+        realmNum=receiver_realmNum,
+        accountNum=receiver_accountNum,
+    )
+
+    hedera_account_amount_receiver = basic_types_pb2.AccountAmount(
+        accountID=hedera_account_id_receiver,
+        amount=amount,
+    )
+
+    account_amounts = [hedera_account_amount_sender, hedera_account_amount_receiver]
+
+    hedera_transfer_list = basic_types_pb2.TransferList(
+        accountAmounts=account_amounts,
+    )
+
+    crypto_transfer = crypto_transfer_pb2.CryptoTransferTransactionBody(
+        transfers=hedera_transfer_list,
+        tokenTransfers=[],
+    )
+
+    return {"cryptoTransfer": crypto_transfer}
+
+
+
 def crypto_transfer_verify(
+        sender_shardNum: int,
+        sender_realmNum: int,
+        sender_accountNum: int,
+        receiver_shardNum: int,
+        receiver_realmNum: int,
+        receiver_accountNum: int,
+        amount: int = 0,
+        reverse_order: bool = False,
+) -> Dict:
+
+    # Build sender AccountID and AccountAmount (amount 0)
+    hedera_account_id_sender = basic_types_pb2.AccountID(
+        shardNum=sender_shardNum,
+        realmNum=sender_realmNum,
+        accountNum=sender_accountNum,
+    )
+
+    hedera_account_amount_sender = basic_types_pb2.AccountAmount(
+        accountID=hedera_account_id_sender,
+        amount=-amount,
+    )
+
+    # Build receiver AccountID and AccountAmount (amount provided)
+    hedera_account_id_receiver = basic_types_pb2.AccountID(
+        shardNum=receiver_shardNum,
+        realmNum=receiver_realmNum,
+        accountNum=receiver_accountNum,
+    )
+
+    hedera_account_amount_receiver = basic_types_pb2.AccountAmount(
+        accountID=hedera_account_id_receiver,
+        amount=amount,
+    )
+
+    if reverse_order:
+        account_amounts = [hedera_account_amount_receiver, hedera_account_amount_sender]
+    else:
+        account_amounts = [hedera_account_amount_sender, hedera_account_amount_receiver]
+
+    hedera_transfer_list = basic_types_pb2.TransferList(
+        accountAmounts=account_amounts,
+    )
+
+    crypto_transfer = crypto_transfer_pb2.CryptoTransferTransactionBody(
+        transfers=hedera_transfer_list,
+        tokenTransfers=[],
+    )
+
+    return {"cryptoTransfer": crypto_transfer}
+
+
+
+
+def crypto_transfer_simple_verify(
     sender_shardNum: int, sender_realmNum: int, sender_accountNum: int
 ) -> Dict:
 
@@ -365,3 +472,94 @@ def token_mint_conf(
     )
 
     return {"tokenMint": token_mint}
+
+
+def contract_call_transaction(*args, **kwargs) -> bytes:
+    """
+    Deprecated: Transaction bodies are now built via hedera_transaction with contractCall oneof.
+    """
+    raise NotImplementedError("contract_call_transaction deprecated; use hedera_transaction(contractCall=...) instead")
+
+
+def contract_call_conf(
+    gas: int,
+    amount: int,
+    function_parameters: bytes = b"",
+    contract_shard_num: int = None,
+    contract_realm_num: int = None,
+    contract_num: int = None,
+    evm_address: bytes = None,
+) -> Dict:
+    """Create a contract call configuration.
+    
+    Args:
+        gas: Gas limit for the contract call
+        amount: Amount of tinybar to send with the call
+        function_parameters: ABI-encoded function parameters
+        contract_shard_num: Contract shard number (if using shard/realm/num format)
+        contract_realm_num: Contract realm number (if using shard/realm/num format)
+        contract_num: Contract number (if using shard/realm/num format)
+        evm_address: 20-byte EVM address (alternative to shard/realm/num)
+    
+    Returns:
+        Dictionary with contract call transaction body
+    """
+    if evm_address is not None:
+        contract_id = basic_types_pb2.ContractID(
+            shardNum=0,  # EVM addresses don't use shard/realm
+            realmNum=0,
+            evm_address=evm_address,
+        )
+    else:
+        contract_id = basic_types_pb2.ContractID(
+            shardNum=contract_shard_num,
+            realmNum=contract_realm_num,
+            contractNum=contract_num,
+        )
+
+    contract_call = contract_call_pb2.ContractCallTransactionBody(
+        contractID=contract_id,
+        gas=gas,
+        amount=amount,
+        functionParameters=function_parameters,
+    )
+
+    return {"contractCall": contract_call}
+
+
+# === Web3-based ERC-20 Encoding Functions ===
+
+# ERC-20 ABI for transfer function
+ERC20_ABI = [
+    {
+        "inputs": [
+            {"internalType": "address", "name": "_to", "type": "address"},
+            {"internalType": "uint256", "name": "_value", "type": "uint256"}
+        ],
+        "name": "transfer",
+        "outputs": [{"internalType": "bool", "name": "success", "type": "bool"}],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]
+
+def encode_erc20_transfer_web3(to_address: str, amount: int) -> bytes:
+    """Encode ERC-20 transfer using Web3 - same as Ethereum app pattern"""
+    contract = Web3().eth.contract(abi=ERC20_ABI, address=None)
+    # Convert string address to bytes if needed
+    if isinstance(to_address, str):
+        to_bytes = bytes.fromhex(to_address.replace('0x', ''))
+    else:
+        to_bytes = to_address
+    # encode_abi returns hex string, convert to bytes
+    hex_data = contract.encode_abi("transfer", [to_bytes, amount])
+    return bytes.fromhex(hex_data[2:])  # Remove 0x prefix
+
+def encode_erc20_with_wrong_selector(to_address: str, amount: int, wrong_selector: int) -> bytes:
+    """Encode ERC-20 transfer with wrong selector for rejection testing"""
+    # First encode normally
+    correct_data = encode_erc20_transfer_web3(to_address, amount)
+    # Replace first 4 bytes (selector) with wrong one
+    wrong_selector_bytes = wrong_selector.to_bytes(4, 'big')
+    return wrong_selector_bytes + correct_data[4:]
+

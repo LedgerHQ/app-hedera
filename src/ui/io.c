@@ -1,5 +1,5 @@
 #include "app_io.h"
-
+#include "utils.h"
 #include "ux.h"
 
 #ifdef HAVE_NBGL
@@ -100,4 +100,6 @@ void io_exchange_with_code(uint16_t code, uint16_t tx) {
     G_io_apdu_buffer[tx++] = code & 0xff;
 
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+    // Clear io buffer after send
+    MEMCLEAR(G_io_apdu_buffer);
 }

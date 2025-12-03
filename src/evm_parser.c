@@ -1,0 +1,250 @@
+#include "evm_parser.h"
+
+#include <string.h>
+
+#include "ui/app_globals.h"
+
+// Validate that calldata length matches selector + two 32-byte words exactly
+static bool evm_exact_len_ok(size_t len) {
+    // 4 bytes selector + 2 * 32 bytes params
+    return len == (EVM_SELECTOR_SIZE + 2 * EVM_WORD_SIZE);
+}
+
+// Copy the last 20 bytes of a 32-byte ABI-encoded address word
+static void evm_address_from_word(const uint8_t *word32, evm_address_t *addr) {
+    // ABI encodes address right-aligned in 32 bytes (12 leading zero bytes)
+    memmove(addr->bytes, word32 + EVM_ADDRESS_PADDING_SIZE, EVM_ADDRESS_SIZE);
+}
+
+// Copy a full 32-byte word as big-endian into raw uint256
+static void uint256_from_word(const uint8_t *word32, uint256_raw_t *out) {
+    memmove(out->bytes, word32, EVM_WORD_SIZE);
+}
+
+bool parse_transfer_function(const uint8_t *calldata,
+                             size_t calldata_len,
+                             transfer_calldata_t *out) {
+    if (calldata == NULL || out == NULL) return false;
+    if (!evm_exact_len_ok(calldata_len)) return false;
+
+    // Selector check
+    uint32_t selector = ((uint32_t)calldata[0] << 24) | ((uint32_t)calldata[1] << 16) |
+                        ((uint32_t)calldata[2] << 8) | (uint32_t)calldata[3];
+    if (selector != EVM_ERC20_TRANSFER_SELECTOR) return false;
+
+    const uint8_t *arg0 = calldata + EVM_SELECTOR_SIZE;               // address word
+    const uint8_t *arg1 = arg0 + EVM_WORD_SIZE;                        // uint256 amount
+
+    evm_address_from_word(arg0, &out->to);
+    uint256_from_word(arg1, &out->amount);
+    return true;
+}
+
+static void hex_from_bytes(const uint8_t *in, size_t in_len, char *out) {
+    static const char HEX[] = "0123456789abcdef";
+    if (in == NULL || out == NULL) return;
+    
+    for (size_t i = 0; i < in_len; i++) {
+        uint8_t b = in[i];
+        out[2 * i] = HEX[b >> 4];
+        out[2 * i + 1] = HEX[b & 0x0F];
+    }
+}
+
+bool evm_addr_to_str(const evm_address_t *addr, char *out, size_t out_len) {
+    if (addr == NULL || out == NULL) return false;
+    if (out_len < EVM_ADDRESS_STR_SIZE) return false;
+    out[0] = '0';
+    out[1] = 'x';
+    hex_from_bytes(addr->bytes, EVM_ADDRESS_SIZE, out + 2);
+    out[2 + (EVM_ADDRESS_SIZE * 2)] = '\0';
+    return true;
+}
+
+bool evm_word_to_str(const uint8_t *word32, char *out) {
+    if (word32 == NULL || out == NULL) return false;
+    out[0] = '0';
+    out[1] = 'x';
+    hex_from_bytes(word32, EVM_WORD_SIZE, out + 2);
+    out[2 + (EVM_WORD_SIZE * 2)] = '\0';
+    return true;
+}
+
+bool evm_word_to_amount(const uint8_t *word32, char out[MAX_UINT256_LENGTH+1]) {
+    if (word32 == NULL || out == NULL) return false;
+    // Pass buffer length that allows for a terminating NUL when the number
+    // uses the full 78 digits (2^256-1 has 78 decimal digits).
+    memset(out, 0, MAX_UINT256_LENGTH+1);
+    return uint256_to_decimal(word32, EVM_WORD_SIZE, out, MAX_UINT256_LENGTH);
+}
+
+// Helper function to check if buffer is all zeros
+// Snippet from Ethereum app 
+// https://github.com/LedgerHQ/ethereum-plugin-sdk/blob/dda423015f2edfdabae9a0eb105fe0a41fe04d97/src/common_utils.c#L334
+static bool allzeroes(const void *buf, size_t n) {
+    const uint8_t *p = (const uint8_t *)buf;
+    for (size_t i = 0; i < n; i++) {
+        if (p[i] != 0) return false;
+    }
+    return true;
+}
+
+// Snippet from Ethereum app 
+// https://github.com/LedgerHQ/ethereum-plugin-sdk/blob/dda423015f2edfdabae9a0eb105fe0a41fe04d97/src/common_utils.c#L85
+bool uint256_to_decimal(const uint8_t *value, size_t value_len, char *out, size_t out_len) {
+    if (value_len > EVM_WORD_SIZE) {
+        // value len is bigger than EVM_WORD_SIZE ?!
+        return false;
+    }
+
+    uint16_t n[16] = {0};
+    // Copy and right-align the number
+    memcpy((uint8_t *) n + EVM_WORD_SIZE - value_len, value, value_len);
+
+    // Special case when value is 0
+    if (allzeroes(n, EVM_WORD_SIZE)) {
+        if (out_len < 2) {
+            // Not enough space to hold "0" and \0.
+            return false;
+        }
+        out[0] = '0';
+        out[1] = '\0';
+        return true;
+    }
+
+    uint16_t *p = n;
+    for (int i = 0; i < 16; i++) {
+        n[i] = __builtin_bswap16(*p++);
+    }
+    int pos = out_len;
+    while (!allzeroes(n, sizeof(n))) {
+        if (pos == 0) {
+            return false;
+        }
+        pos -= 1;
+        unsigned int carry = 0;
+        for (int i = 0; i < 16; i++) {
+            int rem = ((carry << 16) | n[i]) % 10;
+            n[i] = ((carry << 16) | n[i]) / 10;
+            carry = rem;
+        }
+        out[pos] = '0' + carry;
+    }
+    memmove(out, out + pos, out_len - pos);
+    out[out_len - pos] = 0;
+    return true;
+}
+
+// Imported and adapted from Ledger Ethereum app (Apache-2.0)
+// Source: ethereum-plugin-sdk/src/common_utils.c (adjustDecimals)
+// Repo: https://github.com/LedgerHQ/ethereum-plugin-sdk
+bool adjust_decimals(const char *src,
+                    size_t srcLength,
+                    char *target,
+                    size_t targetLength,
+                    uint8_t decimals) {
+    uint32_t startOffset;
+    uint32_t lastZeroOffset = 0;
+    uint32_t offset = 0;
+    if ((srcLength == 1) && (*src == '0')) {
+        if (targetLength < 2) {
+            return false;
+        }
+        target[0] = '0';
+        target[1] = '\0';
+        return true;
+    }
+    if (srcLength <= decimals) {
+        uint32_t delta = (uint32_t)decimals - (uint32_t)srcLength;
+        if (targetLength < srcLength + 1 + 2 + delta) {
+            return false;
+        }
+        target[offset++] = '0';
+        target[offset++] = '.';
+        for (uint32_t i = 0; i < delta; i++) {
+            target[offset++] = '0';
+        }
+        startOffset = offset;
+        for (uint32_t i = 0; i < srcLength; i++) {
+            target[offset++] = src[i];
+        }
+        target[offset] = '\0';
+    } else {
+        uint32_t sourceOffset = 0;
+        uint32_t delta = (uint32_t)srcLength - (uint32_t)decimals;
+        if (targetLength < srcLength + 1 + 1) {
+            return false;
+        }
+        while (offset < delta) {
+            target[offset++] = src[sourceOffset++];
+        }
+        if (decimals != 0) {
+            target[offset++] = '.';
+        }
+        startOffset = offset;
+        while (sourceOffset < srcLength) {
+            target[offset++] = src[sourceOffset++];
+        }
+        target[offset] = '\0';
+    }
+    for (uint32_t i = startOffset; i < offset; i++) {
+        if (target[i] == '0') {
+            if (lastZeroOffset == 0) {
+                lastZeroOffset = i;
+            }
+        } else {
+            lastZeroOffset = 0;
+        }
+    }
+    if (lastZeroOffset != 0) {
+        target[lastZeroOffset] = '\0';
+        if (target[lastZeroOffset - 1] == '.') {
+            target[lastZeroOffset - 1] = '\0';
+        }
+    }
+    return true;
+}
+
+// Imported and adapted from Ledger Ethereum app (Apache-2.0)
+// Source: ethereum-plugin-sdk/src/common_utils.c (amountToString)
+// Repo: https://github.com/LedgerHQ/ethereum-plugin-sdk
+// Adapted: Unlike the Ethereum app where ticker precedes the amount ("TICKER 1.23"),
+// this implementation places the ticker AFTER the amount ("1.23 TICKER").
+bool evm_amount_to_string(const uint8_t *amount,
+                    uint8_t amount_size,
+                    uint8_t decimals,
+                    const char *ticker,
+                    char *out_buffer,
+                    size_t out_buffer_size) {
+    char tmp_buffer[100] = {0};
+
+    if (!uint256_to_decimal(amount, amount_size, tmp_buffer, sizeof(tmp_buffer))) {
+        return false;
+    }
+
+    size_t amount_len = strnlen(tmp_buffer, sizeof(tmp_buffer));
+    size_t ticker_len = ticker ? strnlen(ticker, 16) : 0;
+
+    // First, write the amount (with decimals applied) into the output buffer
+    if (!adjust_decimals(tmp_buffer,
+                        amount_len,
+                        out_buffer,
+                        out_buffer_size,
+                        decimals)) {
+        return false;
+    }
+
+    // Then append ticker after the amount, separated by a single space
+    if (ticker_len > 0) {
+        size_t written = strnlen(out_buffer, out_buffer_size);
+        if (written + 1 + ticker_len + 1 > out_buffer_size) {
+            return false;
+        }
+        out_buffer[written] = ' ';
+        memmove(out_buffer + written + 1, ticker, ticker_len);
+        out_buffer[written + 1 + ticker_len] = '\0';
+    }
+    // Ensure final NUL-termination regardless
+    out_buffer[out_buffer_size - 1] = '\0';
+    return true;
+}

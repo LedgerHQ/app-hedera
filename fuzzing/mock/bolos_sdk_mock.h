@@ -5,9 +5,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-// Define NO_BOLOS_SDK to disable actual SDK includes
-#define NO_BOLOS_SDK 1
-
 // Mock types for BOLOS SDK
 typedef uint32_t cx_err_t;
 typedef uint32_t cx_curve_t;
@@ -65,7 +62,6 @@ typedef void (*nbgl_choiceCallback_t)(bool confirm);
 
 // Mock function declarations
 void PRINTF(const char* format, ...);
-void explicit_bzero(void *s, size_t n);
 void* pic(void* ptr);
 
 // Cryptographic functions
@@ -99,6 +95,7 @@ void nbgl_useCaseReview(nbgl_operationType_t operationType,
 
 // Error handling
 void THROW(unsigned int exception);
+extern volatile unsigned int g_last_throw;
 
 // Memory management
 void* os_malloc(size_t size);

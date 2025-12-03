@@ -77,6 +77,10 @@ static char *hedera_format_tinybar(uint64_t tinybar) {
     return hedera_format_amount(tinybar, 8);
 }
 
+const char *hedera_format_tinybar_str(uint64_t tinybar) {
+    return hedera_format_tinybar(tinybar);
+}
+
 static void validate_decimals(uint32_t decimals) {
     if (decimals >= 20) {
         // We only support decimal values less than 20
@@ -90,9 +94,6 @@ static void validate_memo(const char memo[100]) {
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 }
-
-#define hedera_safe_printf(element, ...) \
-    hedera_snprintf(element, sizeof(element) - 1, __VA_ARGS__)
 
 void reformat_key(void) {
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_NANOS)

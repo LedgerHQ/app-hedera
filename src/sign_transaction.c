@@ -23,6 +23,21 @@ static void parse_and_lookup_token(token_addr_t* token_addr) {
                                   st_ctx.token_name, &st_ctx.token_decimals);
 }
 
+static bool is_hbar_amounts_valid(void) {
+    int64_t total_amount = 0;
+    // Iterate over st_ctx.transaction.data.cryptoTransfer.transfers amounts and
+    // check if sum of the amount values is zero
+    for (int i = 0;
+         i <
+         st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts_count;
+         i++) {
+        total_amount +=
+            st_ctx.transaction.data.cryptoTransfer.transfers.accountAmounts[i]
+                .amount;
+    }
+    return total_amount == 0;
+}
+
 // Validates whether or not a transfer is legal:
 // Either a transfer between two accounts
 // Or a token transfer between two accounts
@@ -37,6 +52,11 @@ static void validate_transfer(void) {
             2 &&
         st_ctx.transaction.data.cryptoTransfer.tokenTransfers_count != 0) {
         // Can't also transfer tokens while sending hbar
+        THROW(EXCEPTION_MALFORMED_APDU);
+    }
+
+    if (!is_hbar_amounts_valid()) {
+        // Hbar amounts list must sum to zero
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
@@ -140,7 +160,9 @@ void handle_transaction_body() {
     reformat_key_index();
 
     // All flows except Verify
-    if (!is_verify_account()) reformat_operator();
+    if (!is_verify_account()) {
+        reformat_operator();
+    }
 
     // Handle parsed protobuf message of transaction body
     switch (st_ctx.transaction.which_data) {
@@ -289,6 +311,13 @@ void handle_transaction_body() {
             }
             break;
 
+        case Hedera_TransactionBody_contractCall_tag:
+            st_ctx.type = ContractCall;
+            reformat_operator();
+            reformat_summary("send ERC20 token?");
+            handle_contract_call_body();
+            break;
+
         default:
             // Unsupported
             THROW(EXCEPTION_MALFORMED_APDU);
@@ -393,13 +422,6 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
     // local and global buffers is impossible.
     memcpy(raw_transaction, (buffer + INDEX_SIZE), raw_transaction_length);
 
-    // Sign Transaction
-    if (!hedera_sign(st_ctx.key_index, raw_transaction, raw_transaction_length,
-                     G_io_apdu_buffer, &st_ctx.signature_length)) {
-        PRINTF("%s: signature failure\n", __func__);
-        THROW(EXCEPTION_MALFORMED_APDU);
-    }
-
     // Make in memory buffer into stream
     pb_istream_t stream =
         pb_istream_from_buffer(raw_transaction, raw_transaction_length);
@@ -409,6 +431,8 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
                    &st_ctx.transaction)) {
         // Oh no couldn't ...
         PRINTF("%s: decoding failure\n", __func__);
+        MEMCLEAR(G_io_apdu_buffer);
+        MEMCLEAR(raw_transaction);
         THROW(EXCEPTION_MALFORMED_APDU);
     }
 
@@ -423,6 +447,17 @@ void handle_sign_transaction(uint8_t p1, uint8_t p2, uint8_t* buffer,
             strcpy(st_ctx.account_memo, "-");
         }
     }
+
+    // Sign Transaction
+    if (!hedera_sign(st_ctx.key_index, raw_transaction, raw_transaction_length,
+                     G_io_apdu_buffer, &st_ctx.signature_length)) {
+        PRINTF("%s: signature failure\n", __func__);
+        MEMCLEAR(G_io_apdu_buffer);
+        MEMCLEAR(raw_transaction);
+        THROW(EXCEPTION_MALFORMED_APDU);
+                     }
+
+    MEMCLEAR(raw_transaction);
 
     handle_transaction_body();
 

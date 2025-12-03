@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "../token_address.h"
+#include "../../evm_parser.h"
 
 #define MAX_TICKER_LENG 16
 #define MAX_HEDERA_ADDRESS_LENGTH 64
@@ -17,6 +18,8 @@ typedef struct token_info {
     const char ticker[MAX_TICKER_LENG];
     const char token_name[MAX_TOKEN_LEN];
     uint8_t decimals;
+    // Optional 20-byte EVM address mirror. If all zeros, not set.
+    evm_address_t evm_address;
 } token_info_t;
 
 /**
@@ -35,6 +38,20 @@ typedef struct token_info {
 bool token_info_get_by_address(const token_addr_t address,
                                char ticker[MAX_TICKER_LENG],
                                char name[MAX_TOKEN_LEN], uint32_t* decimals);
+
+/**
+ * @brief  Get the token info whose EVM address exactly matches @p evm_address.
+ *         If the record's evm_address is all zeros, it is treated as unset.
+ * @param  evm_address Pointer to 20-byte address.
+ * @param  ticker      Output buffer (>= MAX_TICKER_LENG).
+ * @param  name        Output buffer (>= MAX_TOKEN_LEN).
+ * @param  decimals    Output pointer to decimals.
+ * @return true if found, false otherwise.
+ */
+bool token_info_get_by_evm_address(const evm_address_t *evm_address,
+                                   char ticker[MAX_TICKER_LENG],
+                                   char name[MAX_TOKEN_LEN],
+                                   uint32_t* decimals);
 
 /**
  * @brief  Get the total number of entries in the token table.

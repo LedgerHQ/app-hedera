@@ -79,7 +79,7 @@ static bool extract_string_from_string_value(const uint8_t *sv_data,
                 return false;
             }
 
-            if (sv_data + string_length > sv_end) {
+            if (string_length > (uint64_t)(sv_end - sv_data)) {
                 return false;
             }
 
@@ -135,12 +135,11 @@ static bool parse_crypto_update_body(const uint8_t *crypto_data,
             }
 
             uint64_t string_value_length = 0;
-            if (!decode_varint(&crypto_data, crypto_end,
-                               &string_value_length)) {
+            if (!decode_varint(&crypto_data, crypto_end, &string_value_length)) {
                 return false;
             }
 
-            if (crypto_data + string_value_length > crypto_end) {
+            if (string_value_length > (uint64_t)(crypto_end - crypto_data)) {
                 return false;
             }
 
@@ -195,7 +194,7 @@ bool extract_nested_string_field(const uint8_t *buffer, size_t buffer_size,
                 return false;
             }
 
-            if (data + crypto_update_length > end) {
+            if (crypto_update_length > (uint64_t)(end - data)) {
                 return false;
             }
 
@@ -243,10 +242,10 @@ static bool skip_field(const uint8_t **data, const uint8_t *end,
             if (!decode_varint(data, end, &length)) {
                 return false;
             }
-            if (*data + length > end) {
+            if (length > (uint64_t)(end - *data)) {
                 return false;
             }
-            *data += length;
+            *data += (size_t)length;
             break;
         }
         case WIRE_TYPE_32BIT:
