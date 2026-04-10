@@ -71,7 +71,7 @@ message TransactionBody {
    * Any notes or descriptions that should be put into the record (max length
    * 100)
    */
-  string memo = 6 [ (nanopb).max_size = 100 ];
+  string memo = 6 [ (nanopb).max_length = 100 ];
 
   /**
    * The choices here are arranged by service in roughly lexicographical order.

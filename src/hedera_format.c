@@ -88,7 +88,7 @@ static void validate_decimals(uint32_t decimals) {
     }
 }
 
-static void validate_memo(const char memo[100]) {
+static void validate_memo(const char memo[MAX_MEMO_SIZE]) {
     if (strlen(memo) > MAX_MEMO_SIZE) {
         // Hedera max length for memos
         THROW(EXCEPTION_MALFORMED_APDU);
