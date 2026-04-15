@@ -374,11 +374,7 @@ void handle_transaction_body() {
 
             finalize_exchange_sign_transaction(false);
         }
-    } else {
-        ui_sign_transaction();
     }
-#else
-    ui_sign_transaction();
 #endif
 
     ui_sign_transaction();
