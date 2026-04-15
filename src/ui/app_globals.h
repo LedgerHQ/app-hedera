@@ -14,7 +14,7 @@
 #define MAX_UINT256_LENGTH 78
 #define ACCOUNT_ID_SIZE 19 * 3 + 2 + 1
 #define KEY_SIZE 64
-#define MAX_MEMO_SIZE 200
+#define MAX_MEMO_SIZE 100
 #define SIGNATURE_SIZE 32
 #define INDEX_SIZE 4
 
