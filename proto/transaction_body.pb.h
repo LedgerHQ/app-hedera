@@ -49,7 +49,7 @@ typedef struct _Hedera_TransactionBody {
     /* *
  Any notes or descriptions that should be put into the record (max length
  100) */
-    char memo[100]; 
+    char memo[101]; 
     /* *
  Call a contract */
     pb_size_t which_data;
@@ -127,7 +127,7 @@ extern const pb_msgdesc_t Hedera_TransactionBody_msg;
 
 /* Maximum encoded size of messages (where known) */
 #if defined(Hedera_CryptoUpdateTransactionBody_size)
-#define Hedera_TransactionBody_size              (282 + sizeof(union Hedera_TransactionBody_data_size_union))
+#define Hedera_TransactionBody_size              (283 + sizeof(union Hedera_TransactionBody_data_size_union))
 union Hedera_TransactionBody_data_size_union {char f15[(6 + Hedera_CryptoUpdateTransactionBody_size)]; char f0[586];};
 #endif
 

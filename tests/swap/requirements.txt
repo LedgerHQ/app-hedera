@@ -4,4 +4,4 @@ ledger_app_clients.exchange >= 0.0.5
 GitPython
 base58
 bip32
-protobuf>=3.20.0,<=3.20.3
+protobuf >=5.28,<6

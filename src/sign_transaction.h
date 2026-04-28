@@ -163,7 +163,8 @@ typedef struct sign_tx_context_s {
     char fee[DISPLAY_SIZE * 2 + 1];
 
     // Transaction Memo
-    char memo[MAX_MEMO_SIZE + 1];
+    // Needs additional byte for NULL terminator and one byte to ensure compatibility with hedera_safe_printf util
+    char memo[MAX_MEMO_SIZE + 1 + 1];
 
     // Is known token 
     bool token_known;
