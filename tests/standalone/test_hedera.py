@@ -47,6 +47,8 @@ def test_hedera_get_public_key_ok(backend, firmware, navigator, test_name):
                 nav_ins = [NavInsID.RIGHT_CLICK]
             elif backend.firmware.device.startswith("nano"):
                 nav_ins = [NavInsID.RIGHT_CLICK,
+                           NavInsID.BOTH_CLICK,
+                           NavInsID.RIGHT_CLICK,
                            NavInsID.BOTH_CLICK]
             else:
                 nav_ins = [NavInsID.USE_CASE_REVIEW_NEXT,

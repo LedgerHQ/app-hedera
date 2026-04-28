@@ -67,9 +67,6 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, uint8_t* buffer,
     // Return public key and yield control to exchange handler
     else {
         io_exchange_with_code(EXCEPTION_OK, 32);
-        if (!G_called_from_swap) {
-            ui_idle();
-        }
     }
 
 
